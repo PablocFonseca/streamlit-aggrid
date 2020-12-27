@@ -9,12 +9,13 @@ np.random.seed(42)
 
 @st.cache()
 def fetch_data():   
+    nrows = 50
     dummy_data = {
-        "date":pd.date_range('2020-01-01', periods=5),
-        "group":list("AAABB"),
-        "apple":np.random.randint(0,10,5),
-        "banana":np.random.randint(0,10,5),
-        "chocolate":np.random.randint(0,10,5)
+        "date":pd.date_range('2020-01-01', periods=nrows),
+        "group": np.random.choice(['A','B'], size=nrows) ,
+        "apple":np.random.randint(0,10,nrows),
+        "banana":np.random.randint(0,10,nrows),
+        "chocolate":np.random.randint(0,10,nrows)
     }
     return pd.DataFrame(dummy_data)
 
@@ -58,6 +59,7 @@ st.subheader("Dummy data")
 grid_response = AgGrid(df, gridOptions=gridOptions)
 
 df = grid_response['data']
+st.dataframe(df)
 
 st.subheader("Selected Rows")
 selected_rows = grid_response.get('selected_rows', None)

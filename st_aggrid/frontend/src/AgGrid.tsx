@@ -7,6 +7,7 @@ import React, { ReactNode } from "react"
 
 import 'ag-grid-enterprise';
 import { AgGridReact } from 'ag-grid-react';
+import { Constants } from 'ag-grid-community'
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
@@ -37,6 +38,11 @@ class AgGrid extends StreamlitComponentBase {
   private onGridReady(event: any) {
     let gridApi = event.api
     gridApi.sizeColumnsToFit()
+
+    // Hack to export filtered rows: https://github.com/ag-grid/ag-grid/issues/1499
+    const rowModel = gridApi.rowModel;
+    rowModel._originalGetType = rowModel.getType;
+    rowModel._fakeGetType = () => Constants.ROW_MODEL_TYPE_SERVER_SIDE;
   }
 
   private columnTypes: any = {
@@ -65,12 +71,18 @@ class AgGrid extends StreamlitComponentBase {
 
   private returnGridValue() {
     var api = this.agRef.current.api
+
+    // Hack to export filtered rows: https://github.com/ag-grid/ag-grid/issues/1499
+    const rowModel = api.rowModel;
+    rowModel.getType = rowModel._fakeGetType;
     var return_value = {
       dtypes: this.dtypes,
       csvData: api.getDataAsCsv({ allColumns: true }),
       selectedRows: api.getSelectedRows()
     }
+
     Streamlit.setComponentValue(return_value)
+    rowModel.getType = rowModel._originalGetType;
   }
 
   public render = (): ReactNode => {

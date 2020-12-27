@@ -129,7 +129,6 @@ def AgGrid(dataframe, gridOptions=None, height=200, key=None):
         frame = frame.astype({k:v for k,v in zip(frame.columns, dtypes)})
 
         response['data'] = frame
-
         response['selected_rows'] = component_value['selectedRows']
     
     return response

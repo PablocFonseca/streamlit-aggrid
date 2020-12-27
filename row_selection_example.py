@@ -42,6 +42,8 @@ gridOptions['rowSelection'] = selection_type
 gridOptions['rowMultiSelectWithClick'] = rowMultiSelectWithClick
 gridOptions['suppressRowDeselection'] = suppressRowDeselection
 gridOptions['suppressRowClickSelection'] = suppressRowClickSelection
+gridOptions['pagination'] = True
+gridOptions['paginationAutoPageSize'] = True
 
 if checkbox_selection:
     gridOptions['columnDefs'][0]['checkboxSelection'] = True
@@ -56,10 +58,9 @@ gridOptions selection documentation on [https://www.ag-grid.com/javascript-grid-
 """)
 
 st.subheader("Dummy data")
-grid_response = AgGrid(df, gridOptions=gridOptions)
+grid_response = AgGrid(df, gridOptions=gridOptions, height=500)
 
 df = grid_response['data']
-st.dataframe(df)
 
 st.subheader("Selected Rows")
 selected_rows = grid_response.get('selected_rows', None)
@@ -67,6 +68,9 @@ if selected_rows:
     st.write(selected_rows)
 else:
     st.write("No rows selected.")
+
+st.subheader("Returned Grid Data")
+st.dataframe(df)
 
 st.subheader("Used gridOptions")
 st.write(gridOptions)

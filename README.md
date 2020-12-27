@@ -41,3 +41,8 @@ streamlit run example.py
 Grid data is sent back to streamlit and can be reused in other components. In the example below a chart is updated on grid edition.
 
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/example.gif)
+
+# Row Selection Demo
+Selected grid data is stored in ['data'] key on returned dict from AgGrid call
+
+![selection example](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/selection_example.gif)

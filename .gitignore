@@ -3,3 +3,4 @@ st_aggrid/frontend/node_modules/
 st_aggrid/frontend/.env
 st_aggrid/frontend/.eslintcache
 *.pyc
+dist/*

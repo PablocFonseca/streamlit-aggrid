@@ -11,16 +11,16 @@ import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
-import moment from  'moment'
+import moment from 'moment'
 import { throws } from "assert";
 
 
-class AgGrid extends StreamlitComponentBase{
+class AgGrid extends StreamlitComponentBase {
 
   private agRef: any
   private dtypes: any
 
-  constructor(props: any){
+  constructor(props: any) {
     super(props)
     this.agRef = React.createRef()
     this.dtypes = this.props.args['dtypes']
@@ -40,7 +40,7 @@ class AgGrid extends StreamlitComponentBase{
   }
 
   private columnTypes: any = {
-    columnTypes:{
+    columnTypes: {
       'nonEditableColumn': { editable: false },
       'editableColumn': { editable: true },
       'numericRoundedTwoDigitsColumn': {
@@ -53,7 +53,7 @@ class AgGrid extends StreamlitComponentBase{
         valueFormatter: (params: any) => params.value.toFixed(0)
       },
       'shortDateColumn': {
-        filter:'agDateColumnFilter',
+        filter: 'agDateColumnFilter',
         valueFormatter: (params: any) => moment.utc(params.value).format('DD/MM/YYYY'),
       },
       'yearMonthDateColumn': {
@@ -61,26 +61,28 @@ class AgGrid extends StreamlitComponentBase{
       },
     }
 
-}
+  }
 
-  private onCellChanged(){
+  private returnGridValue() {
     var api = this.agRef.current.api
     var return_value = {
-      dtypes:this.dtypes, 
-      csvData: api.getDataAsCsv({allColumns:true})
+      dtypes: this.dtypes,
+      csvData: api.getDataAsCsv({ allColumns: true }),
+      selectedRows: api.getSelectedRows()
     }
     Streamlit.setComponentValue(return_value)
   }
 
   public render = (): ReactNode => {
 
-    const gridOptions = Object.assign({}, this.columnTypes, this.parseGridOptions(), {rowData:this.parseGridData()} )
-    
+    const gridOptions = Object.assign({}, this.columnTypes, this.parseGridOptions(), { rowData: this.parseGridData() })
+
     return (
-      <div className="ag-theme-balham" style={{ height: 400, width: '100%' }}>
+      <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: '100%' }}>
         <AgGridReact
           onGridReady={this.onGridReady}
-          onCellValueChanged={() => this.onCellChanged()}
+          onCellValueChanged={() => this.returnGridValue()}
+          onSelectionChanged={() => this.returnGridValue()}
           gridOptions={gridOptions}
           ref={this.agRef}
         >

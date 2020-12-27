@@ -2,11 +2,11 @@ import os
 import streamlit.components.v1 as components
 import pandas as pd
 
-_RELEASE = True
+_RELEASE = False
 
 class GridOptionsBuilder:
 
-    def __init__(self, min_column_width=100, resizable_columns=True, filterable_columns=True, sorteable_columns=True, pivotable_columns=True, groupable_columns=True, editable_columns=False):
+    def __init__(self, min_column_width=100, resizable_columns=True, filterable_columns=True, sorteable_columns=True, pivotable_columns=True, groupable_columns=True, editable_columns=False, side_panel=True):
         self.__grid_options = {}
         self.columnDefs = []
         self.sideBar = {}
@@ -33,6 +33,9 @@ class GridOptionsBuilder:
             'enableRowGroup': groupable_columns,
         }
 
+        if side_panel:
+            self.enableSideBar()
+
     def build_columnsDefs_from_dataframe(self, dataframe):
         self.columnDefs = []
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
@@ -43,27 +46,28 @@ class GridOptionsBuilder:
             }
             self.columnDefs.append(colDef)
     
-    def enableSideBar(self):
-        self.sideBar = {
-                'toolPanels': [
-                    {
-                        'id': 'columns',
-                        'labelDefault': 'Columns',
-                        'labelKey': 'columns',
-                        'iconKey': 'columns',
-                        'toolPanel': 'agColumnsToolPanel',
-                    },
-                    {
-                        'id': 'filters',
-                        'labelDefault': 'Filters',
-                        'labelKey': 'filters',
-                        'iconKey': 'filter',
-                        'toolPanel': 'agFiltersToolPanel',
+    def enableSideBar(self, filters_panel=True, columns_panel=True, defaultToolPanel=''):
+        filter_panel = {
+            'id': 'filters',
+            'labelDefault': 'Filters',
+            'labelKey': 'filters',
+            'iconKey': 'filter',
+            'toolPanel': 'agFiltersToolPanel',
                     }
-                ],
-                'defaultToolPanel': '',
+        
+        columns_panel = {
+            'id': 'filters',
+            'labelDefault': 'Filters',
+            'labelKey': 'filters',
+            'iconKey': 'filter',
+            'toolPanel': 'agFiltersToolPanel',
+                    }
 
-            }
+        self.sideBar = {'toolPanels':[], 'defaultToolPanel':defaultToolPanel}
+        if filters_panel:
+            self.sideBar['toolPanels'].append(filter_panel)
+        if columns_panel:
+            self.sideBar['toolPanels'].append(columns_panel)
 
     def build(self):
         self.__grid_options['columnDefs'] = self.columnDefs
@@ -85,10 +89,8 @@ else:
     _component_func = components.declare_component("agGrid", path=build_dir)
 
 
-
-def AgGrid(dataframe, gridOptions=None, key=None):
-    """Create a new instance of "my_component".
-
+def AgGrid(dataframe, gridOptions=None, height=200, key=None):
+    """Create a new instance of "AgGrid".
     Parameters
     ----------
     dataframe: Pandas Datafrme
@@ -102,29 +104,32 @@ def AgGrid(dataframe, gridOptions=None, key=None):
 
     Returns
     -------
-    dataframe
-        return the dataframe, with editions if these are enabled
+    dictionary
+        returns a dictionary, grid data is in dictionary's data key. Other keys may be present depending on gridOptions parameters
+"""
+    response = {}
+    response['data'] = dataframe
 
-    """
+    #if no gridOptions is passed, builds a default one.
+    if gridOptions == None:
+        gb = GridOptionsBuilder(min_column_width=100)
+        gb.build_columnsDefs_from_dataframe(dataframe)
+        gridOptions = gb.build()
 
     gridData = dataframe.to_json(orient='records', date_format='iso')
     types = [t.name for t in dataframe.dtypes]
 
-    if gridOptions == None:
-        gb = GridOptionsBuilder(min_column_width=100)
-        gb.build_columnsDefs_from_dataframe(dataframe)
-        gb.enableSideBar()
-        gridOptions = gb.build()
-
-    component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, dtypes=types)
+    component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, dtypes=types, height=height)
     if component_value:
-        dtypes = component_value['dtypes']
 
         from io import StringIO
         frame = pd.read_csv(StringIO(component_value['csvData']))
+        
+        dtypes = component_value['dtypes']
         frame = frame.astype({k:v for k,v in zip(frame.columns, dtypes)})
-    else:
-        frame = dataframe
 
-    return frame
+        response['data'] = frame
 
+        response['selected_rows'] = component_value['selectedRows']
+    
+    return response

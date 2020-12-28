@@ -2,7 +2,7 @@ import os
 import streamlit.components.v1 as components
 import pandas as pd
 
-_RELEASE = False
+_RELEASE = True
 
 class GridOptionsBuilder:
 

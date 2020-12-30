@@ -6,100 +6,174 @@ import {
 import React, { ReactNode } from "react"
 
 import 'ag-grid-enterprise';
+
 import { AgGridReact } from 'ag-grid-react';
-import { Constants } from 'ag-grid-community'
+import { ColumnApi, GridApi } from 'ag-grid-community'
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
-import moment from 'moment'
-import { throws } from "assert";
-
+import { parseISO, compareAsc } from 'date-fns'
+import { format } from 'date-fns-tz'
 
 class AgGrid extends StreamlitComponentBase {
-
-  private agRef: any
-  private dtypes: any
+  private frame_dtypes: any
+  private gridOptions: any
+  private gridData: any
+  private api!: GridApi;
+  private columnApi!: ColumnApi
+  private columnFormaters: any
+  private manual_update_requested: boolean
+  private custom_date_format_string: string
 
   constructor(props: any) {
     super(props)
-    this.agRef = React.createRef()
-    this.dtypes = this.props.args['dtypes']
+
+
+    this.frame_dtypes = props.args['frame_dtypes']
+    this.gridData = JSON.parse(props.args['gridData'])
+    this.gridOptions = props.args['gridOptions']
+
+    this.manual_update_requested = (props.args['update_mode'] == 1)
+
+    this.custom_date_format_string = props.args['custom_date_format_string']
+
+    this.columnFormaters = {
+      columnTypes: {
+        'dateColumnFilter': {
+          filter: 'agDateColumnFilter',
+          filterParams: {
+            comparator: (filterValue: any, cellValue: string) => compareAsc(parseISO(cellValue), filterValue)
+          }
+        },
+        'numberColumnFilter': {
+          filter: 'agNumberColumnFilter'
+        },
+        'shortDateTimeFormat': {
+          valueFormatter: (params: any) => this.date_formater(params.value, "dd/MM/yyyy HH:mm"),
+        },
+        'customDateTimeFormat': {
+          valueFormatter: (params: any) => this.date_formater(params.value, params.column.colDef.custom_format_string),
+        },
+        'customNumericFormat': {
+          valueFormatter: (params: any) => this.number_formater(params.value, params.column.colDef.precision),
+        },
+
+      }
+    }
   }
 
-  private parseGridData() {
-    return JSON.parse(this.props.args['gridData'])
-  }
+  private set_update_mode() {
+    if (this.manual_update_requested) {
+      return //If manual update is set, no listeners will be added
+    }
 
-  private parseGridOptions() {
-    return this.props.args['gridOptions']
+    let update_mode = this.props.args['update_mode']
+
+    if ((update_mode & 2) == 2) {
+      this.api.addEventListener('cellValueChanged', (e: any) => this.returnGridValue(e))
+    }
+
+    if ((update_mode & 4) == 4) {
+      this.api.addEventListener('selectionChanged', (e: any) => this.returnGridValue(e))
+    }
+
+    if ((update_mode & 8) == 8) {
+      this.api.addEventListener('filterChanged', (e: any) => this.returnGridValue(e))
+    }
+
+    if ((update_mode & 16) == 16) {
+      this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
+    }
   }
 
   private onGridReady(event: any) {
-    let gridApi = event.api
-    gridApi.sizeColumnsToFit()
+    this.api = event.api
+    this.columnApi = event.columnApi
 
-    // Hack to export filtered rows: https://github.com/ag-grid/ag-grid/issues/1499
-    const rowModel = gridApi.rowModel;
-    rowModel._originalGetType = rowModel.getType;
-    rowModel._fakeGetType = () => Constants.ROW_MODEL_TYPE_SERVER_SIDE;
+    this.set_update_mode()
+
   }
 
-  private columnTypes: any = {
-    columnTypes: {
-      'nonEditableColumn': { editable: false },
-      'editableColumn': { editable: true },
-      'numericRoundedTwoDigitsColumn': {
-        valueFormatter: (params: any) => params.value.toFixed(2)
-      },
-      'numericPercentageColumn': {
-        valueFormatter: (params: any) => (params.value * 100).toFixed(2) + "%"
-      },
-      'numericIntegerColumn': {
-        valueFormatter: (params: any) => params.value.toFixed(0)
-      },
-      'shortDateColumn': {
-        filter: 'agDateColumnFilter',
-        valueFormatter: (params: any) => moment.utc(params.value).format('DD/MM/YYYY'),
-      },
-      'yearMonthDateColumn': {
-        valueFormatter: (params: any) => moment.utc(params.value).format('MMM/YYYY')
-      },
+  private firstDataRendered(event: any) {
+    if (this.props.args['fit_columns_on_grid_load']) {
+      this.api.sizeColumnsToFit()
+    }
+    else {
+      this.columnApi.autoSizeAllColumns()
+    }
+  }
+
+  private date_formater(isoString: string, formaterString: string): String {
+    try {
+      return format(parseISO(isoString), formaterString)
+    } catch {
+      return isoString
+    }
+  }
+
+  private number_formater(number: number, precision: number): String {
+    if (number) {
+      try {
+        return number.toFixed(precision)
+      } catch {
+        return number.toString()
+      }
+    } else {
+      return ''
+    }
+  }
+
+  private returnGridValue(e: any) {
+    var return_data: any[] = []
+    let return_mode = this.props.args['data_return_mode']
+
+    switch (return_mode) {
+      case 0: //ALL_DATA
+        this.api.forEachLeafNode((row) => return_data.push(row.data))
+        break;
+
+      case 1: //FILTERED_DATA
+        this.api.forEachNodeAfterFilter((row) => { if (!row.group) { return_data.push(row.data) } })
+        break;
+
+      case 2: //FILTERED_SORTED_DATA
+        this.api.forEachNodeAfterFilterAndSort((row) => { if (!row.group) { return_data.push(row.data) } })
+        break;
     }
 
-  }
-
-  private returnGridValue() {
-    var api = this.agRef.current.api
-
-    // Hack to export filtered rows: https://github.com/ag-grid/ag-grid/issues/1499
-    const rowModel = api.rowModel;
-    rowModel.getType = rowModel._fakeGetType;
     var return_value = {
-      dtypes: this.dtypes,
-      csvData: api.getDataAsCsv({ allColumns: true }),
-      selectedRows: api.getSelectedRows()
+      original_dtypes: this.frame_dtypes,
+      gridData: return_data,
+      selectedRows: this.api.getSelectedRows()
     }
 
     Streamlit.setComponentValue(return_value)
-    rowModel.getType = rowModel._originalGetType;
+  }
+
+  private ManualUpdateButton(props: any) {
+
+    if (props.manual_update) {
+      return (<button onClick={props.onClick}>Save</button>)
+    }
+    else {
+      return (<span></span>)
+    }
   }
 
   public render = (): ReactNode => {
 
-    const gridOptions = Object.assign({}, this.columnTypes, this.parseGridOptions(), { rowData: this.parseGridData() })
+    const gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions, { rowData: this.gridData })
 
     return (
       <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: '100%' }}>
+        <this.ManualUpdateButton manual_update={this.manual_update_requested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
-          onGridReady={this.onGridReady}
-          onCellValueChanged={() => this.returnGridValue()}
-          onSelectionChanged={() => this.returnGridValue()}
+          onGridReady={(e) => this.onGridReady(e)}
+          onFirstDataRendered={(e) => this.firstDataRendered(e)}
           gridOptions={gridOptions}
-          ref={this.agRef}
         >
         </AgGridReact>
-
       </div>
     )
   }

@@ -1,82 +1,27 @@
 import os
 import streamlit.components.v1 as components
 import pandas as pd
+import numpy as np
+import json
+
+from st_aggrid.grid_options_builder import GridOptionsBuilder
+
+from enum import IntEnum
+class GridUpdateMode(IntEnum):
+    NO_UPDATE = 0b0000
+    MANUAL = 0b0001
+    VALUE_CHANGED = 0b0010
+    SELECTION_CHANGED = 0b0100
+    FILTERING_CHANGED = 0b1000
+    SORTING_CHANGED = 0b10000
+    MODEL_CHANGED = 0b11111
+
+class DataReturnMode(IntEnum):
+    AS_INPUT = 0
+    FILTERED = 1
+    FILTERED_AND_SORTED = 2
 
 _RELEASE = True
-
-class GridOptionsBuilder:
-
-    def __init__(self, min_column_width=100, resizable_columns=True, filterable_columns=True, sorteable_columns=True, pivotable_columns=True, groupable_columns=True, editable_columns=False, side_panel=True):
-        self.__grid_options = {}
-        self.columnDefs = []
-        self.sideBar = {}
-
-        self.min_column_width = min_column_width
-        self.resizable_columns = resizable_columns
-        self.filterable_columns = filterable_columns
-        self.sorteable_columns = sorteable_columns
-        self.pivotable_columns = pivotable_columns
-        self.groupable_columns = groupable_columns
-
-        self.__col_type_mapper = {
-            'datetime64[ns]' :['shortDateColumn'],
-        }
-        
-        self.defaultColDef = {
-            'minWidth':  min_column_width,
-            'editable': editable_columns,
-            'filter':filterable_columns,
-            'resizable': resizable_columns,
-            'sortable': sorteable_columns,
-            'enablePivot': pivotable_columns,
-            'enableValue': pivotable_columns,
-            'enableRowGroup': groupable_columns,
-        }
-
-        if side_panel:
-            self.enableSideBar()
-
-    def build_columnsDefs_from_dataframe(self, dataframe):
-        self.columnDefs = []
-        for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
-            colDef = {
-                'headerName': col_name,
-                'field': col_name,
-                'type': self.__col_type_mapper.get(col_type.name, [])
-            }
-            self.columnDefs.append(colDef)
-    
-    def enableSideBar(self, filters_panel=True, columns_panel=True, defaultToolPanel=''):
-        filter_panel = {
-            'id': 'filters',
-            'labelDefault': 'Filters',
-            'labelKey': 'filters',
-            'iconKey': 'filter',
-            'toolPanel': 'agFiltersToolPanel',
-                    }
-        
-        columns_panel = {
-            'id': 'filters',
-            'labelDefault': 'Filters',
-            'labelKey': 'filters',
-            'iconKey': 'filter',
-            'toolPanel': 'agFiltersToolPanel',
-                    }
-
-        self.sideBar = {'toolPanels':[], 'defaultToolPanel':defaultToolPanel}
-        if filters_panel:
-            self.sideBar['toolPanels'].append(filter_panel)
-        if columns_panel:
-            self.sideBar['toolPanels'].append(columns_panel)
-
-    def build(self):
-        self.__grid_options['columnDefs'] = self.columnDefs
-        self.__grid_options['defaultColDef']  = self.defaultColDef
-        
-        if self.sideBar:
-            self.__grid_options['sideBar'] = self.sideBar
-        
-        return  self.__grid_options
 
 if not _RELEASE:
     _component_func = components.declare_component(
@@ -89,46 +34,96 @@ else:
     _component_func = components.declare_component("agGrid", path=build_dir)
 
 
-def AgGrid(dataframe, gridOptions=None, height=200, key=None):
-    """Create a new instance of "AgGrid".
-    Parameters
-    ----------
-    dataframe: Pandas Datafrme
-        The dataframe to be displayed on Streamlit
-    gridOptions: dict
-        A dictionary of options for ag-grid. Documentation on www.ag-grid.com
-    key: str or None
-        An optional key that uniquely identifies this component. If this is
-        None, and the component's arguments are changed, the component will
-        be re-mounted in the Streamlit frontend and lose its current state.
+def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=False, update_mode=GridUpdateMode.VALUE_CHANGED, data_return_mode=DataReturnMode.AS_INPUT,  key=None):
+    """Shows a cusomizable grid based on a pandas DataFrame
 
-    Returns
-    -------
-    dictionary
-        returns a dictionary, grid data is in dictionary's data key. Other keys may be present depending on gridOptions parameters
-"""
+    Args:
+        dataframe (pandas.DataFrame): 
+            The underlaying dataframe to be used.
+
+        gridOptions (dictionary, optional): 
+            A dictionary of options for ag-grid. Documentation on www.ag-grid.com
+            Defaults to None. If None defaul grid options will be created with GridOptionsBuilder.from_dataframe() call.
+
+        height (int, optional): 
+            The grid height.
+            Defaults to 200.
+
+        fit_columns_on_grid_load (bool, optional): 
+            Will adjust columns to fit grid width on grid load. 
+            Defaults to False.
+
+        update_mode (GridUpdateMode enumerator, optional): 
+            Defines how the grid will send results back to streamlit.
+            One of:
+                GridUpdateMode.NO_UPDATE
+                GridUpdateMode.MANUAL
+                GridUpdateMode.VALUE_CHANGED
+                GridUpdateMode.SELECTION_CHANGED
+                GridUpdateMode.FILTERING_CHANGED
+                GridUpdateMode.SORTING_CHANGED
+                GridUpdateMode.MODEL_CHANGED
+
+            When using manual a save button will be drawn on top of grid.
+            modes can be combined with bitwise OR operator |, for instance:
+            GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
+            Defaults to GridUpdateMode.VALUE_CHANGED.
+
+        data_return_mode (DataReturnMode enum, optional): 
+            Defines how the data will be retrieved from components client side. One of:
+                DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
+                DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
+                DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
+            Defaults to DataReturnMode.AS_INPUT.
+
+        key ([type], optional): 
+            Streamlits key argument. Check streamlit's documentation.
+            Defaults to None.
+
+    Returns:
+        dictionary
+        returns a dictionary with grid's data is in dictionary's 'data' key. 
+        Other keys may be present depending on gridOptions parameters
+
+    """
+
     response = {}
-    response['data'] = dataframe
+    response["data"] = dataframe
+    response["selected_rows"] = []
+    
+    #basic numpy types
+    frame_dtypes = dict(zip(dataframe.columns, (t.kind for t in dataframe.dtypes)))
 
-    #if no gridOptions is passed, builds a default one.
+    # if no gridOptions is passed, builds a default one.
     if gridOptions == None:
-        gb = GridOptionsBuilder(min_column_width=100)
-        gb.build_columnsDefs_from_dataframe(dataframe)
+        gb = GridOptionsBuilder.from_dataframe(dataframe)
         gridOptions = gb.build()
 
-    gridData = dataframe.to_json(orient='records', date_format='iso')
-    types = [t.name for t in dataframe.dtypes]
+    #this is a hack because pandas to_json doesn't convert tzaware to iso dates properly https://github.com/pandas-dev/pandas/issues/12997
+    date_cols = dataframe.select_dtypes([pd.DatetimeTZDtype, np.datetime64])
+    date_cols = date_cols.applymap(lambda s: s.isoformat()) #slow!!
 
-    component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, dtypes=types, height=height)
+    json_frame = dataframe.copy() #avoids cache mutation
+    json_frame.loc[:,date_cols.columns] = date_cols
+    gridData = json_frame.to_json(orient="records")
+
+    component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, height=height, fit_columns_on_grid_load=fit_columns_on_grid_load, update_mode=update_mode, data_return_mode=data_return_mode, frame_dtypes=frame_dtypes)
     if component_value:
-
-        from io import StringIO
-        frame = pd.read_csv(StringIO(component_value['csvData']))
         
-        dtypes = component_value['dtypes']
-        frame = frame.astype({k:v for k,v in zip(frame.columns, dtypes)})
+        frame = pd.DataFrame(component_value["gridData"])
+        original_types = component_value["original_dtypes"]
 
-        response['data'] = frame
-        response['selected_rows'] = component_value['selectedRows']
-    
+        if not frame.empty:
+            #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
+            #convert frame back to original types, except datetimes.
+            non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
+            frame = frame.astype(non_date_cols)
+            
+            #this is the hack to convert back tz aware iso dates to pandas dtypes'
+            date_cols = set(frame.columns) - set(non_date_cols.keys())
+            frame.loc[:, date_cols] = frame.loc[:, date_cols].apply(pd.to_datetime)
+
+        response["data"] = frame
+        response["selected_rows"] = component_value["selectedRows"]
+
     return response

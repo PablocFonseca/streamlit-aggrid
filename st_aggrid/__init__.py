@@ -100,12 +100,12 @@ def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=Fals
         gridOptions = gb.build()
 
     #this is a hack because pandas to_json doesn't convert tzaware to iso dates properly https://github.com/pandas-dev/pandas/issues/12997
-    #date_cols = dataframe.select_dtypes([pd.DatetimeTZDtype, np.datetime64])
-    #date_cols = date_cols.applymap(lambda s: s.isoformat()) #slow!!
+    date_cols = dataframe.select_dtypes([pd.DatetimeTZDtype, np.datetime64])
+    date_cols = date_cols.applymap(lambda s: s.isoformat()) #slow!!
 
-    json_frame = dataframe #avoids cache mutation
-    #json_frame.loc[:,date_cols.columns] = date_cols
-    gridData = json_frame.to_json(orient="records", date_format='iso')
+    json_frame = dataframe.copy() #avoids cache mutation
+    json_frame.loc[:,date_cols.columns] = date_cols
+    gridData = json_frame.to_json(orient="records")
 
     component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, height=height, fit_columns_on_grid_load=fit_columns_on_grid_load, update_mode=update_mode, data_return_mode=data_return_mode, frame_dtypes=frame_dtypes)
     if component_value:
@@ -116,12 +116,12 @@ def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=Fals
         if not frame.empty:
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             #convert frame back to original types, except datetimes.
-            #non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
-            frame = frame.astype(original_types)
+            non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
+            frame = frame.astype(non_date_cols)
             
             #this is the hack to convert back tz aware iso dates to pandas dtypes'
-            #date_cols = set(frame.columns) - set(non_date_cols.keys())
-            #frame.loc[:, date_cols] = frame.loc[:, date_cols].apply(pd.to_datetime)
+            date_cols = set(frame.columns) - set(non_date_cols.keys())
+            frame.loc[:, date_cols] = frame.loc[:, date_cols].apply(pd.to_datetime)
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]

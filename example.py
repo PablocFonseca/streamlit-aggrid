@@ -25,6 +25,9 @@ def fetch_data(samples, include_date_time):
 
 #Example controlers
 st.sidebar.subheader("St-AgGrid example options")
+
+fit_columns_on_grid_load = st.sidebar.checkbox("Fit Grid Columns on Load")
+
 sample_size = st.sidebar.number_input("rows", min_value=10, value=10)
 grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=800, value=200)
 
@@ -78,8 +81,8 @@ if include_date_time:
     gb.configure_column("date_tz_aware", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string=custom_format_string, pivot=True)
 
 gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=2, aggFunc='sum')
-gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggfunc='avg')
-gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=0, aggfunc='max')
+gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggFunc='avg')
+gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=0, aggFunc='max')
 
 if enable_sidebar:
     gb.configure_side_bar()
@@ -102,7 +105,7 @@ gridOptions = gb.build()
 #Display the grid
 with st.spinner("Loading Grid..."):
     st.header("Streamlit Ag-Grid")
-    grid_response = AgGrid(df, gridOptions=gridOptions, height=grid_height, data_return_mode=return_mode_value, update_mode=update_mode_value)
+    grid_response = AgGrid(df, gridOptions=gridOptions, height=grid_height, data_return_mode=return_mode_value, update_mode=update_mode_value,fit_columns_on_grid_load=fit_columns_on_grid_load)
 
 df = grid_response['data']
 selected = grid_response['selected_rows']

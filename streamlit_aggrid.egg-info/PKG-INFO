@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: streamlit-aggrid
-Version: 0.1.0
+Version: 0.1.1
 Summary: Streamlit component implementation of ag-grid
 Home-page: https://github.com/PablocFonseca/streamlit-aggrid
 Author: Pablo Fonseca

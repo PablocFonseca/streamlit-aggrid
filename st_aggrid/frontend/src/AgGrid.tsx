@@ -3,18 +3,18 @@ import {
   StreamlitComponentBase,
   withStreamlitConnection
 } from "streamlit-component-lib";
+
 import React, { ReactNode } from "react"
-
-import 'ag-grid-enterprise';
-
 import { AgGridReact } from 'ag-grid-react';
 import { ColumnApi, GridApi } from 'ag-grid-community'
 
+import 'ag-grid-enterprise'
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
-import { parseISO, compareAsc } from 'date-fns'
+import { parseISO, compareAsc, isDate } from 'date-fns'
 import { format } from 'date-fns-tz'
+
 
 class AgGrid extends StreamlitComponentBase {
   private frame_dtypes: any
@@ -24,19 +24,15 @@ class AgGrid extends StreamlitComponentBase {
   private columnApi!: ColumnApi
   private columnFormaters: any
   private manual_update_requested: boolean
-  private custom_date_format_string: string
 
   constructor(props: any) {
     super(props)
-
 
     this.frame_dtypes = props.args['frame_dtypes']
     this.gridData = JSON.parse(props.args['gridData'])
     this.gridOptions = props.args['gridOptions']
 
-    this.manual_update_requested = (props.args['update_mode'] == 1)
-
-    this.custom_date_format_string = props.args['custom_date_format_string']
+    this.manual_update_requested = (props.args['update_mode'] === 1)
 
     this.columnFormaters = {
       columnTypes: {
@@ -70,19 +66,19 @@ class AgGrid extends StreamlitComponentBase {
 
     let update_mode = this.props.args['update_mode']
 
-    if ((update_mode & 2) == 2) {
+    if ((update_mode & 2) === 2) {
       this.api.addEventListener('cellValueChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 4) == 4) {
+    if ((update_mode & 4) === 4) {
       this.api.addEventListener('selectionChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 8) == 8) {
+    if ((update_mode & 8) === 8) {
       this.api.addEventListener('filterChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 16) == 16) {
+    if ((update_mode & 16) === 16) {
       this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
     }
   }
@@ -105,23 +101,21 @@ class AgGrid extends StreamlitComponentBase {
   }
 
   private date_formater(isoString: string, formaterString: string): String {
-    try {
-      return format(parseISO(isoString), formaterString)
-    } catch {
-      return isoString
+    let r = isoString
+    if (isDate(isoString)) {
+      r = format(parseISO(isoString), formaterString)
     }
+    return r
   }
 
   private number_formater(number: number, precision: number): String {
+    let r = ''
     if (number) {
-      try {
-        return number.toFixed(precision)
-      } catch {
-        return number.toString()
-      }
+      r = number.toFixed(precision)
     } else {
-      return ''
+      r = number.toString()
     }
+    return r
   }
 
   private returnGridValue(e: any) {
@@ -164,7 +158,6 @@ class AgGrid extends StreamlitComponentBase {
   public render = (): ReactNode => {
 
     const gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions, { rowData: this.gridData })
-
     return (
       <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: '100%' }}>
         <this.ManualUpdateButton manual_update={this.manual_update_requested} onClick={(e: any) => this.returnGridValue(e)} />
@@ -174,16 +167,10 @@ class AgGrid extends StreamlitComponentBase {
           gridOptions={gridOptions}
         >
         </AgGridReact>
-      </div>
+      </div >
     )
   }
-
 }
-
-
-
-//import './styles.scss';
-
 
 // "withStreamlitConnection" is a wrapper function. It bootstraps the
 // connection between your component and the Streamlit app, and handles

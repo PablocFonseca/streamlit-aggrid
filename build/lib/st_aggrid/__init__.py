@@ -86,12 +86,11 @@ def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=Fals
         Other keys may be present depending on gridOptions parameters
 
     """
-
     response = {}
     response["data"] = dataframe
     response["selected_rows"] = []
     
-    #basic numpy types
+    #basic numpy types of dataframe
     frame_dtypes = dict(zip(dataframe.columns, (t.kind for t in dataframe.dtypes)))
 
     # if no gridOptions is passed, builds a default one.

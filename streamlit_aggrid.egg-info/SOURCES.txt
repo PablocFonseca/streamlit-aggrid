@@ -8,11 +8,11 @@ st_aggrid/frontend/build/bootstrap.min.css
 st_aggrid/frontend/build/index.html
 st_aggrid/frontend/build/static/css/2.8ab7c14d.chunk.css
 st_aggrid/frontend/build/static/css/2.8ab7c14d.chunk.css.map
-st_aggrid/frontend/build/static/js/2.513456e4.chunk.js
-st_aggrid/frontend/build/static/js/2.513456e4.chunk.js.LICENSE.txt
-st_aggrid/frontend/build/static/js/2.513456e4.chunk.js.map
-st_aggrid/frontend/build/static/js/main.f5844c45.chunk.js
-st_aggrid/frontend/build/static/js/main.f5844c45.chunk.js.map
+st_aggrid/frontend/build/static/js/2.5c8e2275.chunk.js
+st_aggrid/frontend/build/static/js/2.5c8e2275.chunk.js.LICENSE.txt
+st_aggrid/frontend/build/static/js/2.5c8e2275.chunk.js.map
+st_aggrid/frontend/build/static/js/main.a0c239c5.chunk.js
+st_aggrid/frontend/build/static/js/main.a0c239c5.chunk.js.map
 st_aggrid/frontend/build/static/js/runtime-main.b722a939.js
 st_aggrid/frontend/build/static/js/runtime-main.b722a939.js.map
 streamlit_aggrid.egg-info/PKG-INFO

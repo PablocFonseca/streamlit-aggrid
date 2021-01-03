@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="streamlit-aggrid", # Replace with your own username
-    version="0.1.1",
+    version="0.1.2",
     author="Pablo Fonseca",
     author_email="pablo.fonseca+pip@gmail.com",
     description="Streamlit component implementation of ag-grid",

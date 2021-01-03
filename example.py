@@ -82,7 +82,7 @@ if include_date_time:
 
 gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=2, aggFunc='sum')
 gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggFunc='avg')
-gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=0, aggFunc='max')
+gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customCurrencyFormat"], custom_currency_symbol="R$", aggFunc='max')
 
 if enable_sidebar:
     gb.configure_side_bar()

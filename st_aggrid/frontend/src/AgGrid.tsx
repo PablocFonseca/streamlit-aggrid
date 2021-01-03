@@ -54,6 +54,10 @@ class AgGrid extends StreamlitComponentBase {
         'customNumericFormat': {
           valueFormatter: (params: any) => this.number_formater(params.value, params.column.colDef.precision),
         },
+        'customCurrencyFormat': {
+          valueFormatter: (params: any) => this.currency_formater(params.value, params.column.colDef.custom_currency_symbol),
+        },
+
 
       }
     }
@@ -104,6 +108,16 @@ class AgGrid extends StreamlitComponentBase {
     let r = isoString
     if (isDate(isoString)) {
       r = format(parseISO(isoString), formaterString)
+    }
+    return r
+  }
+
+  private currency_formater(number: number, currency_symbol: string): String {
+    let r = ''
+    if (number) {
+      r = currency_symbol + number.toFixed(2)
+    } else {
+      r = number.toString()
     }
     return r
   }

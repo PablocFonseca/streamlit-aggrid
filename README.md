@@ -43,6 +43,9 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.2
+* added customCurrencyFormat as column type
+
  Version 0.1.0:
 * I worked a little bit more on making the example app functional.
 * Couple configuration options for update mode (How frontend updates streamlit) and for data returns (grid should return data filtered? Sorted?)

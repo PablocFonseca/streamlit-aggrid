@@ -20,7 +20,7 @@ Pablo Fonseca
 
 # Install
 ```
-pip install -i https://test.pypi.org/simple/ streamlit-aggrid
+pip install streamlit-aggrid
 
 ```
 

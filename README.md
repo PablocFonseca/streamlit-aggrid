@@ -1,22 +1,17 @@
 # streamlit-aggrid
 
-This is just a proof of concept. Links below:
+AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise featrues!
 
-* [Open in Streamlit Share](https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/example.py])
+Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) if you like it!
+
+This is just a proof of concept. Check Links below:
+
+* [Open in Streamlit Share](https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/example.py)
 
 * [GitHub](https://github.com/PablocFonseca/streamlit-aggrid])
 
 * [pypi.org](https://test.pypi.org/project/streamlit-aggrid/)
 
-
-
-This just a proof of concept. <br>
-AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise featrues!
-
-Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) if you like this!
-
-Pablo Fonseca
-<br><br>
 
 # Install
 ```

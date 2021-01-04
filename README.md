@@ -2,7 +2,7 @@
 
 AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise featrues!
 
-Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) if you like it!
+Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) (There is also a sponsor link below, if you prefer =))
 
 This is just a proof of concept. Check Links below:
 
@@ -11,6 +11,8 @@ This is just a proof of concept. Check Links below:
 * [GitHub](https://github.com/PablocFonseca/streamlit-aggrid])
 
 * [pypi.org](https://test.pypi.org/project/streamlit-aggrid/)
+
+* If you like it, [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 
 # Install

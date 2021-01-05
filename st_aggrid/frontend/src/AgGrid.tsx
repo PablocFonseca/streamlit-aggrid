@@ -105,31 +105,31 @@ class AgGrid extends StreamlitComponentBase {
   }
 
   private date_formater(isoString: string, formaterString: string): String {
-    let r = isoString
-    if (isDate(isoString)) {
-      r = format(parseISO(isoString), formaterString)
+    try {
+      let date = parseISO(isoString)
+      return format(date, formaterString)
+    } catch {
+      return isoString
     }
-    return r
+    finally { }
   }
 
-  private currency_formater(number: number, currency_symbol: string): String {
-    let r = ''
-    if (number) {
-      r = currency_symbol + number.toFixed(2)
+  private currency_formater(number: any, currency_symbol: string): String {
+    let n = Number.parseFloat(number)
+    if (!Number.isNaN(n)) {
+      return currency_symbol + n.toFixed(2)
     } else {
-      r = number.toString()
+      return ''
     }
-    return r
   }
 
-  private number_formater(number: number, precision: number): String {
-    let r = ''
-    if (number) {
-      r = number.toFixed(precision)
+  private number_formater(number: any, precision: number): String {
+    let n = Number.parseFloat(number)
+    if (!Number.isNaN(n)) {
+      return n.toFixed(precision)
     } else {
-      r = number.toString()
+      return ''
     }
-    return r
   }
 
   private returnGridValue(e: any) {

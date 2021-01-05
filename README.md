@@ -1,19 +1,12 @@
 # streamlit-aggrid
 
+[![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] 
+
 AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise featrues!
 
-Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) (There is also a sponsor link below, if you prefer =))
+Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
-This is just a proof of concept. Check Links below:
-
-* [Open in Streamlit Share](https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/example.py)
-
-* [GitHub](https://github.com/PablocFonseca/streamlit-aggrid])
-
-* [pypi.org](https://test.pypi.org/project/streamlit-aggrid/)
-
-* If you like it, [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
-
+<br>
 
 # Install
 ```
@@ -49,3 +42,13 @@ Version 0.1.2
 * Some basic level of row selection
 * Added some docstrings specially on gridOptionsBuilder methods
 * Lacks performance for production. JS Client code is slow...
+
+
+[share_badge]: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
+[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/example.py
+
+[github_badge]: https://badgen.net/badge/icon/GitHub?icon=github&color=black&label
+[github_link]: https://github.com/PablocFonseca/streamlit-aggrid
+
+[pypi_badge]: https://badgen.net/pypi/v/streamlit-aggrid?icon=pypi&color=black&label
+[pypi_link]: hhttps://test.pypi.org/project/streamlit-aggrid/

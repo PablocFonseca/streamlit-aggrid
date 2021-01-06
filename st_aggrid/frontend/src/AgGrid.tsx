@@ -12,9 +12,10 @@ import 'ag-grid-enterprise'
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
-import { parseISO, compareAsc, isDate } from 'date-fns'
+import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 
+import deepMap from "./utils"
 
 class AgGrid extends StreamlitComponentBase {
   private frame_dtypes: any
@@ -24,6 +25,7 @@ class AgGrid extends StreamlitComponentBase {
   private columnApi!: ColumnApi
   private columnFormaters: any
   private manual_update_requested: boolean
+  private allow_unsafe_jscode: boolean = false
 
   constructor(props: any) {
     super(props)
@@ -31,8 +33,8 @@ class AgGrid extends StreamlitComponentBase {
     this.frame_dtypes = props.args['frame_dtypes']
     this.gridData = JSON.parse(props.args['gridData'])
     this.gridOptions = props.args['gridOptions']
-
     this.manual_update_requested = (props.args['update_mode'] === 1)
+    this.allow_unsafe_jscode = props.args['allow_unsafe_jscode']
 
     this.columnFormaters = {
       columnTypes: {
@@ -61,6 +63,26 @@ class AgGrid extends StreamlitComponentBase {
 
       }
     }
+  }
+
+  private convertJavascriptCode = (obj: object) => {
+    const JS_PLACEHOLDER = "--x_x--0_0--"
+
+    let funcReg = new RegExp(
+      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
+    )
+
+    return deepMap(obj, function (v: string) {
+      let match = funcReg.exec(v)
+
+      if (match) {
+        const funcStr = match[1]
+        return new Function("return " + funcStr)()
+
+      } else {
+        return v
+      }
+    })
   }
 
   private set_update_mode() {
@@ -170,6 +192,10 @@ class AgGrid extends StreamlitComponentBase {
   }
 
   public render = (): ReactNode => {
+    if (this.allow_unsafe_jscode) {
+      console.warn("flag allow_unsafe_jscode is on.")
+      this.gridOptions = this.convertJavascriptCode(this.gridOptions)
+    }
 
     const gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions, { rowData: this.gridData })
     return (

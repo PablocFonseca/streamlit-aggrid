@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import altair as alt
 
-from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 np.random.seed(42)
 
@@ -84,6 +84,23 @@ gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customN
 gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggFunc='avg')
 gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customCurrencyFormat"], custom_currency_symbol="R$", aggFunc='max')
 
+cellsytle_jscode = JsCode("""
+function(params) {
+    if (params.value == 'A') {
+        return {
+            'color': 'white',
+            'backgroundColor': 'darkred'
+        }
+    } else {
+        return {
+            'color': 'black',
+            'backgroundColor': 'white'
+        }
+    }
+};
+""")
+gb.configure_column("group", cellStyle=cellsytle_jscode)
+
 if enable_sidebar:
     gb.configure_side_bar()
 
@@ -105,7 +122,15 @@ gridOptions = gb.build()
 #Display the grid
 with st.spinner("Loading Grid..."):
     st.header("Streamlit Ag-Grid")
-    grid_response = AgGrid(df, gridOptions=gridOptions, height=grid_height, data_return_mode=return_mode_value, update_mode=update_mode_value,fit_columns_on_grid_load=fit_columns_on_grid_load)
+    grid_response = AgGrid(
+        df, 
+        gridOptions=gridOptions,
+        height=grid_height, 
+        data_return_mode=return_mode_value, 
+        update_mode=update_mode_value,
+        fit_columns_on_grid_load=fit_columns_on_grid_load,
+        allow_unsafe_jscode=True
+        )
 
 df = grid_response['data']
 selected = grid_response['selected_rows']

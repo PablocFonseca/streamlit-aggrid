@@ -1,5 +1,4 @@
 // stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
-
 function mapObject(obj, fn) {
     return Object.keys(obj).reduce((res, key) => {
         res[key] = fn(obj[key])

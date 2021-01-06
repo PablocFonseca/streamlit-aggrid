@@ -1,5 +1,5 @@
-from enum import IntEnum
-class GridUpdateMode(IntEnum):
+from enum import IntEnum, IntFlag
+class GridUpdateMode(IntFlag):
     NO_UPDATE = 0b0000
     MANUAL = 0b0001
     VALUE_CHANGED = 0b0010
@@ -13,9 +13,17 @@ class DataReturnMode(IntEnum):
     FILTERED = 1
     FILTERED_AND_SORTED = 2
 
-
+# stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
 class JsCode:
     def __init__(self, js_code: str):
+        """Wrapper around a js function to be injected on gridOptions.
+        code is not checked at all. 
+        set allow_unsafe_jscode=True on AgGrid call to use it.
+        Code is rebuilt on client using new Function Syntax (https://javascript.info/new-function)
+        
+        Args:
+            js_code (str): javascript function code as str
+        """        
         import re
         js_placeholder = "--x_x--0_0--"
         one_line_jscode = re.sub(r"\s+|\n+", " ", js_code)

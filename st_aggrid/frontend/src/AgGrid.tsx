@@ -5,16 +5,18 @@ import {
 } from "streamlit-component-lib";
 
 import React, { ReactNode } from "react"
-import { AgGridReact } from 'ag-grid-react';
-import { ColumnApi, GridApi } from 'ag-grid-community'
 
-import 'ag-grid-enterprise'
-import 'ag-grid-community/dist/styles/ag-grid.css';
-import 'ag-grid-community/dist/styles/ag-theme-balham.css';
+import { AgGridReact } from '@ag-grid-community/react';
+import { ColumnApi, GridApi } from '@ag-grid-community/core'
+import { ModuleRegistry } from '@ag-grid-community/core';
+import { AllCommunityModules } from '@ag-grid-community/all-modules'
+import { AllModules } from '@ag-grid-enterprise/all-modules'
+
+import '@ag-grid-community/core/dist/styles/ag-grid.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
 
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
-
 import deepMap from "./utils"
 
 class AgGrid extends StreamlitComponentBase {
@@ -29,6 +31,12 @@ class AgGrid extends StreamlitComponentBase {
 
   constructor(props: any) {
     super(props)
+
+    if (props.args['enable_enterprise_modules']) {
+      ModuleRegistry.registerModules(AllModules);
+    } else {
+      ModuleRegistry.registerModules(AllCommunityModules);
+    }
 
     this.frame_dtypes = props.args['frame_dtypes']
     this.gridData = JSON.parse(props.args['gridData'])
@@ -59,8 +67,6 @@ class AgGrid extends StreamlitComponentBase {
         'customCurrencyFormat': {
           valueFormatter: (params: any) => this.currency_formater(params.value, params.column.colDef.custom_currency_symbol),
         },
-
-
       }
     }
   }
@@ -141,7 +147,7 @@ class AgGrid extends StreamlitComponentBase {
     if (!Number.isNaN(n)) {
       return currency_symbol + n.toFixed(2)
     } else {
-      return ''
+      return number
     }
   }
 
@@ -150,7 +156,7 @@ class AgGrid extends StreamlitComponentBase {
     if (!Number.isNaN(n)) {
       return n.toFixed(precision)
     } else {
-      return ''
+      return number
     }
   }
 
@@ -199,7 +205,7 @@ class AgGrid extends StreamlitComponentBase {
 
     const gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions, { rowData: this.gridData })
     return (
-      <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: '100%' }}>
+      <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: this.props.args['width'] }}>
         <this.ManualUpdateButton manual_update={this.manual_update_requested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}

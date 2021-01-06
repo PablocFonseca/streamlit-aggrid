@@ -23,10 +23,12 @@ def AgGrid(
     dataframe,
     gridOptions=None,
     height=200,
+    width='100%',
     fit_columns_on_grid_load=False,
     update_mode=GridUpdateMode.VALUE_CHANGED,
     data_return_mode=DataReturnMode.AS_INPUT,
     allow_unsafe_jscode=False,
+    enable_enterprise_modules=False,
     key=None):
     """Shows a cusomizable grid based on a pandas DataFrame
 
@@ -101,17 +103,29 @@ def AgGrid(
     
     if allow_unsafe_jscode:
         walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v )
-   
-    component_value = _component_func(
-        gridOptions=gridOptions,
-        gridData=gridData, key=key,
-        default=None, height=height, 
-        fit_columns_on_grid_load=fit_columns_on_grid_load, 
-        update_mode=update_mode, 
-        data_return_mode=data_return_mode, 
-        frame_dtypes=frame_dtypes,
-        allow_unsafe_jscode=allow_unsafe_jscode
-        )
+    
+    try:
+        component_value = _component_func(
+            gridOptions=gridOptions,
+            gridData=gridData, key=key,
+            default=None,
+            height=height, 
+            width=width,
+            fit_columns_on_grid_load=fit_columns_on_grid_load, 
+            update_mode=update_mode, 
+            data_return_mode=data_return_mode, 
+            frame_dtypes=frame_dtypes,
+            allow_unsafe_jscode=allow_unsafe_jscode,
+            enable_enterprise_modules=enable_enterprise_modules
+            )
+    except components.components.MarshallComponentException as ex:
+        #a more complete error message.
+        args = list(ex.args)
+        args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
+        ex = components.components.MarshallComponentException(*args)
+        raise(ex)
+        
+        
     if component_value:
         
         frame = pd.DataFrame(component_value["gridData"])

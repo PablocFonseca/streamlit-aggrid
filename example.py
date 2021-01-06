@@ -26,8 +26,6 @@ def fetch_data(samples, include_date_time):
 #Example controlers
 st.sidebar.subheader("St-AgGrid example options")
 
-fit_columns_on_grid_load = st.sidebar.checkbox("Fit Grid Columns on Load")
-
 sample_size = st.sidebar.number_input("rows", min_value=10, value=10)
 grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=800, value=200)
 
@@ -37,13 +35,22 @@ return_mode_value = DataReturnMode.__members__[return_mode]
 update_mode = st.sidebar.selectbox("Update Mode", list(GridUpdateMode.__members__), index=6)
 update_mode_value = GridUpdateMode.__members__[update_mode]
 
-
-include_date_time = st.sidebar.checkbox("include tz aware date column", value=False)
+#TZ aware DT handling
+include_date_time = st.sidebar.checkbox("Include tz aware date column", value=False)
 if include_date_time:
     custom_format_string = st.sidebar.text_input("date column format string", value='yyyy-MM-dd HH:mm zzz')
     st.sidebar.text("___")
 
-enable_sidebar =st.sidebar.checkbox("Enable grid sidebar", value=False)
+
+#enterprise modules
+enable_enterprise_modules = st.sidebar.checkbox("Enable Enterprise Modules")
+if enable_enterprise_modules:
+    enable_sidebar =st.sidebar.checkbox("Enable grid sidebar", value=False)
+else:
+    enable_sidebar = False
+
+#features
+fit_columns_on_grid_load = st.sidebar.checkbox("Fit Grid Columns on Load")
 
 enable_selection=st.sidebar.checkbox("Enable row selection", value=False)
 if enable_selection:
@@ -84,6 +91,7 @@ gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customN
 gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggFunc='avg')
 gb.configure_column("chocolate", type=["numericColumn", "numberColumnFilter", "customCurrencyFormat"], custom_currency_symbol="R$", aggFunc='max')
 
+#configures last row to use custom styles based on cell's value, injecting JsCode on components front end
 cellsytle_jscode = JsCode("""
 function(params) {
     if (params.value == 'A') {
@@ -126,10 +134,12 @@ with st.spinner("Loading Grid..."):
         df, 
         gridOptions=gridOptions,
         height=grid_height, 
+        width='100%',
         data_return_mode=return_mode_value, 
         update_mode=update_mode_value,
         fit_columns_on_grid_load=fit_columns_on_grid_load,
-        allow_unsafe_jscode=True
+        allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
+        enable_enterprise_modules=enable_enterprise_modules
         )
 
 df = grid_response['data']

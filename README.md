@@ -33,6 +33,11 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.3
+* Fixed bug where cell was blank after edition.
+* Added enable_enterprise_modules argument to AgGrid call for enabling/disabling [enterprise features](https://www.ag-grid.com/documentation/javascript/licensing/)
+* It is now possible to inject js functions on gridOptions. Enabling advanced customizations such as conditional formating (check 4<sup>th</sup> column on the [example](share_link))
+
 Version 0.1.2
 * added customCurrencyFormat as column type
 

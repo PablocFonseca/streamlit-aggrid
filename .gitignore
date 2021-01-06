@@ -8,11 +8,11 @@ __pycache__/
 *.pyc
 
 # Distribution / packaging
-
+/build/*
 dist/
 eggs/
 .eggs/
-*.egg-info/
+*.egg-info
 *.egg
 
 # Unit test / coverage reports
@@ -71,3 +71,4 @@ package-lock.json
 st_aggrid/frontend/node_modules/
 st_aggrid/frontend/.env
 st_aggrid/frontend/.eslintcache
+streamlit_aggrid.egg-info/*

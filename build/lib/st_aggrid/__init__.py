@@ -5,21 +5,7 @@ import numpy as np
 import json
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-
-from enum import IntEnum
-class GridUpdateMode(IntEnum):
-    NO_UPDATE = 0b0000
-    MANUAL = 0b0001
-    VALUE_CHANGED = 0b0010
-    SELECTION_CHANGED = 0b0100
-    FILTERING_CHANGED = 0b1000
-    SORTING_CHANGED = 0b10000
-    MODEL_CHANGED = 0b11111
-
-class DataReturnMode(IntEnum):
-    AS_INPUT = 0
-    FILTERED = 1
-    FILTERED_AND_SORTED = 2
+from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
 
 _RELEASE = True
 
@@ -33,8 +19,17 @@ else:
     build_dir = os.path.join(parent_dir, "frontend/build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
-
-def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=False, update_mode=GridUpdateMode.VALUE_CHANGED, data_return_mode=DataReturnMode.AS_INPUT,  key=None):
+def AgGrid(
+    dataframe,
+    gridOptions=None,
+    height=200,
+    width='100%',
+    fit_columns_on_grid_load=False,
+    update_mode=GridUpdateMode.VALUE_CHANGED,
+    data_return_mode=DataReturnMode.AS_INPUT,
+    allow_unsafe_jscode=False,
+    enable_enterprise_modules=False,
+    key=None):
     """Shows a cusomizable grid based on a pandas DataFrame
 
     Args:
@@ -105,8 +100,32 @@ def AgGrid(dataframe, gridOptions=None, height=200,fit_columns_on_grid_load=Fals
     json_frame = dataframe.copy() #avoids cache mutation
     json_frame.loc[:,date_cols.columns] = date_cols
     gridData = json_frame.to_json(orient="records")
-
-    component_value = _component_func(gridOptions=gridOptions, gridData=gridData, key=key, default=None, height=height, fit_columns_on_grid_load=fit_columns_on_grid_load, update_mode=update_mode, data_return_mode=data_return_mode, frame_dtypes=frame_dtypes)
+    
+    if allow_unsafe_jscode:
+        walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v )
+    
+    try:
+        component_value = _component_func(
+            gridOptions=gridOptions,
+            gridData=gridData, key=key,
+            default=None,
+            height=height, 
+            width=width,
+            fit_columns_on_grid_load=fit_columns_on_grid_load, 
+            update_mode=update_mode, 
+            data_return_mode=data_return_mode, 
+            frame_dtypes=frame_dtypes,
+            allow_unsafe_jscode=allow_unsafe_jscode,
+            enable_enterprise_modules=enable_enterprise_modules
+            )
+    except components.components.MarshallComponentException as ex:
+        #a more complete error message.
+        args = list(ex.args)
+        args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
+        ex = components.components.MarshallComponentException(*args)
+        raise(ex)
+        
+        
     if component_value:
         
         frame = pd.DataFrame(component_value["gridData"])

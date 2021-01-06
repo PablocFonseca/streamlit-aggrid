@@ -9,7 +9,7 @@ setuptools.setup(
     author="Pablo Fonseca",
     author_email="pablo.fonseca+pip@gmail.com",
     description="Streamlit component implementation of ag-grid",
-    long_description="No time for that!",
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/PablocFonseca/streamlit-aggrid",
     packages=setuptools.find_packages(),

@@ -156,13 +156,13 @@ def AgGrid(
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             #convert frame back to original types, except datetimes.
             if try_to_convert_back_to_original_types:
-                numeric_columns = {k:v for k,v in original_types.items() if not v in ['i','u','f']}
+                numeric_columns = {k:v for k,v in original_types.items() if v in ['i','u','f']}
                 frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
 
-                text_columns = {k:v for k,v in original_types.items() if not v in ['O','S','U']}
+                text_columns = {k:v for k,v in original_types.items() if v in ['O','S','U']}
                 frame.loc[:,text_columns]  = frame.loc[:,text_columns] .astype('string')
 
-                date_columns = {k:v for k,v in original_types.items() if not v in ['M']}
+                date_columns = {k:v for k,v in original_types.items() if v in ['M']}
                 frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
 
         response["data"] = frame

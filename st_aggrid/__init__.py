@@ -134,8 +134,11 @@ def AgGrid(
         if not frame.empty:
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             #convert frame back to original types, except datetimes.
-            non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
-            frame = frame.astype(non_date_cols)
+            try:
+                non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
+                frame = frame.astype(non_date_cols)
+            except Exception as ex:
+                pass
             
             #this is the hack to convert back tz aware iso dates to pandas dtypes'
             date_cols = set(frame.columns) - set(non_date_cols.keys())

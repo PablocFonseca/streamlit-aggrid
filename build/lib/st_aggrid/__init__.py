@@ -29,6 +29,8 @@ def AgGrid(
     data_return_mode=DataReturnMode.AS_INPUT,
     allow_unsafe_jscode=False,
     enable_enterprise_modules=False,
+    try_to_convert_back_to_original_types=True,
+    conversion_errors='coerce',
     key=None):
     """Shows a cusomizable grid based on a pandas DataFrame
 
@@ -70,6 +72,25 @@ def AgGrid(
                 DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
                 DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
             Defaults to DataReturnMode.AS_INPUT.
+
+        allow_unsafe_jscode (bool, optional): 
+            Allows jsCode to be injected in gridOptions.
+            Defaults to False.
+
+        enable_enterprise_modules (bool, optional):
+            Loads Ag-Grid enterprise modules (check licensing).
+            Defaults to False.
+        
+        try_to_convert_back_to_original_types (bool, optional):
+            Attempts to convert data retrieved from the grid to original types.
+            Defaults to True.
+
+        conversion_errors (str, optional): 
+            Behaviour when conversion fails. One of:
+                'raise'     -> invalid parsing will raise an exception.
+                'coerce'    -> then invalid parsing will be set as NaT/NaN.
+                'ignore'    -> invalid parsing will return the input.
+            Defaults to 'coerce'.
 
         key ([type], optional): 
             Streamlits key argument. Check streamlit's documentation.
@@ -134,12 +155,15 @@ def AgGrid(
         if not frame.empty:
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             #convert frame back to original types, except datetimes.
-            non_date_cols = {k:v for k,v in original_types.items() if not v == "M"}
-            frame = frame.astype(non_date_cols)
-            
-            #this is the hack to convert back tz aware iso dates to pandas dtypes'
-            date_cols = set(frame.columns) - set(non_date_cols.keys())
-            frame.loc[:, date_cols] = frame.loc[:, date_cols].apply(pd.to_datetime)
+            if try_to_convert_back_to_original_types:
+                numeric_columns = {k:v for k,v in original_types.items() if v in ['i','u','f']}
+                frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
+
+                text_columns = {k:v for k,v in original_types.items() if v in ['O','S','U']}
+                frame.loc[:,text_columns]  = frame.loc[:,text_columns] .astype('string')
+
+                date_columns = {k:v for k,v in original_types.items() if v in ['M']}
+                frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]

@@ -72,3 +72,4 @@ st_aggrid/frontend/node_modules/
 st_aggrid/frontend/.env
 st_aggrid/frontend/.eslintcache
 streamlit_aggrid.egg-info/*
+streamlit_aggrid.egg-info/PKG-INFO

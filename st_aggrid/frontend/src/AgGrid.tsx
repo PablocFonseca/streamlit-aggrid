@@ -19,30 +19,39 @@ import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 
-class AgGrid extends StreamlitComponentBase {
-  private frame_dtypes: any
-  private gridOptions: any
-  private gridData: any
+interface State {
+  rowData: any
+  gridHeight: number
+}
+
+class AgGrid extends StreamlitComponentBase<State> {
+  private frameDtypes: any
   private api!: GridApi;
   private columnApi!: ColumnApi
   private columnFormaters: any
-  private manual_update_requested: boolean
-  private allow_unsafe_jscode: boolean = false
+  private manualUpdateRequested: boolean = false
+  private allowUnsafeJsCode: boolean = false
+  private fitColumnsOnGridLoad: boolean = false
+  private gridOptions: any
 
   constructor(props: any) {
     super(props)
+    this.state = {
+      rowData: props.args.row_data,
+      gridHeight: this.props.args.height
+    }
 
-    if (props.args['enable_enterprise_modules']) {
+    if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules(AllModules);
     } else {
       ModuleRegistry.registerModules(AllCommunityModules);
     }
 
-    this.frame_dtypes = props.args['frame_dtypes']
-    this.gridData = JSON.parse(props.args['gridData'])
-    this.gridOptions = props.args['gridOptions']
-    this.manual_update_requested = (props.args['update_mode'] === 1)
-    this.allow_unsafe_jscode = props.args['allow_unsafe_jscode']
+    this.frameDtypes = this.props.args.frame_dtypes
+    this.manualUpdateRequested = (this.props.args.update_mode === 1)
+    this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
+    this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
+    this.gridOptions = this.props.args.gridOptions
 
     this.columnFormaters = {
       columnTypes: {
@@ -56,61 +65,76 @@ class AgGrid extends StreamlitComponentBase {
           filter: 'agNumberColumnFilter'
         },
         'shortDateTimeFormat': {
-          valueFormatter: (params: any) => this.date_formater(params.value, "dd/MM/yyyy HH:mm"),
+          valueFormatter: (params: any) => this.dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
         },
         'customDateTimeFormat': {
-          valueFormatter: (params: any) => this.date_formater(params.value, params.column.colDef.custom_format_string),
+          valueFormatter: (params: any) => this.dateFormatter(params.value, params.column.colDef.custom_format_string),
         },
         'customNumericFormat': {
-          valueFormatter: (params: any) => this.number_formater(params.value, params.column.colDef.precision),
+          valueFormatter: (params: any) => this.numberFormatter(params.value, params.column.colDef.precision ?? 2),
         },
         'customCurrencyFormat': {
-          valueFormatter: (params: any) => this.currency_formater(params.value, params.column.colDef.custom_currency_symbol),
+          valueFormatter: (params: any) => this.currencyFormatter(params.value, params.column.colDef.custom_currency_symbol),
         },
       }
     }
   }
 
-  private convertJavascriptCode = (obj: object) => {
+  static getDerivedStateFromProps(props: any, state: any) {
+    if (props.args.reload_data) {
+      return {
+        rowData: props.args.row_data,
+        gridHeight: props.args.height
+      }
+    } else {
+      return {
+        gridHeight: props.args.height
+      }
+    }
+  }
+
+  private convertStringToFunction(v: string) {
     const JS_PLACEHOLDER = "--x_x--0_0--"
 
     let funcReg = new RegExp(
       `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
     )
 
-    return deepMap(obj, function (v: string) {
-      let match = funcReg.exec(v)
+    let match = funcReg.exec(v)
 
-      if (match) {
-        const funcStr = match[1]
-        return new Function("return " + funcStr)()
+    if (match) {
+      const funcStr = match[1]
+      return new Function("return " + funcStr)()
 
-      } else {
-        return v
-      }
-    })
+    } else {
+      return v
+    }
   }
 
-  private set_update_mode() {
-    if (this.manual_update_requested) {
+  private convertJavascriptCodeOnGridOptions = (obj: object) => {
+    return deepMap(obj, this.convertStringToFunction)
+  }
+
+  private setUpdateMode() {
+    if (this.manualUpdateRequested) {
       return //If manual update is set, no listeners will be added
     }
 
-    let update_mode = this.props.args['update_mode']
+    let updateMode = this.props.args.update_mode
 
-    if ((update_mode & 2) === 2) {
+    if ((updateMode & 2) === 2) {
       this.api.addEventListener('cellValueChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 4) === 4) {
+    if ((updateMode & 4) === 4) {
       this.api.addEventListener('selectionChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 8) === 8) {
+    if ((updateMode & 8) === 8) {
       this.api.addEventListener('filterChanged', (e: any) => this.returnGridValue(e))
     }
 
-    if ((update_mode & 16) === 16) {
+    if ((updateMode & 16) === 16) {
       this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
     }
   }
@@ -119,12 +143,12 @@ class AgGrid extends StreamlitComponentBase {
     this.api = event.api
     this.columnApi = event.columnApi
 
-    this.set_update_mode()
-
+    this.setUpdateMode()
+    this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
   }
 
-  private firstDataRendered(event: any) {
-    if (this.props.args['fit_columns_on_grid_load']) {
+  private fitColumns() {
+    if (this.fitColumnsOnGridLoad) {
       this.api.sizeColumnsToFit()
     }
     else {
@@ -132,7 +156,7 @@ class AgGrid extends StreamlitComponentBase {
     }
   }
 
-  private date_formater(isoString: string, formaterString: string): String {
+  private dateFormatter(isoString: string, formaterString: string): String {
     try {
       let date = parseISO(isoString)
       return format(date, formaterString)
@@ -142,16 +166,16 @@ class AgGrid extends StreamlitComponentBase {
     finally { }
   }
 
-  private currency_formater(number: any, currency_symbol: string): String {
+  private currencyFormatter(number: any, currencySymbol: string): String {
     let n = Number.parseFloat(number)
     if (!Number.isNaN(n)) {
-      return currency_symbol + n.toFixed(2)
+      return currencySymbol + n.toFixed(2)
     } else {
       return number
     }
   }
 
-  private number_formater(number: any, precision: number): String {
+  private numberFormatter(number: any, precision: number): String {
     let n = Number.parseFloat(number)
     if (!Number.isNaN(n)) {
       return n.toFixed(precision)
@@ -161,56 +185,70 @@ class AgGrid extends StreamlitComponentBase {
   }
 
   private returnGridValue(e: any) {
-    var return_data: any[] = []
-    let return_mode = this.props.args['data_return_mode']
+    let returnData: any[] = []
+    let returnMode = this.props.args.data_return_mode
 
-    switch (return_mode) {
+    switch (returnMode) {
       case 0: //ALL_DATA
-        this.api.forEachLeafNode((row) => return_data.push(row.data))
+        this.api.forEachLeafNode((row) => returnData.push(row.data))
         break;
 
       case 1: //FILTERED_DATA
-        this.api.forEachNodeAfterFilter((row) => { if (!row.group) { return_data.push(row.data) } })
+        this.api.forEachNodeAfterFilter((row) => { if (!row.group) { returnData.push(row.data) } })
         break;
 
       case 2: //FILTERED_SORTED_DATA
-        this.api.forEachNodeAfterFilterAndSort((row) => { if (!row.group) { return_data.push(row.data) } })
+        this.api.forEachNodeAfterFilterAndSort((row) => { if (!row.group) { returnData.push(row.data) } })
         break;
     }
 
-    var return_value = {
-      original_dtypes: this.frame_dtypes,
-      gridData: return_data,
+    let returnValue = {
+      originalDtypes: this.frameDtypes,
+      rowData: returnData,
       selectedRows: this.api.getSelectedRows()
     }
 
-    Streamlit.setComponentValue(return_value)
+    Streamlit.setComponentValue(returnValue)
   }
 
   private ManualUpdateButton(props: any) {
-
     if (props.manual_update) {
-      return (<button onClick={props.onClick}>Save</button>)
+      return (<button onClick={props.onClick}>Update</button>)
     }
     else {
       return (<span></span>)
     }
   }
 
+  private defineContainerHeight() {
+    if ('domLayout' in this.gridOptions) {
+      if (this.gridOptions['domLayout'] === 'autoHeight') {
+        return ({
+          width: this.props.width
+        })
+      }
+    }
+    return ({
+      width: this.props.width,
+      height: this.state.gridHeight
+    })
+  }
+
   public render = (): ReactNode => {
-    if (this.allow_unsafe_jscode) {
+    let gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions)
+
+    if (this.allowUnsafeJsCode) {
       console.warn("flag allow_unsafe_jscode is on.")
-      this.gridOptions = this.convertJavascriptCode(this.gridOptions)
+      gridOptions = this.convertJavascriptCodeOnGridOptions(gridOptions)
     }
 
-    const gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions, { rowData: this.gridData })
     return (
-      <div className="ag-theme-balham" style={{ height: this.props.args['height'], width: this.props.args['width'] }}>
-        <this.ManualUpdateButton manual_update={this.manual_update_requested} onClick={(e: any) => this.returnGridValue(e)} />
+      <div className="ag-theme-balham" style={this.defineContainerHeight()}>
+        <this.ManualUpdateButton manual_update={this.manualUpdateRequested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
-          onFirstDataRendered={(e) => this.firstDataRendered(e)}
           gridOptions={gridOptions}
+          rowData={this.state.rowData}
         >
         </AgGridReact>
       </div >

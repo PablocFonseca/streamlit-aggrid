@@ -7,7 +7,7 @@ import json
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
 
-_RELEASE = True
+_RELEASE = False
 
 if not _RELEASE:
     _component_func = components.declare_component(
@@ -22,7 +22,7 @@ else:
 def AgGrid(
     dataframe,
     gridOptions=None,
-    height=200,
+    height=400,
     width='100%',
     fit_columns_on_grid_load=False,
     update_mode=GridUpdateMode.VALUE_CHANGED,
@@ -31,6 +31,7 @@ def AgGrid(
     enable_enterprise_modules=False,
     try_to_convert_back_to_original_types=True,
     conversion_errors='coerce',
+    reload_data=False,
     key=None):
     """Shows a cusomizable grid based on a pandas DataFrame
 
@@ -120,16 +121,15 @@ def AgGrid(
 
     json_frame = dataframe.copy() #avoids cache mutation
     json_frame.loc[:,date_cols.columns] = date_cols
-    gridData = json_frame.to_json(orient="records")
+    row_data = json_frame.to_dict(orient="records")
     
     if allow_unsafe_jscode:
-        walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v )
-    
+        walk_gridOptions(dict(gridOptions), lambda v: v.js_code if isinstance(v, JsCode) else v )
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
-            gridData=gridData, key=key,
-            default=None,
+            row_data=row_data,
             height=height, 
             width=width,
             fit_columns_on_grid_load=fit_columns_on_grid_load, 
@@ -137,24 +137,25 @@ def AgGrid(
             data_return_mode=data_return_mode, 
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
-            enable_enterprise_modules=enable_enterprise_modules
+            enable_enterprise_modules=enable_enterprise_modules,
+            default=None,
+            reload_data=reload_data,
+            key=key
             )
+
     except components.components.MarshallComponentException as ex:
         #a more complete error message.
         args = list(ex.args)
         args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
         ex = components.components.MarshallComponentException(*args)
         raise(ex)
-        
-        
+
     if component_value:
-        
-        frame = pd.DataFrame(component_value["gridData"])
-        original_types = component_value["original_dtypes"]
+        frame = pd.DataFrame(component_value["rowData"])
+        original_types = component_value["originalDtypes"]
 
         if not frame.empty:
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
-            #convert frame back to original types, except datetimes.
             if try_to_convert_back_to_original_types:
                 numeric_columns = {k:v for k,v in original_types.items() if v in ['i','u','f']}
                 frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
@@ -167,5 +168,5 @@ def AgGrid(
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]
-
+    
     return response

@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from collections import defaultdict
 
 
@@ -46,7 +45,7 @@ class GridOptionsBuilder:
 
         return gb
 
-    def configure_default_column(self, min_column_width=100, resizable=True, filterable=True, sorteable=True, editable=False, groupable=False, **other_default_column_properties):
+    def configure_default_column(self, min_column_width=5, resizable=True, filterable=True, sorteable=True, editable=False, groupable=False, **other_default_column_properties):
         """Configure default column.
 
         Args:
@@ -89,6 +88,34 @@ class GridOptionsBuilder:
 
         self.__grid_options["defaultColDef"] = defaultColDef
 
+    def configure_auto_height(self, autoHeight=True):
+        if autoHeight:
+            self.configure_grid_options(domLayout='autoHeight')
+        else:
+            self.configure_grid_options(domLayout='normal')
+
+    def configure_grid_options(self, **props):
+        """Merges props to gridOptions
+
+        Args:
+            props (dict): props dicts will be merged to gridOptions root.
+        """        
+        self.__grid_options.update(props)
+
+    def configure_columns(self, column_names=[], **props):
+        """Batch configures columns. Key-pair values from props dict will be merged
+        to colDefs which field property is in column_names list.
+
+        Args:
+            column_names (list, optional):
+                columns field properties. If any of colDefs mathces **props dict is merged.
+                Defaults to [].
+        """        
+        for k in self.__grid_options["columnDefs"]:
+            if k in column_names:
+                self.__grid_options["columnDefs"][k].update(props)
+
+    
     def configure_column(self, field, header_name=None, **other_column_properties):
         """Configures an individual column
         check https://www.ag-grid.com/javascript-grid-column-properties/ for more information.
@@ -97,12 +124,15 @@ class GridOptionsBuilder:
             field (String): field name, usually equals the column header.
             header_name (String, optional): [description]. Defaults to None.
         """
+        if not self.__grid_options.get("columnDefs", None):
+            self.__grid_options["columnDefs"] = defaultdict(dict)
+
         colDef = {"headerName": header_name if header_name else field, "field": field}
 
         if other_column_properties:
             colDef = {**colDef, **other_column_properties}
 
-        self.__grid_options["columnDefs"][field] = colDef
+        self.__grid_options["columnDefs"][field].update(colDef)
 
     def configure_side_bar(self, filters_panel=True, columns_panel=True, defaultToolPanel=""):
         """configures the side panel of ag-grid.

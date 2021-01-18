@@ -33,6 +33,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.5
+* small bug fixes
+* there is an option to avoid grid re-initialization on app update (check fixed_key_example.py on examples folder or [here](https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/examples/fixed_key_example.py))
+
 Version 0.1.3
 * Fixed bug where cell was blank after edition.
 * Added enable_enterprise_modules argument to AgGrid call for enabling/disabling [enterprise features](https://www.ag-grid.com/documentation/javascript/licensing/)
@@ -50,7 +54,7 @@ Version 0.1.2
 
 
 [share_badge]: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
-[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/example.py
+[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/wxamples/example.py
 
 [github_badge]: https://badgen.net/badge/icon/GitHub?icon=github&color=black&label
 [github_link]: https://github.com/PablocFonseca/streamlit-aggrid

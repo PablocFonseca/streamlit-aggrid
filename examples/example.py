@@ -41,7 +41,6 @@ if include_date_time:
     custom_format_string = st.sidebar.text_input("date column format string", value='yyyy-MM-dd HH:mm zzz')
     st.sidebar.text("___")
 
-
 #enterprise modules
 enable_enterprise_modules = st.sidebar.checkbox("Enable Enterprise Modules")
 if enable_enterprise_modules:
@@ -66,6 +65,8 @@ if enable_selection:
         rowMultiSelectWithClick = st.sidebar.checkbox("Multiselect with click (instead of holding CTRL)", value=False)
         if not rowMultiSelectWithClick:
             suppressRowDeselection = st.sidebar.checkbox("Suppress deselection (while holding CTRL)", value=False)
+        else:
+            suppressRowDeselection=False
     st.sidebar.text("___")
 
 enable_pagination = st.sidebar.checkbox("Enable pagination", value=False)

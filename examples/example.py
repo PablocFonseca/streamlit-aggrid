@@ -2,25 +2,34 @@ import streamlit as st
 import pandas as pd 
 import numpy as np
 import altair as alt
+from itertools import cycle
 
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 np.random.seed(42)
 
 @st.cache(allow_output_mutation=True)
-def fetch_data(samples, include_date_time):
-
+def fetch_data(samples):
+    deltas = cycle([
+            pd.Timedelta(weeks=-2),
+            pd.Timedelta(days=-1),
+            pd.Timedelta(hours=-1),
+            pd.Timedelta(0),
+            pd.Timedelta(minutes=5),
+            pd.Timedelta(seconds=10),
+            pd.Timedelta(microseconds=50),
+            pd.Timedelta(microseconds=10)
+            ])
     dummy_data = {
-        "date":pd.date_range('2020-01-01', periods=samples),
-        "date_tz_aware":pd.date_range('2020-01-01', periods=samples, tz="Asia/Katmandu"),
+        "date_time_naive":pd.date_range('2021-01-01', periods=samples),
         "apple":np.random.randint(0,100,samples) / 3.0,
         "banana":np.random.randint(0,100,samples) / 5.0,
         "chocolate":np.random.randint(0,100,samples),
-        "group": np.random.choice(['A','B'], size=samples) ,
+        "group": np.random.choice(['A','B'], size=samples),
+        "date_only":pd.date_range('2020-01-01', periods=samples).date,
+        "timedelta":[next(deltas) for i in range(samples)],
+        "date_tz_aware":pd.date_range('2022-01-01', periods=samples, tz="Asia/Katmandu")
     }
-    if not include_date_time:
-        dummy_data.pop("date_tz_aware", None)
-
     return pd.DataFrame(dummy_data)
 
 #Example controlers
@@ -29,17 +38,11 @@ st.sidebar.subheader("St-AgGrid example options")
 sample_size = st.sidebar.number_input("rows", min_value=10, value=10)
 grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=800, value=200)
 
-return_mode = st.sidebar.selectbox("Return Mode", list(DataReturnMode.__members__), index=0)
+return_mode = st.sidebar.selectbox("Return Mode", list(DataReturnMode.__members__), index=1)
 return_mode_value = DataReturnMode.__members__[return_mode]
 
 update_mode = st.sidebar.selectbox("Update Mode", list(GridUpdateMode.__members__), index=6)
 update_mode_value = GridUpdateMode.__members__[update_mode]
-
-#TZ aware DT handling
-include_date_time = st.sidebar.checkbox("Include tz aware date column", value=False)
-if include_date_time:
-    custom_format_string = st.sidebar.text_input("date column format string", value='yyyy-MM-dd HH:mm zzz')
-    st.sidebar.text("___")
 
 #enterprise modules
 enable_enterprise_modules = st.sidebar.checkbox("Enable Enterprise Modules")
@@ -51,7 +54,7 @@ else:
 #features
 fit_columns_on_grid_load = st.sidebar.checkbox("Fit Grid Columns on Load")
 
-enable_selection=st.sidebar.checkbox("Enable row selection", value=False)
+enable_selection=st.sidebar.checkbox("Enable row selection", value=True)
 if enable_selection:
     st.sidebar.subheader("Selection options")
     selection_mode = st.sidebar.radio("Selection Mode", ['single','multiple'])
@@ -77,7 +80,7 @@ if enable_pagination:
         paginationPageSize = st.sidebar.number_input("Page size", value=5, min_value=0, max_value=sample_size)
     st.sidebar.text("___")
 
-df = fetch_data(sample_size, include_date_time)
+df = fetch_data(sample_size)
 
 #Infer basic colDefs from dataframe types
 gb = GridOptionsBuilder.from_dataframe(df)
@@ -85,8 +88,7 @@ gb = GridOptionsBuilder.from_dataframe(df)
 #customize gridOptions
 gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc='sum', editable=True)
 
-if include_date_time:
-    gb.configure_column("date_tz_aware", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string=custom_format_string, pivot=True)
+gb.configure_column("date_tz_aware", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string='yyyy-MM-dd HH:mm zzz', pivot=True)
 
 gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=2, aggFunc='sum')
 gb.configure_column("banana", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=1, aggFunc='avg')
@@ -150,18 +152,18 @@ selected_df = pd.DataFrame(selected)
 
 with st.spinner("Displaying results..."):
     #displays the chart
-    chart_data = df.loc[:,['date','apple','banana','chocolate']].assign(source='total')
+    chart_data = df.loc[:,['date_time_naive','apple','banana','chocolate']].assign(source='total')
 
     if not selected_df.empty:
-        selected_data = selected_df.loc[:,['date','apple','banana','chocolate']].assign(source='selection')
+        selected_data = selected_df.loc[:,['date_time_naive','apple','banana','chocolate']].assign(source='selection')
         chart_data = pd.concat([chart_data, selected_data])
 
-    chart_data = pd.melt(chart_data, id_vars=['date','source'], var_name="item", value_name="quantity")
+    chart_data = pd.melt(chart_data, id_vars=['date_time_naive','source'], var_name="item", value_name="quantity")
     #st.dataframe(chart_data)
     chart = alt.Chart(data=chart_data).mark_bar().encode(
         x=alt.X("item:O"),
         y=alt.Y("sum(quantity):Q", stack=False),
-        color='source:N',
+        color=alt.Color('source:N', scale=alt.Scale(domain=['total','selection'])),
     )
 
     st.header("Example chart")

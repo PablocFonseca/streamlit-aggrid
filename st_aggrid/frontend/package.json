@@ -1,6 +1,6 @@
 {
   "name": "streamlit-aggrid",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "dependencies": {
     "@ag-grid-community/all-modules": "^24.1.0",
@@ -15,9 +15,9 @@
     "@types/react-dom": ">=16.9.0",
     "date-fns": "^2.16.1",
     "date-fns-tz": "^1.0.12",
+    "moment": "^2.29.1",
     "react": ">=16.13.1",
     "react-dom": ">=16.13.1",
-    "react-moment": "^1.0.0",
     "react-scripts": ">=4.0.1",
     "streamlit-component-lib": ">=1.1.3",
     "typescript": ">=3.7.2"

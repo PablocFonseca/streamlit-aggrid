@@ -29,7 +29,7 @@ class GridOptionsBuilder:
             "u": ["numericColumn", "numberColumnFilter"],
             "f": ["numericColumn", "numberColumnFilter"],
             "c": [],
-            "m": [],
+            "m": ['timedeltaFormat'],
             "M": ["dateColumnFilter", "shortDateTimeFormat"],
             "O": [],
             "S": [],

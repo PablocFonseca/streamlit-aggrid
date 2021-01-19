@@ -18,6 +18,7 @@ import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
+import { Moment, duration } from "moment";
 
 interface State {
   rowData: any
@@ -75,6 +76,9 @@ class AgGrid extends StreamlitComponentBase<State> {
         },
         'customCurrencyFormat': {
           valueFormatter: (params: any) => this.currencyFormatter(params.value, params.column.colDef.custom_currency_symbol),
+        },
+        'timedeltaFormat': {
+          valueFormatter: (params: any) => duration(params.value).humanize(true)
         },
       }
     }

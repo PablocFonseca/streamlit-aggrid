@@ -6,6 +6,7 @@ import json
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
+from numbers import Number
 
 _RELEASE = True
 
@@ -115,12 +116,16 @@ def AgGrid(
         gb = GridOptionsBuilder.from_dataframe(dataframe)
         gridOptions = gb.build()
 
-    #this is a hack because pandas to_json doesn't convert tzaware to iso dates properly https://github.com/pandas-dev/pandas/issues/12997
-    date_cols = dataframe.select_dtypes([pd.DatetimeTZDtype, np.datetime64])
-    date_cols = date_cols.applymap(lambda s: s.isoformat()) #slow!!
-
-    json_frame = dataframe.copy() #avoids cache mutation
-    json_frame.loc[:,date_cols.columns] = date_cols
+    def cast_to_serializable(value):
+        isoformat = getattr(value, 'isoformat', None)
+        if ((isoformat) and callable(isoformat)):
+            return isoformat()
+        elif isinstance(value, Number):
+            return value
+        else:
+            return value.__str__()
+    
+    json_frame = dataframe.applymap(cast_to_serializable) 
     row_data = json_frame.to_dict(orient="records")
     
     if allow_unsafe_jscode:
@@ -165,6 +170,15 @@ def AgGrid(
 
                 date_columns = {k:v for k,v in original_types.items() if v in ['M']}
                 frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
+
+                def cast_to_timedelta(s):
+                    try:
+                        return pd.Timedelta(s)
+                    except:
+                        return s
+
+                timedelta_columns = {k:v for k,v in original_types.items() if v in ['m']}
+                frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]

@@ -33,6 +33,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.6
+* Fixes issue [#3](https://github.com/PablocFonseca/streamlit-aggrid/issues/3)
+* Adds support for timedelta columns check [example][share_link]
+
 Version 0.1.5
 * small bug fixes
 * there is an option to avoid grid re-initialization on app update (check fixed_key_example.py on examples folder or [here](https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/examples/fixed_key_example.py))
@@ -54,7 +58,7 @@ Version 0.1.2
 
 
 [share_badge]: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
-[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/wxamples/example.py
+[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/examples/example.py
 
 [github_badge]: https://badgen.net/badge/icon/GitHub?icon=github&color=black&label
 [github_link]: https://github.com/PablocFonseca/streamlit-aggrid

@@ -163,22 +163,26 @@ def AgGrid(
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             if try_to_convert_back_to_original_types:
                 numeric_columns = {k:v for k,v in original_types.items() if v in ['i','u','f']}
-                frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
+                if numeric_columns:
+                    frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
 
                 text_columns = {k:v for k,v in original_types.items() if v in ['O','S','U']}
-                frame.loc[:,text_columns]  = frame.loc[:,text_columns] .astype('string')
+                if text_columns:
+                    frame.loc[:,text_columns]  = frame.loc[:,text_columns] .astype('string')
 
                 date_columns = {k:v for k,v in original_types.items() if v in ['M']}
-                frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
-
-                def cast_to_timedelta(s):
-                    try:
-                        return pd.Timedelta(s)
-                    except:
-                        return s
+                if date_columns:
+                    frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
 
                 timedelta_columns = {k:v for k,v in original_types.items() if v in ['m']}
-                frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
+                if timedelta_columns:
+                    def cast_to_timedelta(s):
+                        try:
+                            return pd.Timedelta(s)
+                        except:
+                            return s
+
+                    frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]

@@ -33,6 +33,9 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.7
+* Fixes a bug that happened when converting data back from the grid with only one row
+
 Version 0.1.6
 * Fixes issue [#3](https://github.com/PablocFonseca/streamlit-aggrid/issues/3)
 * Adds support for timedelta columns check [example][share_link]

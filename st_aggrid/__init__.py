@@ -168,7 +168,7 @@ def AgGrid(
 
                 text_columns = {k:v for k,v in original_types.items() if v in ['O','S','U']}
                 if text_columns:
-                    frame.loc[:,text_columns]  = frame.loc[:,text_columns] .astype('string')
+                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].astype(str)
 
                 date_columns = {k:v for k,v in original_types.items() if v in ['M']}
                 if date_columns:

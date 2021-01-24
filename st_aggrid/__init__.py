@@ -30,6 +30,7 @@ def AgGrid(
     data_return_mode=DataReturnMode.AS_INPUT,
     allow_unsafe_jscode=False,
     enable_enterprise_modules=False,
+    license_key=None,
     try_to_convert_back_to_original_types=True,
     conversion_errors='coerce',
     reload_data=False,
@@ -143,6 +144,7 @@ def AgGrid(
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
             enable_enterprise_modules=enable_enterprise_modules,
+            license_key=license_key,
             default=None,
             reload_data=reload_data,
             key=key

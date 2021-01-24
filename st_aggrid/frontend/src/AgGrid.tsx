@@ -11,6 +11,7 @@ import { ColumnApi, GridApi } from '@ag-grid-community/core'
 import { ModuleRegistry } from '@ag-grid-community/core';
 import { AllCommunityModules } from '@ag-grid-community/all-modules'
 import { AllModules } from '@ag-grid-enterprise/all-modules'
+import { LicenseManager } from "@ag-grid-enterprise/core";
 
 import '@ag-grid-community/core/dist/styles/ag-grid.css';
 import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
@@ -18,7 +19,7 @@ import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
-import { Moment, duration } from "moment";
+import { duration } from "moment";
 
 interface State {
   rowData: any
@@ -44,6 +45,9 @@ class AgGrid extends StreamlitComponentBase<State> {
 
     if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules(AllModules);
+      if ('license_key' in props.args) {
+        LicenseManager.setLicenseKey(props.args['license_key']);
+      }
     } else {
       ModuleRegistry.registerModules(AllCommunityModules);
     }

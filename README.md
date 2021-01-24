@@ -35,6 +35,7 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 # Develpoment Notes
 Version 0.1.7
 * Fixes a bug that happened when converting data back from the grid with only one row
+* Added license_key parameter on AgGrid call.
 
 Version 0.1.6
 * Fixes issue [#3](https://github.com/PablocFonseca/streamlit-aggrid/issues/3)

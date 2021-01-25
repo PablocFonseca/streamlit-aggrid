@@ -39,7 +39,7 @@ class AgGrid extends StreamlitComponentBase<State> {
   constructor(props: any) {
     super(props)
     this.state = {
-      rowData: props.args.row_data,
+      rowData: JSON.parse(props.args.row_data),
       gridHeight: this.props.args.height
     }
 
@@ -91,7 +91,7 @@ class AgGrid extends StreamlitComponentBase<State> {
   static getDerivedStateFromProps(props: any, state: any) {
     if (props.args.reload_data) {
       return {
-        rowData: props.args.row_data,
+        rowData: JSON.parse(props.args.row_data),
         gridHeight: props.args.height
       }
     } else {

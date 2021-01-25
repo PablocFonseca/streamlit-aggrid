@@ -7,6 +7,7 @@ name = "pypi"
 streamlit = "*"
 pandas = "*"
 numpy = "*"
+simplejson = "*"
 
 [dev-packages]
 streamlit-aggrid = {editable = true, path = "."}

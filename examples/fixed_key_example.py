@@ -30,6 +30,9 @@ data = get_data()
 gb = GridOptionsBuilder.from_dataframe(data)
 #make all columns editable
 gb.configure_columns(list('abcde'), editable=True)
+
+#Create a calculated column that updates when data is edited. Use agAnimateShowChangeCellRenderer to show changes   
+gb.configure_column('row total', valueGetter='Number(data.a) + Number(data.b) + Number(data.c) + Number(data.d) + Number(data.e)', cellRenderer='agAnimateShowChangeCellRenderer', editable='false', type=['numericColumn'])
 go = gb.build()
 
 if use_fixed_key:
@@ -51,3 +54,5 @@ else:
 
 st.subheader("Returned Data")
 st.dataframe(ag['data'])
+
+st.write(go)

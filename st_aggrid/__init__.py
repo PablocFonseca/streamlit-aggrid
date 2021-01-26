@@ -136,7 +136,7 @@ def AgGrid(
     row_data = simplejson.dumps(row_data, ignore_nan=True)
 
     if allow_unsafe_jscode:
-        walk_gridOptions(dict(gridOptions), lambda v: v.js_code if isinstance(v, JsCode) else v )
+        walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)
 
     try:
         component_value = _component_func(

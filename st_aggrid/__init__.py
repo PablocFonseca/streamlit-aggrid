@@ -34,7 +34,8 @@ def AgGrid(
     try_to_convert_back_to_original_types=True,
     conversion_errors='coerce',
     reload_data=False,
-    key=None):
+    key=None,
+    **default_column_parameters):
     """Shows a cusomizable grid based on a pandas DataFrame
 
     Args:
@@ -98,6 +99,9 @@ def AgGrid(
         key ([type], optional): 
             Streamlits key argument. Check streamlit's documentation.
             Defaults to None.
+        
+        **default_column_parameters:
+            Other parameters will be passed as key:value pairs on gripdOptions defaultColDef.
 
     Returns:
         dictionary
@@ -114,7 +118,7 @@ def AgGrid(
 
     # if no gridOptions is passed, builds a default one.
     if gridOptions == None:
-        gb = GridOptionsBuilder.from_dataframe(dataframe)
+        gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
         gridOptions = gb.build()
 
     def cast_to_serializable(value):

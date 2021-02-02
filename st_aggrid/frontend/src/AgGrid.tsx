@@ -21,9 +21,12 @@ import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";
 
+import _ from 'lodash'
+
 interface State {
   rowData: any
   gridHeight: number
+  should_update: boolean
 }
 
 class AgGrid extends StreamlitComponentBase<State> {
@@ -38,10 +41,6 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
-    this.state = {
-      rowData: JSON.parse(props.args.row_data),
-      gridHeight: this.props.args.height
-    }
 
     if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules(AllModules);
@@ -56,7 +55,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
     this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
-    this.gridOptions = this.props.args.gridOptions
 
     this.columnFormaters = {
       columnTypes: {
@@ -86,13 +84,31 @@ class AgGrid extends StreamlitComponentBase<State> {
         },
       }
     }
+
+    let gridOptions = Object.assign({}, this.columnFormaters, this.props.args.gridOptions)
+
+    if (this.allowUnsafeJsCode) {
+      console.warn("flag allow_unsafe_jscode is on.")
+      gridOptions = this.convertJavascriptCodeOnGridOptions(gridOptions)
+    }
+    this.gridOptions = gridOptions
+
+    this.state = {
+      rowData: JSON.parse(props.args.row_data),
+      gridHeight: this.props.args.height,
+      should_update: false
+    }
   }
 
   static getDerivedStateFromProps(props: any, state: any) {
     if (props.args.reload_data) {
+      let old_row_data = state.rowData
+      let new_row_data = JSON.parse(props.args.row_data)
+      //let should_update = _.isEqual(_.map(old_row_data, (v) => Object.keys(v)), _.map(new_row_data, (v) => Object.keys(v)))
       return {
-        rowData: JSON.parse(props.args.row_data),
-        gridHeight: props.args.height
+        rowData: new_row_data,
+        gridHeight: props.args.height,
+        should_update: true
       }
     } else {
       return {
@@ -153,6 +169,8 @@ class AgGrid extends StreamlitComponentBase<State> {
 
     this.setUpdateMode()
     this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
+
+    this.api.setRowData(this.state.rowData)
   }
 
   private fitColumns() {
@@ -243,20 +261,19 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 
   public render = (): ReactNode => {
-    let gridOptions = Object.assign({}, this.columnFormaters, this.gridOptions)
 
-    if (this.allowUnsafeJsCode) {
-      console.warn("flag allow_unsafe_jscode is on.")
-      gridOptions = this.convertJavascriptCodeOnGridOptions(gridOptions)
+    if (this.api !== undefined) {
+      if (this.state.should_update) {
+        this.api.setRowData(this.state.rowData)
+      }
     }
 
     return (
-      <div className="ag-theme-balham" style={this.defineContainerHeight()}>
+      <div className="ag-theme-balham" style={this.defineContainerHeight()} >
         <this.ManualUpdateButton manual_update={this.manualUpdateRequested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
-          gridOptions={gridOptions}
-          rowData={this.state.rowData}
+          gridOptions={this.gridOptions}
         >
         </AgGridReact>
       </div >

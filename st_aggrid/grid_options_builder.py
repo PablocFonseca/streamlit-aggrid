@@ -10,7 +10,7 @@ class GridOptionsBuilder:
         self.sideBar = {}
 
     @staticmethod
-    def from_dataframe(dataframe):
+    def from_dataframe(dataframe,**default_column_parameters):
         """
         Creates an instance and initilizes it from a dataframe.
         ColumnDefs are created based on dataframe columns and data types.
@@ -38,7 +38,7 @@ class GridOptionsBuilder:
         }
 
         gb = GridOptionsBuilder()
-        gb.configure_default_column()
+        gb.configure_default_column(**default_column_parameters)
 
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))

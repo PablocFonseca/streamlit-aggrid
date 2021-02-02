@@ -5,13 +5,13 @@ import pandas as pd
 from st_aggrid import AgGrid, DataReturnMode, GridUpdateMode, GridOptionsBuilder, JsCode
 
 @st.cache()
-def get_data():
+def get_data_ex7():
     df = pd.DataFrame(
         np.random.randint(0, 100, 100).reshape(-1, 5), columns=list("abcde")
     )
     return df
 
-data = get_data()
+data = get_data_ex7()
 
 gb = GridOptionsBuilder.from_dataframe(data)
 #make all columns editable
@@ -34,9 +34,22 @@ function(e) {
 };
 """)
 
-#just found a bug. JsCode at root of gridOption is not converted..
-#call .js_code as a workaround. Will be fixed on next version
-gb.configure_grid_options(onCellValueChanged=js.js_code) 
+gb.configure_grid_options(onCellValueChanged=js) 
 go = gb.build()
+st.markdown("""
+### JsCode injections
+Cell editions are highlighted here by attaching to ```onCellValueChanged``` of the grid, using JsCode injection
+```python
+js = JsCode(...)
+gb.configure_grid_options(onCellValueChanged=js) 
+ag = AgGrid(data, gridOptions=gb.build(),  key='grid1', allow_unsafe_jscode=True, reload_data=False)
+```
+""")
 
-AgGrid(data, gridOptions=go,  key='grid1', allow_unsafe_jscode=True)
+ag = AgGrid(data, gridOptions=go,  key='grid1', allow_unsafe_jscode=True, reload_data=False)
+
+st.subheader("Returned Data")
+st.dataframe(ag['data'])
+
+st.subheader("Grid Options")
+st.write(go)

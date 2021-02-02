@@ -33,6 +33,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Develpoment Notes
+Version 0.1.9
+* Small fixes 
+* Organized examples folder
+
 Version 0.1.8
 * Fixes a bug that breaks the grid when NaN or Inf values are present in the data
 

@@ -179,6 +179,7 @@ class GridOptionsBuilder:
         self,
         selection_mode="single",
         use_checkbox=False,
+        pre_selected_rows=None,
         rowMultiSelectWithClick=False,
         suppressRowDeselection=False,
         suppressRowClickSelection=False,
@@ -190,6 +191,9 @@ class GridOptionsBuilder:
         Args:
             selection_mode (str, optional):
                 Either 'single', 'multiple' or 'disabled'. Defaults to 'single'.
+
+            pre_selected_rows (list, optional):
+                Use list of dataframe row iloc index to set corresponding rows as selected state on load. Defaults to None.
 
             rowMultiSelectWithClick (bool, optional):
                 If False user must hold shift to multiselect. Defaults to True if selection_mode is 'multiple'.
@@ -225,6 +229,9 @@ class GridOptionsBuilder:
             suppressRowClickSelection = True
             first_key = next(iter(self.__grid_options["columnDefs"].keys()))
             self.__grid_options["columnDefs"][first_key]["checkboxSelection"] = True
+        
+        if pre_selected_rows:
+            self.__grid_options['preSelectedRows'] = pre_selected_rows
 
         self.__grid_options["rowSelection"] = selection_mode
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick

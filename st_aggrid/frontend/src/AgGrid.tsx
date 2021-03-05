@@ -171,6 +171,10 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
 
     this.api.setRowData(this.state.rowData)
+
+    for (var idx in this.gridOptions['preSelectedRows']) {
+      this.api.selectIndex(this.gridOptions['preSelectedRows'][idx], true, true)
+    }
   }
 
   private fitColumns() {

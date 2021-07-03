@@ -168,6 +168,8 @@ def AgGrid(
         raise(ex)
 
     if component_value:
+        if isinstance(component_value, str):
+            component_value = simplejson.loads(component_value)
         frame = pd.DataFrame(component_value["rowData"])
         original_types = component_value["originalDtypes"]
 

@@ -80,8 +80,9 @@ class GridOptionsBuilder:
             "filter": filterable,
             "resizable": resizable,
             "sortable": sorteable,
-            "enableRowGroup": groupable,
         }
+        if groupable:
+            defaultColDef["enableRowGroup"] = groupable
 
         if other_default_column_properties:
             defaultColDef = {**defaultColDef, **other_default_column_properties}

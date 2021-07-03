@@ -230,7 +230,7 @@ class GridOptionsBuilder:
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick
         self.__grid_options["suppressRowDeselection"] = suppressRowDeselection
         self.__grid_options["suppressRowClickSelection"] = suppressRowClickSelection
-        self.__grid_options["groupSelectsChildren"] = groupSelectsChildren
+        self.__grid_options["groupSelectsChildren"] = groupSelectsChildren and selection_mode == "multiple"
         self.__grid_options["groupSelectsFiltered"] = groupSelectsChildren
 
     def configure_pagination(self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10):

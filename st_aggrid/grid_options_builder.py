@@ -232,7 +232,7 @@ class GridOptionsBuilder:
         self.__grid_options["suppressRowDeselection"] = suppressRowDeselection
         self.__grid_options["suppressRowClickSelection"] = suppressRowClickSelection
         self.__grid_options["groupSelectsChildren"] = groupSelectsChildren
-        self.__grid_options["groupSelectsFiltered"] = groupSelectsChildren
+        self.__grid_options["groupSelectsFiltered"] = groupSelectsFiltered
 
     def configure_pagination(self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10):
         """Configure grid's pagination features

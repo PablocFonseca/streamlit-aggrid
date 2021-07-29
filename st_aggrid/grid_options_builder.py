@@ -1,4 +1,3 @@
-import pandas as pd
 from collections import defaultdict
 
 
@@ -10,7 +9,7 @@ class GridOptionsBuilder:
         self.sideBar = {}
 
     @staticmethod
-    def from_dataframe(dataframe,**default_column_parameters):
+    def from_dataframe(dataframe, **default_column_parameters):
         """
         Creates an instance and initilizes it from a dataframe.
         ColumnDefs are created based on dataframe columns and data types.
@@ -100,7 +99,7 @@ class GridOptionsBuilder:
 
         Args:
             props (dict): props dicts will be merged to gridOptions root.
-        """        
+        """
         self.__grid_options.update(props)
 
     def configure_columns(self, column_names=[], **props):
@@ -111,12 +110,11 @@ class GridOptionsBuilder:
             column_names (list, optional):
                 columns field properties. If any of colDefs mathces **props dict is merged.
                 Defaults to [].
-        """        
+        """
         for k in self.__grid_options["columnDefs"]:
             if k in column_names:
                 self.__grid_options["columnDefs"][k].update(props)
 
-    
     def configure_column(self, field, header_name=None, **other_column_properties):
         """Configures an individual column
         check https://www.ag-grid.com/javascript-grid-column-properties/ for more information.
@@ -140,12 +138,12 @@ class GridOptionsBuilder:
            Side panels are enterprise features, please check www.ag-grid.com
 
         Args:
-            filters_panel (bool, optional): 
+            filters_panel (bool, optional):
                 Enable filters side panel. Defaults to True.
 
-            columns_panel (bool, optional): 
+            columns_panel (bool, optional):
                 Enable columns side panel. Defaults to True.
-                
+
             defaultToolPanel (str, optional): The default tool panel that should open when grid renders.
                                               Either "filters" or "columns".
                                               If value is blank, panel will start closed (default)

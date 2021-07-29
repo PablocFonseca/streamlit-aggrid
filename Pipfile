@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-streamlit = "*"
+streamlit = ">0.85"
 pandas = "*"
 numpy = "*"
 simplejson = "*"

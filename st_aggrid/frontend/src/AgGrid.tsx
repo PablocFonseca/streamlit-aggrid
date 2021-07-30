@@ -13,15 +13,23 @@ import { AllCommunityModules } from '@ag-grid-community/all-modules'
 import { AllModules } from '@ag-grid-enterprise/all-modules'
 import { LicenseManager } from "@ag-grid-enterprise/core";
 
-import '@ag-grid-community/core/dist/styles/ag-grid.css';
-import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
+// import '@ag-grid-community/core/dist/styles/ag-grid.css';
+// import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
+// import '@ag-grid-community/core/dist/styles/ag-theme-balham-dark.css';
+// import 'Agrid.scss'
 
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";
 
-import _ from 'lodash'
+import '@ag-grid-community/core/dist/styles/ag-theme-blue.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-fresh.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-material.css';
+
+// import _ from 'lodash'
+
+import'./AgGrid.scss'
 
 interface State {
   rowData: any
@@ -55,6 +63,15 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
     this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
+    
+    // let themes = {
+    //   'streamlit':'ag-theme-streamlit',
+    //   'light':'ag-theme-light',
+    //   'dark':'ag-theme-dark',
+    //   'blue':'ag-theme-blue',
+    //   'fresh':'ag-theme-fresh',
+    //   'material':'ag-theme-material',
+    // }
 
     this.columnFormaters = {
       columnTypes: {
@@ -102,7 +119,7 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   static getDerivedStateFromProps(props: any, state: any) {
     if (props.args.reload_data) {
-      let old_row_data = state.rowData
+      // let old_row_data = state.rowData
       let new_row_data = JSON.parse(props.args.row_data)
       //let should_update = _.isEqual(_.map(old_row_data, (v) => Object.keys(v)), _.map(new_row_data, (v) => Object.keys(v)))
       return {
@@ -128,6 +145,7 @@ class AgGrid extends StreamlitComponentBase<State> {
 
     if (match) {
       const funcStr = match[1]
+      // eslint-disable-next-line
       return new Function("return " + funcStr)()
 
     } else {
@@ -273,7 +291,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
 
     return (
-      <div className="ag-theme-balham" style={this.defineContainerHeight()} >
+      <div className={"ag-theme-"+ this.props.args.theme} style={this.defineContainerHeight()} >
         <this.ManualUpdateButton manual_update={this.manualUpdateRequested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}

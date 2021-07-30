@@ -26,14 +26,15 @@ def AgGrid(
     height=400,
     width='100%',
     fit_columns_on_grid_load=False,
-    update_mode=GridUpdateMode.VALUE_CHANGED,
-    data_return_mode=DataReturnMode.AS_INPUT,
+    update_mode= 'value_changed' ,
+    data_return_mode= 'as_input' ,
     allow_unsafe_jscode=False,
     enable_enterprise_modules=False,
     license_key=None,
     try_to_convert_back_to_original_types=True,
     conversion_errors='coerce',
     reload_data=False,
+    theme='streamlit',
     key=None,
     **default_column_parameters):
     """Shows a cusomizable grid based on a pandas DataFrame
@@ -56,7 +57,7 @@ def AgGrid(
 
         update_mode (GridUpdateMode enumerator, optional): 
             Defines how the grid will send results back to streamlit.
-            One of:
+            either a string, one or a combination of:
                 GridUpdateMode.NO_UPDATE
                 GridUpdateMode.MANUAL
                 GridUpdateMode.VALUE_CHANGED
@@ -95,6 +96,15 @@ def AgGrid(
                 'coerce'    -> then invalid parsing will be set as NaT/NaN.
                 'ignore'    -> invalid parsing will return the input.
             Defaults to 'coerce'.
+        
+        theme (str, optional):
+            theme used by ag-grid. One of:
+                 'streamlit' -> follows default streamlit colors
+                 'light'     -> ag-grid balham-light theme
+                 'dark'      -> ag-grid balham-dark theme
+                 'blue'      -> ag-grid blue theme
+                 'fresh'     -> ag-grid fresh theme
+                 'material'  -> ag-grid material theme
 
         key ([type], optional): 
             Streamlits key argument. Check streamlit's documentation.
@@ -142,6 +152,31 @@ def AgGrid(
     if allow_unsafe_jscode:
         walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)
 
+    _available_themes = ['streamlit','light','dark', 'blue', 'fresh','material']
+    if (not isinstance(theme, str)) or (not theme in _available_themes):
+        raise ValueError(f"{theme} is not valid. Available options: {_available_themes}")
+
+    try:
+        if (not isinstance(data_return_mode, (str, DataReturnMode))):
+            raise ValueError(f"{data_return_mode} is not valid.")
+
+        if isinstance(data_return_mode, str):
+            data_return_mode = DataReturnMode[data_return_mode.upper()]
+    except:
+        raise
+        raise ValueError(f"{data_return_mode} is not valid.")
+
+
+    try:
+        if (not isinstance(update_mode, (str, GridUpdateMode))):
+            raise ValueError(f"{update_mode} is not valid.")
+
+        if isinstance(update_mode, str):
+            update_mode = GridUpdateMode[update_mode.upper()]
+    except:
+        raise
+        raise ValueError(f"{data_return_mode} is not valid.")
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -157,6 +192,7 @@ def AgGrid(
             license_key=license_key,
             default=None,
             reload_data=reload_data,
+            theme=theme,
             key=key
             )
 

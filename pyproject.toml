@@ -7,12 +7,12 @@ homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
 authors = ["Pablo Fonseca <pablo.fonseca+pip@gmail.com>"]
 readme = "README.md"
 exclude = ["**/node_modules/**/*", "**/frontend/src/**/*", "**/frontend/public/**/*"]
+packages = [{include="st_aggrid"}]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 streamlit = "^0.87.0"
-numpy = "*"
-pandas = "*"
+pandas = "^1.2"
 simplejson = ">=3.0"
 
 [build-system]  

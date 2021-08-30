@@ -7,6 +7,7 @@ homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
 authors = ["Pablo Fonseca <pablo.fonseca+pip@gmail.com>"]
 readme = "README.md"
 exclude = ["**/node_modules/**/*", "**/frontend/src/**/*", "**/frontend/public/**/*"]
+include = ["**/frontend/build/**/*"]
 packages = [{include="st_aggrid"}]
 
 [tool.poetry.dependencies]

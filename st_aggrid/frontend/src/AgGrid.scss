@@ -18,7 +18,7 @@
     row-hover-color: var(--primary-color),
     header-background-color: var(--secondary-background-color),
     foreground-color: var(--text-color),
-    selected-row-background-color: #005A80
+    selected-row-background-color: var(--secondary-background-color)
   ));
 
   .ag-menu-option-active {

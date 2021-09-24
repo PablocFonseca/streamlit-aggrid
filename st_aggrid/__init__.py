@@ -34,7 +34,7 @@ def AgGrid(
     try_to_convert_back_to_original_types=True,
     conversion_errors='coerce',
     reload_data=False,
-    theme='streamlit',
+    theme='light',
     key=None,
     **default_column_parameters):
     """Shows a cusomizable grid based on a pandas DataFrame

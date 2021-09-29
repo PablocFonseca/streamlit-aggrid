@@ -39,6 +39,7 @@ def AgGrid(
     conversion_errors: str='coerce',
     reload_data:bool=False,
     theme:str='light',
+    custom_css=None,
     key: typing.Any=None,
     **default_column_parameters) -> typing.Dict:
     """Reders a DataFrame using AgGrid.
@@ -121,6 +122,9 @@ def AgGrid(
             'material'  -> ag-grid material theme
         By default 'light'
     
+    custom_css (dict, optional):
+        Custom CSS rules to be added to the component's iframe.
+
     key : typing.Any, optional
         Streamlits key argument. Check streamlit's documentation.
         Defaults to None.
@@ -194,6 +198,8 @@ def AgGrid(
     except:
         raise ValueError(f"{data_return_mode} is not valid.")
 
+    custom_css = custom_css or dict()
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -210,6 +216,7 @@ def AgGrid(
             default=None,
             reload_data=reload_data,
             theme=theme,
+            custom_css=custom_css,
             key=key
             )
 

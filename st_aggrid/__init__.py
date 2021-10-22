@@ -3,6 +3,7 @@ import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import simplejson
+import warnings
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
@@ -24,7 +25,7 @@ def AgGrid(
     dataframe,
     gridOptions=None,
     height=400,
-    width='100%',
+    width=None,
     fit_columns_on_grid_load=False,
     update_mode= 'value_changed' ,
     data_return_mode= 'as_input' ,
@@ -119,6 +120,9 @@ def AgGrid(
         Other keys may be present depending on gridOptions parameters
 
     """
+    if width:
+        warnings.warn("DEPRECATION Warning: width parameter is deprecated and will be removed on next version.")
+
     response = {}
     response["data"] = dataframe
     response["selected_rows"] = []
@@ -163,7 +167,6 @@ def AgGrid(
         if isinstance(data_return_mode, str):
             data_return_mode = DataReturnMode[data_return_mode.upper()]
     except:
-        raise
         raise ValueError(f"{data_return_mode} is not valid.")
 
 
@@ -174,7 +177,6 @@ def AgGrid(
         if isinstance(update_mode, str):
             update_mode = GridUpdateMode[update_mode.upper()]
     except:
-        raise
         raise ValueError(f"{data_return_mode} is not valid.")
 
     try:

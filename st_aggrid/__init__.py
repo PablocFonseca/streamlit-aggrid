@@ -5,6 +5,7 @@ import numpy as np
 import simplejson
 import warnings
 from dotenv import load_dotenv
+import typing
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
@@ -24,104 +25,116 @@ else:
     _component_func = components.declare_component("agGrid", path=build_dir)
 
 def AgGrid(
-    dataframe,
-    gridOptions=None,
-    height=400,
+    dataframe: pd.DataFrame,
+    gridOptions: typing.Dict=None ,
+    height: int =400,
     width=None,
-    fit_columns_on_grid_load=False,
-    update_mode= 'value_changed' ,
-    data_return_mode= 'as_input' ,
-    allow_unsafe_jscode=False,
-    enable_enterprise_modules=False,
-    license_key=None,
-    try_to_convert_back_to_original_types=True,
-    conversion_errors='coerce',
-    reload_data=False,
-    theme='light',
-    key=None,
-    **default_column_parameters):
-    """Shows a cusomizable grid based on a pandas DataFrame
+    fit_columns_on_grid_load: bool=False,
+    update_mode: GridUpdateMode= 'value_changed' ,
+    data_return_mode: DataReturnMode= 'as_input' ,
+    allow_unsafe_jscode: bool=False,
+    enable_enterprise_modules: bool=False,
+    license_key: str=None,
+    try_to_convert_back_to_original_types: bool=True,
+    conversion_errors: str='coerce',
+    reload_data:bool=False,
+    theme:str='light',
+    key: typing.Any=None,
+    **default_column_parameters) -> typing.Dict:
+    """Reders a DataFrame using AgGrid.
 
-    Args:
-        dataframe (pandas.DataFrame): 
-            The underlaying dataframe to be used.
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The underlaying dataframe to be used.
 
-        gridOptions (dictionary, optional): 
-            A dictionary of options for ag-grid. Documentation on www.ag-grid.com
-            Defaults to None. If None defaul grid options will be created with GridOptionsBuilder.from_dataframe() call.
-
-        height (int, optional): 
-            The grid height.
-            Defaults to 200.
-
-        fit_columns_on_grid_load (bool, optional): 
-            Will adjust columns to fit grid width on grid load. 
-            Defaults to False.
-
-        update_mode (GridUpdateMode enumerator, optional): 
-            Defines how the grid will send results back to streamlit.
-            either a string, one or a combination of:
-                GridUpdateMode.NO_UPDATE
-                GridUpdateMode.MANUAL
-                GridUpdateMode.VALUE_CHANGED
-                GridUpdateMode.SELECTION_CHANGED
-                GridUpdateMode.FILTERING_CHANGED
-                GridUpdateMode.SORTING_CHANGED
-                GridUpdateMode.MODEL_CHANGED
-
-            When using manual a save button will be drawn on top of grid.
-            modes can be combined with bitwise OR operator |, for instance:
-            GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
-            Defaults to GridUpdateMode.VALUE_CHANGED.
-
-        data_return_mode (DataReturnMode enum, optional): 
-            Defines how the data will be retrieved from components client side. One of:
-                DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
-                DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
-                DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
-            Defaults to DataReturnMode.AS_INPUT.
-
-        allow_unsafe_jscode (bool, optional): 
-            Allows jsCode to be injected in gridOptions.
-            Defaults to False.
-
-        enable_enterprise_modules (bool, optional):
-            Loads Ag-Grid enterprise modules (check licensing).
-            Defaults to False.
+    gridOptions : typing.Dict, optional
+        A dictionary of options for ag-grid. Documentation on www.ag-grid.com
+        If None default grid options will be created with GridOptionsBuilder.from_dataframe() call. By default None
+    
+    height : int, optional
+        The grid height, by default 400
+    
+    width : [type], optional
+        Deprecated, by default None
+    
+    fit_columns_on_grid_load : bool, optional
+        Will adjust columns to fit grid width on grid load, by default False
+    
+    update_mode : GridUpdateMode, optional
+        Defines how the grid will send results back to streamlit.
+        either a string, one or a combination of:
+            GridUpdateMode.NO_UPDATE
+            GridUpdateMode.MANUAL
+            GridUpdateMode.VALUE_CHANGED
+            GridUpdateMode.SELECTION_CHANGED
+            GridUpdateMode.FILTERING_CHANGED
+            GridUpdateMode.SORTING_CHANGED
+            GridUpdateMode.MODEL_CHANGED
+        When using manual a save button will be drawn on top of grid.
+        modes can be combined with bitwise OR operator |, for instance:
+        GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
+        Defaults to GridUpdateMode.VALUE_CHANGED.
+        by default 'value_changed'
+    
+    data_return_mode : DataReturnMode, optional
+        Defines how the data will be retrieved from components client side. One of:
+            DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
+            DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
+            DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
+        Defaults to DataReturnMode.AS_INPUT.
         
-        try_to_convert_back_to_original_types (bool, optional):
-            Attempts to convert data retrieved from the grid to original types.
-            Defaults to True.
+    allow_unsafe_jscode : bool, optional
+        Allows jsCode to be injected in gridOptions.
+        Defaults to False.
 
-        conversion_errors (str, optional): 
-            Behaviour when conversion fails. One of:
-                'raise'     -> invalid parsing will raise an exception.
-                'coerce'    -> then invalid parsing will be set as NaT/NaN.
-                'ignore'    -> invalid parsing will return the input.
-            Defaults to 'coerce'.
-        
-        theme (str, optional):
-            theme used by ag-grid. One of:
-                 'streamlit' -> follows default streamlit colors
-                 'light'     -> ag-grid balham-light theme
-                 'dark'      -> ag-grid balham-dark theme
-                 'blue'      -> ag-grid blue theme
-                 'fresh'     -> ag-grid fresh theme
-                 'material'  -> ag-grid material theme
+    enable_enterprise_modules : bool, optional
+        Loads Ag-Grid enterprise modules (check licensing).
+        Defaults to False.
 
-        key ([type], optional): 
-            Streamlits key argument. Check streamlit's documentation.
-            Defaults to None.
-        
-        **default_column_parameters:
-            Other parameters will be passed as key:value pairs on gripdOptions defaultColDef.
+    license_key : str, optional
+        Licence key to use for enterprise modules
+        By default None
 
-    Returns:
-        dictionary
+    try_to_convert_back_to_original_types : bool, optional
+        Attempts to convert data retrieved from the grid to original types.
+        Defaults to True.
+
+    conversion_errors : str, optional
+        Behaviour when conversion fails. One of:
+            'raise'     -> invalid parsing will raise an exception.
+            'coerce'    -> then invalid parsing will be set as NaT/NaN.
+            'ignore'    -> invalid parsing will return the input.
+        Defaults to 'coerce'.
+    
+    reload_data : bool, optional
+        Force AgGrid to reload data using api calls. Should be false on most use cases
+        By default False
+    
+    theme : str, optional
+        theme used by ag-grid. One of:
+            'streamlit' -> follows default streamlit colors
+            'light'     -> ag-grid balham-light theme
+            'dark'      -> ag-grid balham-dark theme
+            'blue'      -> ag-grid blue theme
+            'fresh'     -> ag-grid fresh theme
+            'material'  -> ag-grid material theme
+        By default 'light'
+    
+    key : typing.Any, optional
+        Streamlits key argument. Check streamlit's documentation.
+        Defaults to None.
+    
+    **default_column_parameters:
+        Other parameters will be passed as key:value pairs on gripdOptions defaultColDef.
+
+    Returns
+    -------
+    Dict
         returns a dictionary with grid's data is in dictionary's 'data' key. 
         Other keys may be present depending on gridOptions parameters
-
     """
+
     if width:
         warnings.warn("DEPRECATION Warning: width parameter is deprecated and will be removed on next version.")
 

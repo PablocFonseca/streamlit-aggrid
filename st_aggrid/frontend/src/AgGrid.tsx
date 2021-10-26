@@ -119,9 +119,9 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   static getDerivedStateFromProps(props: any, state: any) {
     if (props.args.reload_data) {
-      // let old_row_data = state.rowData
+
       let new_row_data = JSON.parse(props.args.row_data)
-      //let should_update = _.isEqual(_.map(old_row_data, (v) => Object.keys(v)), _.map(new_row_data, (v) => Object.keys(v)))
+
       return {
         rowData: new_row_data,
         gridHeight: props.args.height,

@@ -2,7 +2,7 @@
 
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] 
 
-AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise featrues!
+AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
 Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
@@ -33,7 +33,14 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
-# Develpoment Notes
+# Develop
+ment Notes
+Version 0.2.2
+* Updated frontend dependencies to latest version
+* Corrected text color for better viz when using streamlit theme (thanks [jasonpmcculloch](https://github.com/jasonpmcculloch))
+* Switched default theme to Balham Light ('light'), if you want to use streamlit theme set `theme='streamlit'` on agGrid call 
+
+
 Version 0.2.0
 * Support Themes
 * Incorporated Pull Requests with fixes and pre-select rows (Thanks [randomseed42](https://github.com/randomseed42) and [msabramo](https://github.com/msabramo))

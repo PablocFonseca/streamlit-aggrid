@@ -11,9 +11,9 @@ include = ["**/frontend/build/**/*"]
 packages = [{include="st_aggrid"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-streamlit = "^0.87.0"
-pandas = "^1.2"
+python = ">=3.7.1,<4.0"
+streamlit = ">=0.87.0"
+pandas = ">=1.2"
 simplejson = ">=3.0"
 
 [build-system]  

@@ -6,7 +6,7 @@ from st_aggrid import AgGrid, DataReturnMode, GridUpdateMode, GridOptionsBuilder
 
 @st.cache()
 def get_data_ex5():
-    rows=10
+    rows=100
     df = pd.DataFrame(
         np.random.randint(0, 100, 2*rows).reshape(-1, 2), columns= list("ab")
     )
@@ -28,12 +28,12 @@ Pin columns using either pinnedTopRowData or pinnedBottomRowData
 gb = GridOptionsBuilder.from_dataframe(data)
 go = gb.build()
 go['pinnedTopRowData'] = [{'a':'100', 'b':'200'}]
+go['pinnedBottomRowData'] = [{'a':'pinned', 'b':'down'}]
 
 ```  
-a cellRenderer is also configured to display changes
 """)
 go['pinnedTopRowData'] = [{'a':'100', 'b':'200'}]
-go['pinnedBottomRowData'] = [{'a':'300', 'b':'400'}]
+go['pinnedBottomRowData'] = [{'a':'pinned', 'b':'down'}]
 ag = AgGrid(
     data, 
     gridOptions=go, 

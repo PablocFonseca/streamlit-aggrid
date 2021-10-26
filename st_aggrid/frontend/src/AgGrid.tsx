@@ -4,7 +4,7 @@ import {
   withStreamlitConnection
 } from "streamlit-component-lib";
 
-import React, { ReactNode } from "react"
+import { ReactNode } from "react"
 
 import { AgGridReact } from '@ag-grid-community/react';
 import { ColumnApi, GridApi } from '@ag-grid-community/core'
@@ -12,11 +12,6 @@ import { ModuleRegistry } from '@ag-grid-community/core';
 import { AllCommunityModules } from '@ag-grid-community/all-modules'
 import { AllModules } from '@ag-grid-enterprise/all-modules'
 import { LicenseManager } from "@ag-grid-enterprise/core";
-
-// import '@ag-grid-community/core/dist/styles/ag-grid.css';
-// import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
-// import '@ag-grid-community/core/dist/styles/ag-theme-balham-dark.css';
-// import 'Agrid.scss'
 
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
@@ -27,9 +22,8 @@ import '@ag-grid-community/core/dist/styles/ag-theme-blue.css';
 import '@ag-grid-community/core/dist/styles/ag-theme-fresh.css';
 import '@ag-grid-community/core/dist/styles/ag-theme-material.css';
 
-// import _ from 'lodash'
-
-import'./AgGrid.scss'
+import './AgGrid.scss'
+import './scrollbar.css'
 
 interface State {
   rowData: any
@@ -64,15 +58,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
     this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
     
-    // let themes = {
-    //   'streamlit':'ag-theme-streamlit',
-    //   'light':'ag-theme-light',
-    //   'dark':'ag-theme-dark',
-    //   'blue':'ag-theme-blue',
-    //   'fresh':'ag-theme-fresh',
-    //   'material':'ag-theme-material',
-    // }
-
     this.columnFormaters = {
       columnTypes: {
         'dateColumnFilter': {
@@ -303,9 +288,4 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 }
 
-// "withStreamlitConnection" is a wrapper function. It bootstraps the
-// connection between your component and the Streamlit app, and handles
-// passing arguments from Python -> Component.
-//
-// You don't need to edit withStreamlitConnection (but you're welcome to!).
 export default withStreamlitConnection(AgGrid)

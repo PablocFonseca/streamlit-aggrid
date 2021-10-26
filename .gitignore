@@ -186,7 +186,6 @@ st_aggrid/frontend/.eslintcache
 streamlit_aggrid.egg-info/*
 streamlit_aggrid.egg-info/PKG-INFO
 Pipfile.lock
-Pipfile.lock
 Pipfile
 Pipfile
 poetry.lock

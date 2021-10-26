@@ -4,12 +4,14 @@ import pandas as pd
 import numpy as np
 import simplejson
 import warnings
+from dotenv import load_dotenv
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
 from numbers import Number
+load_dotenv()
 
-_RELEASE = True
+_RELEASE = os.getenv("AGGRID_RELEASE",'true').lower() == 'true'
 
 if not _RELEASE:
     _component_func = components.declare_component(
@@ -18,7 +20,7 @@ if not _RELEASE:
     )
 else:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "frontend/build")
+    build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
 def AgGrid(

@@ -39,7 +39,7 @@ function getCSS(styles: CSSDict): string {
     let style = selector + " {";
     
     for (let prop in styles[selector]) {
-      style += prop + ": " + styles[selector][prop];
+      style += prop + ": " + styles[selector][prop] + ";";
     }
     
     style += "}";

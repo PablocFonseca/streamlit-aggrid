@@ -10,7 +10,8 @@ Welcome to streamlit-aggrid's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   GridOptionsBuilder
+   AgGrid
 
 Indices and tables
 ==================

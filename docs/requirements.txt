@@ -1,1 +1,3 @@
 streamlit-aggrid
+sphinxcontrib-napoleon
+Sphinx

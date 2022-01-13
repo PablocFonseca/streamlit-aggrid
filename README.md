@@ -8,6 +8,7 @@ Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-compone
 
 <br>
 
+Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 # Install
 ```
 pip install streamlit-aggrid

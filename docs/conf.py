@@ -13,7 +13,10 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import subprocess
+subprocess.call('npm install --global yarn', shell=True)
+subprocess.call('pwd', shell=True)
+subprocess.call('cd ../st_aggrid/frontend && yarn install && yarn build', shell=True)
 
 # -- Project information -----------------------------------------------------
 

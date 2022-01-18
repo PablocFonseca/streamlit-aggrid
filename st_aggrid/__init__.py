@@ -59,8 +59,10 @@ def AgGrid(
             The grid height, by default 400
 
         width:
-            The grid width, by default None
+        
             .. deprecated:: 0.2.0
+
+            The grid width, by default None
 
         fit_columns_on_grid_load:
             Automatically fit columns to the grid width. Defaults to False.
@@ -68,6 +70,7 @@ def AgGrid(
         update_mode: 
             Defines how the grid will send results back to streamlit.
             must be either a string, one or a bitwise combination of:
+            
                 + GridUpdateMode.NO_UPDATE
                 + GridUpdateMode.MANUAL
                 + GridUpdateMode.VALUE_CHANGED
@@ -78,12 +81,15 @@ def AgGrid(
 
             .. note::
                 When using  *GridUpdateMode.MANUAL* a save button will be drawn on top of grid.
+
+            .. note::    
                 modes can be combined with bitwise OR operator *|* for instance:
                 GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
             
             Defaults to GridUpdateMode.VALUE_CHANGED.
 
         data_return_mode:
+        
             Defines how the data will be retrieved from components client side. One of:
                 + DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
                 + DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order

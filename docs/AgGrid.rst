@@ -2,7 +2,7 @@
 
 AgGrid
 ------------------
-AgGrid is the main call to render the grid.
+AgGrid is the main function used to render the grid.
 
 
 .. autofunction:: st_aggrid.AgGrid

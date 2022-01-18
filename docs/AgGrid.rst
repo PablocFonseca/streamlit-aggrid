@@ -5,4 +5,5 @@ AgGrid
 AgGrid is the main function used to render the grid.
 
 
-.. autofunction:: st_aggrid.AgGrid
+.. automodule:: st_aggrid
+    :members: AgGrid

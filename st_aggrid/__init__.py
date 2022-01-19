@@ -1,3 +1,4 @@
+from operator import index
 import os
 import streamlit.components.v1 as components
 import pandas as pd
@@ -16,6 +17,7 @@ load_dotenv()
 _RELEASE = os.getenv("AGGRID_RELEASE", "true").lower() == "true"
 
 if not _RELEASE:
+    print("WARNING: Running de development mode")
     _component_func = components.declare_component(
         "agGrid",
         url="http://localhost:3001",
@@ -32,7 +34,7 @@ def AgGrid(
     height: int = 400,
     width=None,
     fit_columns_on_grid_load: bool = False,
-    update_mode: GridUpdateMode = "value_changed",
+    update_mode: GridUpdateMode = GridUpdateMode.VALUE_CHANGED | GridUpdateMode.SELECTION_CHANGED,
     data_return_mode: DataReturnMode = "as_input",
     allow_unsafe_jscode: bool = False,
     enable_enterprise_modules: bool = False,
@@ -86,7 +88,7 @@ def AgGrid(
                 modes can be combined with bitwise OR operator *|* for instance:
                 GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
             
-            Defaults to GridUpdateMode.VALUE_CHANGED.
+            Defaults to GridUpdateMode.VALUE_CHANGED | SELECTION_CHANGED.
 
         data_return_mode:
         

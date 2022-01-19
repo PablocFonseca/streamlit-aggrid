@@ -238,7 +238,9 @@ class AgGrid extends StreamlitComponentBase<State> {
     let returnValue = {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
-      selectedRows: this.api.getSelectedRows()
+      selectedRows: this.api
+        .getSelectedNodes()
+        .map((node) => Object.assign({}, { index: node.rowIndex }, node.data)),
     }
 
     Streamlit.setComponentValue(returnValue)

@@ -52,11 +52,11 @@ this will make all the cells in the grid editable and the `new_df` variable will
 Grid Customization
 ==================
 AgGrid can be customized in many ways, many options can be set using the `grid_options` parameter.
-`grid_options` is a dictionary used as a one-stop-shop to configure the grid. Extensive documentation  is available at
+`grid_options` is a dictionary used as a "one stop shop" to configure the grid. Extensive documentation  is available at
 `AgGrid documentation <https://www.ag-grid.com/javascript-data-grid/grid-properties/>`_
 
 .. note::
-    Not all `grid_options` are fully suppoerted by streamlit-aggrid. Not all use cases have been tested current implementation
+    Not all `grid_options` are fully suppoerted by streamlit-aggrid. Not all use cases have been tested. Current implementation
     cover most common scenarios.
 
 if `grid_options` is not set, AgGrid call will infer default options from the dataframe. However if it is set, at least `columnDefs` key must be 
@@ -120,7 +120,6 @@ also enables single row selection. Selection result  returns as a list of select
     options_builder = GridOptionsBuilder.from_dataframe(df)
     options_builder.configure_column('col1', editable=True)
     options_builder.configure_selection("single")
-    options_builder.
     grid_options = options_builder.build()
 
     grid_return = AgGrid(df, grid_options)

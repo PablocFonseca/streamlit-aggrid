@@ -9,9 +9,18 @@ Welcome to streamlit-aggrid's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   
+   How to use AgGrid <Usage>
 
-   GridOptionsBuilder
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Api:
+
    AgGrid
+   GridOptionsBuilder
+   
+   
 
 Indices and tables
 ==================

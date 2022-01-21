@@ -12,6 +12,7 @@ class DataReturnMode(IntEnum):
     AS_INPUT = 0
     FILTERED = 1
     FILTERED_AND_SORTED = 2
+    SELECTION_ONLY = 3
 
 # stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
 class JsCode:

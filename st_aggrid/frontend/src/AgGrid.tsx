@@ -233,6 +233,9 @@ class AgGrid extends StreamlitComponentBase<State> {
       case 2: //FILTERED_SORTED_DATA
         this.api.forEachNodeAfterFilterAndSort((row) => { if (!row.group) { returnData.push(row.data) } })
         break;
+
+      case 3: //SELECTION_ONLY
+        break;
     }
 
     let returnValue = {

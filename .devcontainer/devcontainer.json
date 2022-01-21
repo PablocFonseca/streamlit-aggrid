@@ -1,0 +1,14 @@
+{
+    "name": "aggrid_dev",
+    "image": "nikolaik/python-nodejs:latest",
+    "workspaceFolder": "/code",
+    "runArgs": [
+        "--network=host"
+    ],
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "workspaceMount": "src=${localWorkspaceFolder},dst=/code,type=bind,consistency=cached",
+    "postCreateCommand": "cd /st_aggrid/frontend && npm install",
+    "extensions": ["ms-python.python", "eamodio.gitlens"]
+}

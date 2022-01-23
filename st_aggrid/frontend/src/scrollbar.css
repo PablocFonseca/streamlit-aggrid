@@ -1,0 +1,15 @@
+::-webkit-scrollbar {
+    background: transparent;
+    border-radius: 100px;
+    height: 6px;
+    width: 6px;
+}
+::-webkit-scrollbar:hover {
+    background:rgba(49, 51, 63, 0.15);
+  }
+
+/* Add a thumb */
+::-webkit-scrollbar-thumb {
+    background: rgba(49, 51, 63, 0.40   );
+    border-radius: 100px;
+}

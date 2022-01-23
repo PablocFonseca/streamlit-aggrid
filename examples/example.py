@@ -9,7 +9,10 @@ dashboards = {
     "License Key": os.path.join(root, "licensing_example.py"),
     "Two grids in page": os.path.join(root, "two_grids_example.py"),
     "Virtual Columns": os.path.join(root, "virtual_columns.py"),
-    "Highlight Editions": os.path.join(root, "example_highlight_change.py")
+    "Highlight Editions": os.path.join(root, "example_highlight_change.py"),
+    "Inside st.form": os.path.join(root, "forms.py"),
+    "Pinned Row": os.path.join(root, "pinned_rows.py"),
+    "Theming & Pre-Selection": os.path.join(root, "themes_and_pre_selection.py")
 }
 
 choice = st.sidebar.radio("Examples", list(dashboards.keys()))

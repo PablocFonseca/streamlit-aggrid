@@ -1,4 +1,3 @@
-import pandas as pd
 from collections import defaultdict
 
 
@@ -10,7 +9,7 @@ class GridOptionsBuilder:
         self.sideBar = {}
 
     @staticmethod
-    def from_dataframe(dataframe,**default_column_parameters):
+    def from_dataframe(dataframe, **default_column_parameters):
         """
         Creates an instance and initilizes it from a dataframe.
         ColumnDefs are created based on dataframe columns and data types.
@@ -80,8 +79,9 @@ class GridOptionsBuilder:
             "filter": filterable,
             "resizable": resizable,
             "sortable": sorteable,
-            "enableRowGroup": groupable,
         }
+        if groupable:
+            defaultColDef["enableRowGroup"] = groupable
 
         if other_default_column_properties:
             defaultColDef = {**defaultColDef, **other_default_column_properties}
@@ -99,7 +99,7 @@ class GridOptionsBuilder:
 
         Args:
             props (dict): props dicts will be merged to gridOptions root.
-        """        
+        """
         self.__grid_options.update(props)
 
     def configure_columns(self, column_names=[], **props):
@@ -110,12 +110,11 @@ class GridOptionsBuilder:
             column_names (list, optional):
                 columns field properties. If any of colDefs mathces **props dict is merged.
                 Defaults to [].
-        """        
+        """
         for k in self.__grid_options["columnDefs"]:
             if k in column_names:
                 self.__grid_options["columnDefs"][k].update(props)
 
-    
     def configure_column(self, field, header_name=None, **other_column_properties):
         """Configures an individual column
         check https://www.ag-grid.com/javascript-grid-column-properties/ for more information.
@@ -139,12 +138,12 @@ class GridOptionsBuilder:
            Side panels are enterprise features, please check www.ag-grid.com
 
         Args:
-            filters_panel (bool, optional): 
+            filters_panel (bool, optional):
                 Enable filters side panel. Defaults to True.
 
-            columns_panel (bool, optional): 
+            columns_panel (bool, optional):
                 Enable columns side panel. Defaults to True.
-                
+
             defaultToolPanel (str, optional): The default tool panel that should open when grid renders.
                                               Either "filters" or "columns".
                                               If value is blank, panel will start closed (default)
@@ -179,6 +178,7 @@ class GridOptionsBuilder:
         self,
         selection_mode="single",
         use_checkbox=False,
+        pre_selected_rows=None,
         rowMultiSelectWithClick=False,
         suppressRowDeselection=False,
         suppressRowClickSelection=False,
@@ -190,6 +190,9 @@ class GridOptionsBuilder:
         Args:
             selection_mode (str, optional):
                 Either 'single', 'multiple' or 'disabled'. Defaults to 'single'.
+
+            pre_selected_rows (list, optional):
+                Use list of dataframe row iloc index to set corresponding rows as selected state on load. Defaults to None.
 
             rowMultiSelectWithClick (bool, optional):
                 If False user must hold shift to multiselect. Defaults to True if selection_mode is 'multiple'.
@@ -225,6 +228,9 @@ class GridOptionsBuilder:
             suppressRowClickSelection = True
             first_key = next(iter(self.__grid_options["columnDefs"].keys()))
             self.__grid_options["columnDefs"][first_key]["checkboxSelection"] = True
+        
+        if pre_selected_rows:
+            self.__grid_options['preSelectedRows'] = pre_selected_rows
 
         self.__grid_options["rowSelection"] = selection_mode
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick
@@ -232,7 +238,7 @@ class GridOptionsBuilder:
         self.__grid_options["suppressRowClickSelection"] = suppressRowClickSelection
         self.__grid_options["groupSelectsChildren"] = groupSelectsChildren and selection_mode == "multiple"
         self.__grid_options["groupSelectsFiltered"] = groupSelectsChildren
-
+    
     def configure_pagination(self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10):
         """Configure grid's pagination features
 

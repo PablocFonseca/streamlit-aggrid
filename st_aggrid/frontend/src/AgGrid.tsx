@@ -4,7 +4,7 @@ import {
   withStreamlitConnection
 } from "streamlit-component-lib";
 
-import React, { ReactNode } from "react"
+import { ReactNode } from "react"
 
 import { AgGridReact } from '@ag-grid-community/react';
 import { ColumnApi, GridApi } from '@ag-grid-community/core'
@@ -13,20 +13,50 @@ import { AllCommunityModules } from '@ag-grid-community/all-modules'
 import { AllModules } from '@ag-grid-enterprise/all-modules'
 import { LicenseManager } from "@ag-grid-enterprise/core";
 
-import '@ag-grid-community/core/dist/styles/ag-grid.css';
-import '@ag-grid-community/core/dist/styles/ag-theme-balham.css';
-
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";
 
-import _ from 'lodash'
+import '@ag-grid-community/core/dist/styles/ag-theme-blue.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-fresh.css';
+import '@ag-grid-community/core/dist/styles/ag-theme-material.css';
+
+import './AgGrid.scss'
+import './scrollbar.css'
 
 interface State {
   rowData: any
   gridHeight: number
   should_update: boolean
+}
+
+type CSSDict = {[key: string]: {[key: string]: string}}
+
+function getCSS(styles: CSSDict): string {
+  var css = [];
+  for (let selector in styles) {
+    let style = selector + " {";
+    
+    for (let prop in styles[selector]) {
+      style += prop + ": " + styles[selector][prop] + ";";
+    }
+    
+    style += "}";
+    
+    css.push(style);
+  }
+  
+  return css.join("\n");
+}
+
+function addCustomCSS(custom_css: CSSDict): void {
+    var css = getCSS(custom_css)
+    var styleSheet = document.createElement("style")
+    styleSheet.type = "text/css"
+    styleSheet.innerText = css
+    console.log(`Adding cutom css: `, css)
+    document.head.appendChild(styleSheet)
 }
 
 class AgGrid extends StreamlitComponentBase<State> {
@@ -42,6 +72,10 @@ class AgGrid extends StreamlitComponentBase<State> {
   constructor(props: any) {
     super(props)
 
+    if (props.args.custom_css) {
+      addCustomCSS(props.args.custom_css);
+    }
+
     if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules(AllModules);
       if ('license_key' in props.args) {
@@ -55,7 +89,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
     this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
-
+    
     this.columnFormaters = {
       columnTypes: {
         'dateColumnFilter': {
@@ -102,9 +136,9 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   static getDerivedStateFromProps(props: any, state: any) {
     if (props.args.reload_data) {
-      let old_row_data = state.rowData
+
       let new_row_data = JSON.parse(props.args.row_data)
-      //let should_update = _.isEqual(_.map(old_row_data, (v) => Object.keys(v)), _.map(new_row_data, (v) => Object.keys(v)))
+
       return {
         rowData: new_row_data,
         gridHeight: props.args.height,
@@ -128,6 +162,7 @@ class AgGrid extends StreamlitComponentBase<State> {
 
     if (match) {
       const funcStr = match[1]
+      // eslint-disable-next-line
       return new Function("return " + funcStr)()
 
     } else {
@@ -171,6 +206,10 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
 
     this.api.setRowData(this.state.rowData)
+
+    for (var idx in this.gridOptions['preSelectedRows']) {
+      this.api.selectIndex(this.gridOptions['preSelectedRows'][idx], true, true)
+    }
   }
 
   private fitColumns() {
@@ -269,7 +308,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
 
     return (
-      <div className="ag-theme-balham" style={this.defineContainerHeight()} >
+      <div className={"ag-theme-"+ this.props.args.theme} style={this.defineContainerHeight()} >
         <this.ManualUpdateButton manual_update={this.manualUpdateRequested} onClick={(e: any) => this.returnGridValue(e)} />
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
@@ -281,9 +320,4 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 }
 
-// "withStreamlitConnection" is a wrapper function. It bootstraps the
-// connection between your component and the Streamlit app, and handles
-// passing arguments from Python -> Component.
-//
-// You don't need to edit withStreamlitConnection (but you're welcome to!).
 export default withStreamlitConnection(AgGrid)

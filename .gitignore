@@ -108,7 +108,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -181,11 +180,15 @@ package-lock.json
 .vscode/
 
 st_aggrid/frontend/node_modules/
-st_aggrid/frontend/.env
 st_aggrid/frontend/.eslintcache
 streamlit_aggrid.egg-info/*
 streamlit_aggrid.egg-info/PKG-INFO
 Pipfile.lock
-Pipfile.lock
 Pipfile
-Pipfile
+/poetry.lock
+/.env
+
+########################################################################
+# vim
+########################################################################
+.vim/

@@ -1,0 +1,28 @@
+// ag-grid.scss defines structural styles and should be imported first
+@import "@ag-grid-community/core/dist/styles/ag-grid.scss";
+@import "@ag-grid-community/core/dist/styles/ag-theme-balham/sass/ag-theme-balham-mixin.scss";
+@import "@ag-grid-community/core/dist/styles/ag-theme-balham-dark/sass/ag-theme-balham-dark-mixin.scss";
+
+.ag-theme-light {
+    @include ag-theme-balham
+};
+
+.ag-theme-dark {
+    @include ag-theme-balham-dark
+}
+
+.ag-theme-streamlit {
+  @include ag-theme-balham((
+    odd-row-background-color: var(--secondary-background-color),
+    background-color: var(--background-color),
+    row-hover-color: var(--primary-color),
+    header-background-color: var(--secondary-background-color),
+    foreground-color: var(--text-color),
+    selected-row-background-color: var(--primary-color)
+  ));
+
+  .ag-menu-option-active {
+    background-color: #2661ad;
+    color: white;
+  }
+}

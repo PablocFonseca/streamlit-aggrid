@@ -17,7 +17,7 @@ dashboards = {
     "Nested Grids" : os.path.join(root, "nested_grids.py") 
 }
 
-choice_from_url = query_params = st.experimental_get_query_params().get("example", "Main Example")[0]
+choice_from_url = query_params = st.experimental_get_query_params().get("example", ["Main Example"])[0]
 index = list(dashboards.keys()).index(choice_from_url)
 
 choice = st.sidebar.radio("Examples", list(dashboards.keys()), index=index)

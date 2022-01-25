@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import streamlit as st
 import os
 
@@ -16,8 +17,17 @@ dashboards = {
     "Nested Grids" : os.path.join(root, "nested_grids.py") 
 }
 
-choice = st.sidebar.radio("Examples", list(dashboards.keys()))
+choice_from_url = query_params = st.experimental_get_query_params().get("example", "Main Example")[0]
+index = list(dashboards.keys()).index(choice_from_url)
+
+choice = st.sidebar.radio("Examples", list(dashboards.keys()), index=index)
 
 path = dashboards[choice]
+
 with open(path, encoding="utf-8") as code:
-    exec(code.read(), globals())
+    c = code.read()
+    exec(c, globals())
+
+    with st.expander('Code for this example:'):
+        st.markdown(f"""``` python
+{c}```""")

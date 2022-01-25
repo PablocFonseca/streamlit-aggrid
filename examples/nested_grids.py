@@ -1,4 +1,3 @@
-from curses import meta
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode, GridUpdateMode
 import pandas as pd
@@ -63,10 +62,8 @@ gridOptions = {
 r = AgGrid(
     df,
     gridOptions=gridOptions,
-    height=700,
+    height=500,
     allow_unsafe_jscode=True,
     enable_enterprise_modules=True,
     update_mode=GridUpdateMode.SELECTION_CHANGED
 )
-
-st.write(r)

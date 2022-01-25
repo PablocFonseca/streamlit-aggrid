@@ -155,6 +155,9 @@ def AgGrid(
         gridOptions = gb.build()
 
     def cast_to_serializable(value):
+        if isinstance(value, pd.DataFrame):
+            return get_row_data(value)
+        
         isoformat = getattr(value, 'isoformat', None)
         
         if ((isoformat) and callable(isoformat)):

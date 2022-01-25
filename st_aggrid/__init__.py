@@ -15,6 +15,7 @@ load_dotenv()
 _RELEASE = os.getenv("AGGRID_RELEASE",'true').lower() == 'true'
 
 if not _RELEASE:
+    warnings.warn("WARNING: ST_AGGRID is in development mode.")
     _component_func = components.declare_component(
         "agGrid",
         url="http://localhost:3001",
@@ -175,7 +176,7 @@ def AgGrid(
         json_frame = df.applymap(cast_to_serializable) 
         row_data = json_frame.to_dict(orient="records")
         row_data = simplejson.dumps(row_data, ignore_nan=True)
-       return row_data
+        return row_data
 
     row_data = get_row_data(dataframe)
 

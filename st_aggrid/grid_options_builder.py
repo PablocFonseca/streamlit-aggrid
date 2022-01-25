@@ -39,6 +39,9 @@ class GridOptionsBuilder:
         gb = GridOptionsBuilder()
         gb.configure_default_column(**default_column_parameters)
 
+        if any('.' in col for col in dataframe.columns):
+            gb.configure_grid_options(suppressFieldDotNotation = True)
+
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 

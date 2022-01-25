@@ -12,7 +12,8 @@ dashboards = {
     "Highlight Editions": os.path.join(root, "example_highlight_change.py"),
     "Inside st.form": os.path.join(root, "forms.py"),
     "Pinned Row": os.path.join(root, "pinned_rows.py"),
-    "Theming & Pre-Selection": os.path.join(root, "themes_and_pre_selection.py")
+    "Theming & Pre-Selection": os.path.join(root, "themes_and_pre_selection.py"),
+    "Nested Grids" : os.path.join(root, "nested_grids.py") 
 }
 
 choice = st.sidebar.radio("Examples", list(dashboards.keys()))

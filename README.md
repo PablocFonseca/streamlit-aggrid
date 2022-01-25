@@ -38,6 +38,7 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 Version 0.2.3
 * small fixes
 * Merged PR #44 and #25 (thanks [msabramo](https://github.com/msabramo) and [ljnsn](https://github.com/ljnsn))
+* Merged PR #58 - allow nesting dataframes. Included an example in exampes folder.
 
 Version 0.2.2
 * Updated frontend dependencies to latest version

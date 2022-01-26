@@ -8,6 +8,7 @@ Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-compone
 
 <br>
 
+Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 # Install
 ```
 pip install streamlit-aggrid
@@ -33,8 +34,12 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
-# Develop
-ment Notes
+# Development Notes
+Version 0.2.3
+* small fixes
+* Merged PR #44 and #25 (thanks [msabramo](https://github.com/msabramo) and [ljnsn](https://github.com/ljnsn))
+* Merged PR #58 - allow nesting dataframes. Included an example in exampes folder.
+
 Version 0.2.2
 * Updated frontend dependencies to latest version
 * Corrected text color for better viz when using streamlit theme (thanks [jasonpmcculloch](https://github.com/jasonpmcculloch))

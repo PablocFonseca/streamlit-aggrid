@@ -11,7 +11,7 @@ Welcome to streamlit-aggrid's documentation!
    :caption: Contents:
    
    How to use AgGrid <Usage>
-
+   Examples <Examples>
 
 .. toctree::
    :maxdepth: 2

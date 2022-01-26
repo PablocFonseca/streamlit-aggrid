@@ -44,6 +44,7 @@ def AgGrid(
     reload_data: bool = False,
     theme: str = "light",
     key: typing.Any = None,
+    custom_css=None,
     **default_column_parameters,
 ) -> typing.Dict:
     """
@@ -162,23 +163,30 @@ def AgGrid(
         gb = GridOptionsBuilder.from_dataframe(dataframe, **default_column_parameters)
         gridOptions = gb.build()
 
-    def cast_to_serializable(value):
-        isoformat = getattr(value, "isoformat", None)
+    def get_row_data(df):
+        def cast_to_serializable(value):
+            if isinstance(value, pd.DataFrame):
+                return get_row_data(value)
 
-        if (isoformat) and callable(isoformat):
-            return isoformat()
+            isoformat = getattr(value, 'isoformat', None)
 
-        elif isinstance(value, Number):
-            if np.isnan(value) or np.isinf(value):
+            if ((isoformat) and callable(isoformat)):
+                return isoformat()
+
+            elif isinstance(value, Number):
+                if (np.isnan(value) or np.isinf(value)):
+                    return value.__str__()
+
+                return value
+            else:
                 return value.__str__()
+    
+        json_frame = df.applymap(cast_to_serializable) 
+        row_data = json_frame.to_dict(orient="records")
+        row_data = simplejson.dumps(row_data, ignore_nan=True)
+        return row_data
 
-            return value
-        else:
-            return value.__str__()
-
-    json_frame = dataframe.applymap(cast_to_serializable)
-    row_data = json_frame.to_dict(orient="records")
-    row_data = simplejson.dumps(row_data, ignore_nan=True)
+    row_data = get_row_data(dataframe)
 
     if allow_unsafe_jscode:
         walk_gridOptions(
@@ -209,6 +217,8 @@ def AgGrid(
     except:
         raise ValueError(f"{data_return_mode} is not valid.")
 
+    custom_css = custom_css or dict()
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -225,8 +235,9 @@ def AgGrid(
             default=None,
             reload_data=reload_data,
             theme=theme,
-            key=key,
-        )
+            custom_css=custom_css,
+            key=key
+            )
 
     except components.components.MarshallComponentException as ex:
         # a more complete error message.

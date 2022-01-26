@@ -31,6 +31,34 @@ interface State {
   should_update: boolean
 }
 
+type CSSDict = {[key: string]: {[key: string]: string}}
+
+function getCSS(styles: CSSDict): string {
+  var css = [];
+  for (let selector in styles) {
+    let style = selector + " {";
+    
+    for (let prop in styles[selector]) {
+      style += prop + ": " + styles[selector][prop] + ";";
+    }
+    
+    style += "}";
+    
+    css.push(style);
+  }
+  
+  return css.join("\n");
+}
+
+function addCustomCSS(custom_css: CSSDict): void {
+    var css = getCSS(custom_css)
+    var styleSheet = document.createElement("style")
+    styleSheet.type = "text/css"
+    styleSheet.innerText = css
+    console.log(`Adding cutom css: `, css)
+    document.head.appendChild(styleSheet)
+}
+
 class AgGrid extends StreamlitComponentBase<State> {
   private frameDtypes: any
   private api!: GridApi;
@@ -43,6 +71,10 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
+
+    if (props.args.custom_css) {
+      addCustomCSS(props.args.custom_css);
+    }
 
     if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules(AllModules);

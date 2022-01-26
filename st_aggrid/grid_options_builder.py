@@ -62,6 +62,9 @@ class GridOptionsBuilder:
         gb = GridOptionsBuilder()
         gb.configure_default_column(**default_column_parameters)
 
+        if any('.' in col for col in dataframe.columns):
+            gb.configure_grid_options(suppressFieldDotNotation = True)
+
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
@@ -299,16 +302,11 @@ class GridOptionsBuilder:
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick
         self.__grid_options["suppressRowDeselection"] = suppressRowDeselection
         self.__grid_options["suppressRowClickSelection"] = suppressRowClickSelection
-        self.__grid_options["groupSelectsChildren"] = groupSelectsChildren
-        self.__grid_options["groupSelectsFiltered"] = groupSelectsFiltered
-
-    def configure_pagination(
-        self,
-        enabled: bool = True,
-        paginationAutoPageSize: bool = True,
-        paginationPageSize: int = 10,
-    ):
-        """Configure grid's pagination feature
+        self.__grid_options["groupSelectsChildren"] = groupSelectsChildren and selection_mode == "multiple"
+        self.__grid_options["groupSelectsFiltered"] = groupSelectsChildren
+    
+    def configure_pagination(self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10):
+        """Configure grid's pagination features
 
         Args:
             enabled:

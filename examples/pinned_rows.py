@@ -22,7 +22,7 @@ gb.configure_columns(list('abcde'), editable=False)
 
 go = gb.build()
 st.markdown("""
-### Pinned Columns
+### Pinned Rows
 Pin columns using either pinnedTopRowData or pinnedBottomRowData
 ``` 
 gb = GridOptionsBuilder.from_dataframe(data)

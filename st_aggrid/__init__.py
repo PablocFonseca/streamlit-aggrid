@@ -244,19 +244,19 @@ def AgGrid(
         if not frame.empty:
             #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             if try_to_convert_back_to_original_types:
-                numeric_columns = {k:v for k,v in original_types.items() if v in ['i','u','f']}
+                numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
                 if numeric_columns:
                     frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
 
-                text_columns = {k:v for k,v in original_types.items() if v in ['O','S','U']}
+                text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
                     frame.loc[:,text_columns]  = frame.loc[:,text_columns].astype(str)
 
-                date_columns = {k:v for k,v in original_types.items() if v in ['M']}
+                date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:
                     frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
 
-                timedelta_columns = {k:v for k,v in original_types.items() if v in ['m']}
+                timedelta_columns = [k for k,v in original_types.items() if v == "m"]
                 if timedelta_columns:
                     def cast_to_timedelta(s):
                         try:

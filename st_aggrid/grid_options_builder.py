@@ -47,7 +47,7 @@ class GridOptionsBuilder:
 
         return gb
 
-    def configure_default_column(self, min_column_width=5, resizable=True, filterable=True, sortable=True, editable=False, groupable=False, **other_default_column_properties):
+    def configure_default_column(self, min_column_width=5, resizable=True, filterable=True, sortable=True, editable=False, groupable=False, sorteable=None, **other_default_column_properties):
         """Configure default column.
 
         Args:
@@ -63,6 +63,9 @@ class GridOptionsBuilder:
             sortable (bool, optional):
                 All columns will be sortable. Defaults to True.
 
+            sorteable (bool, optional):
+                Backwards compatibility alias for sortable. Overrides sortable if not None.
+
             groupable (bool, optional):
                 All columns will be groupable based on row values. Defaults to True.
 
@@ -76,6 +79,9 @@ class GridOptionsBuilder:
                 Key value pairs that will be merged to defaultColDef dict.
                 Chech ag-grid documentation.
         """
+        if sorteable is not None:
+            sortable = sorteable
+
         defaultColDef = {
             "minWidth": min_column_width,
             "editable": editable,

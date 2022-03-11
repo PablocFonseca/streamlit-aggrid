@@ -2,6 +2,7 @@ from multiprocessing.sharedctypes import Value
 import streamlit as st
 import os
 
+st.set_page_config(layout="wide")
 root = os.path.join(os.path.dirname(__file__))
 
 dashboards = {
@@ -14,7 +15,8 @@ dashboards = {
     "Inside st.form": os.path.join(root, "forms.py"),
     "Pinned Row": os.path.join(root, "pinned_rows.py"),
     "Theming & Pre-Selection": os.path.join(root, "themes_and_pre_selection.py"),
-    "Nested Grids" : os.path.join(root, "nested_grids.py") 
+    "Nested Grids" : os.path.join(root, "nested_grids.py"), 
+    "Rich Cell Editor" : os.path.join(root, "rich_cell_editor.py") 
 }
 
 choice_from_url = query_params = st.experimental_get_query_params().get("example", ["Main Example"])[0]

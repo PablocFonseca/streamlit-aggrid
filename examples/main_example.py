@@ -1,3 +1,5 @@
+from distutils import errors
+from distutils.log import error
 import streamlit as st
 import pandas as pd 
 import numpy as np
@@ -35,8 +37,8 @@ def fetch_data(samples):
 #Example controlers
 st.sidebar.subheader("St-AgGrid example options")
 
-sample_size = st.sidebar.number_input("rows", min_value=10, value=10)
-grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=800, value=200)
+sample_size = st.sidebar.number_input("rows", min_value=10, value=30)
+grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=800, value=300)
 
 return_mode = st.sidebar.selectbox("Return Mode", list(DataReturnMode.__members__), index=1)
 return_mode_value = DataReturnMode.__members__[return_mode]
@@ -57,9 +59,9 @@ fit_columns_on_grid_load = st.sidebar.checkbox("Fit Grid Columns on Load")
 enable_selection=st.sidebar.checkbox("Enable row selection", value=True)
 if enable_selection:
     st.sidebar.subheader("Selection options")
-    selection_mode = st.sidebar.radio("Selection Mode", ['single','multiple'])
+    selection_mode = st.sidebar.radio("Selection Mode", ['single','multiple'], index=1)
     
-    use_checkbox = st.sidebar.checkbox("Use check box for selection")
+    use_checkbox = st.sidebar.checkbox("Use check box for selection", value=True)
     if use_checkbox:
         groupSelectsChildren = st.sidebar.checkbox("Group checkbox select children", value=True)
         groupSelectsFiltered = st.sidebar.checkbox("Group checkbox includes filtered", value=True)
@@ -153,17 +155,18 @@ grid_response = AgGrid(
 
 df = grid_response['data']
 selected = grid_response['selected_rows']
-selected_df = pd.DataFrame(selected)
+selected_df = pd.DataFrame(selected).apply(pd.to_numeric, errors='coerce')
+
 
 with st.spinner("Displaying results..."):
     #displays the chart
-    chart_data = df.loc[:,['date_time_naive','apple','banana','chocolate']].assign(source='total')
+    chart_data = df.loc[:,['apple','banana','chocolate']].assign(source='total')
 
-    if not selected_df.empty:
-        selected_data = selected_df.loc[:,['date_time_naive','apple','banana','chocolate']].assign(source='selection')
+    if not selected_df.empty :
+        selected_data = selected_df.loc[:,['apple','banana','chocolate']].assign(source='selection')
         chart_data = pd.concat([chart_data, selected_data])
 
-    chart_data = pd.melt(chart_data, id_vars=['date_time_naive','source'], var_name="item", value_name="quantity")
+    chart_data = pd.melt(chart_data, id_vars=['source'], var_name="item", value_name="quantity")
     #st.dataframe(chart_data)
     chart = alt.Chart(data=chart_data).mark_bar().encode(
         x=alt.X("item:O"),

@@ -10,6 +10,6 @@
 
 /* Add a thumb */
 ::-webkit-scrollbar-thumb {
-    background: rgba(49, 51, 63, 0.40   );
+    background: rgba(128, 128, 128, 1);
     border-radius: 100px;
 }

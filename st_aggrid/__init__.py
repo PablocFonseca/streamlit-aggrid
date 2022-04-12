@@ -246,15 +246,15 @@ def AgGrid(
             if try_to_convert_back_to_original_types:
                 numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
                 if numeric_columns:
-                    frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
+                    frame.loc[:,numeric_columns.keys()] = frame.loc[:,numeric_columns.keys()] .apply(pd.to_numeric, errors=conversion_errors)
 
                 text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
-                    frame.loc[:,text_columns.keys()]  = frame.loc[:,text_columns.keys()].astype(str)
+                    frame.loc[:,text_columns.keys()] = frame.loc[:,text_columns.keys()].astype(str)
 
                 date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:
-                    frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
+                    frame.loc[:,date_columns.keys()] = frame.loc[:,date_columns.keys()].apply(pd.to_datetime, errors=conversion_errors)
 
                 timedelta_columns = [k for k,v in original_types.items() if v == "m"]
                 if timedelta_columns:
@@ -264,7 +264,7 @@ def AgGrid(
                         except:
                             return s
 
-                    frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
+                    frame.loc[:,timedelta_columns.keys()] = frame.loc[:,timedelta_columns.keys()].apply(cast_to_timedelta)
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]

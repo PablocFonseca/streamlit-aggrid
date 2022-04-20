@@ -25,6 +25,7 @@ class JsCode:
             js_code (str): javascript function code as str
         """        
         import re
+        js_code = re.sub(re.compile("//.*?\n" ), "", js_code)
         js_placeholder = "--x_x--0_0--"
         one_line_jscode = re.sub(r"\s+|\n+", " ", js_code)
         self.js_code = f"{js_placeholder}{one_line_jscode}{js_placeholder}"

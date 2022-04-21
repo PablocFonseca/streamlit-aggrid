@@ -1,7 +1,6 @@
 import os
 import streamlit.components.v1 as components
 import pandas as pd
-import numpy as np
 import simplejson
 import warnings
 from dotenv import load_dotenv
@@ -9,7 +8,6 @@ import typing
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
-from numbers import Number
 load_dotenv()
 
 _RELEASE = os.getenv("AGGRID_RELEASE",'true').lower() == 'true'
@@ -155,30 +153,7 @@ def AgGrid(
         gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
         gridOptions = gb.build()
 
-    def get_row_data(df):
-        def cast_to_serializable(value):
-            if isinstance(value, pd.DataFrame):
-                return get_row_data(value)
-
-            isoformat = getattr(value, 'isoformat', None)
-
-            if ((isoformat) and callable(isoformat)):
-                return isoformat()
-
-            elif isinstance(value, Number):
-                if (np.isnan(value) or np.isinf(value)):
-                    return value.__str__()
-
-                return value
-            else:
-                return value.__str__()
-    
-        json_frame = df.applymap(cast_to_serializable) 
-        row_data = json_frame.to_dict(orient="records")
-        row_data = simplejson.dumps(row_data, ignore_nan=True)
-        return row_data
-
-    row_data = get_row_data(dataframe)
+    row_data = dataframe.to_json(orient="records", date_format="iso")
 
     if allow_unsafe_jscode:
         walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)

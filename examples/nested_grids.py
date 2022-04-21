@@ -52,7 +52,7 @@ gridOptions = {
         "getDetailRowData": JsCode(
             """function (params) {
                 console.log(params);
-                params.successCallback(JSON.parse(params.data.callRecords));
+                params.successCallback(params.data.callRecords);
     }"""
         ).js_code,
     },

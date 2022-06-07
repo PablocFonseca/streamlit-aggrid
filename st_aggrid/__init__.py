@@ -41,6 +41,7 @@ def AgGrid(
     reload_data:bool=False,
     theme:str='light',
     custom_css=None,
+    default_column_filters: typing.Optional[str] = None,
     key: typing.Any=None,
     **default_column_parameters) -> typing.Dict:
     """Reders a DataFrame using AgGrid.
@@ -126,6 +127,10 @@ def AgGrid(
     custom_css (dict, optional):
         Custom CSS rules to be added to the component's iframe.
 
+    default_column_filters : str, optional
+        Default column filters to apply on instantiation. Requires enterprise license.
+        Defaults to None.
+
     key : typing.Any, optional
         Streamlits key argument. Check streamlit's documentation.
         Defaults to None.
@@ -146,6 +151,7 @@ def AgGrid(
     response = {}
     response["data"] = dataframe
     response["selected_rows"] = []
+    response["column_filters"] = None
     
     #basic numpy types of dataframe
     frame_dtypes = dict(zip(dataframe.columns, (t.kind for t in dataframe.dtypes)))
@@ -225,7 +231,8 @@ def AgGrid(
             reload_data=reload_data,
             theme=theme,
             custom_css=custom_css,
-            key=key
+            default_column_filters=default_column_filters,
+            key=key,
             )
 
     except components.components.MarshallComponentException as ex:
@@ -250,7 +257,7 @@ def AgGrid(
 
                 text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
-                    frame.loc[:,text_columns.keys()]  = frame.loc[:,text_columns.keys()].astype(str)
+                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].astype(str)
 
                 date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:
@@ -268,5 +275,6 @@ def AgGrid(
 
         response["data"] = frame
         response["selected_rows"] = component_value["selectedRows"]
+        response["column_filters"] = component_value["columnFilters"]
     
     return response

@@ -208,7 +208,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api.addEventListener('firstDataRendered', (e: any) => {
       this.fitColumns()
       if (this.defaultColumnFilters) {
-        let filters = JSON.parse(this.defaultColumnFilters.slice(1, -1))
+        let filters = JSON.parse(this.defaultColumnFilters)
         this.api.setFilterModel(filters)
       }
     })

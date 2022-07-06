@@ -153,22 +153,23 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   private convertStringToFunction(v: string) {
     const JS_PLACEHOLDER = "--x_x--0_0--"
-
+  
     let funcReg = new RegExp(
-      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
+      `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
     )
-
+  
     let match = funcReg.exec(v)
-
+  
     if (match) {
       const funcStr = match[1]
       // eslint-disable-next-line
       return new Function("return " + funcStr)()
-
+  
     } else {
       return v
     }
   }
+
 
   private convertJavascriptCodeOnGridOptions = (obj: object) => {
     return deepMap(obj, this.convertStringToFunction)

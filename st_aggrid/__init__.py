@@ -4,15 +4,16 @@ import pandas as pd
 import numpy as np
 import simplejson
 import warnings
-from dotenv import load_dotenv
 import typing
+
+from traitlets import default
 
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
 from numbers import Number
-load_dotenv()
+from decouple import config
 
-_RELEASE = os.getenv("AGGRID_RELEASE",'true').lower() == 'true'
+_RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
 
 if not _RELEASE:
     warnings.warn("WARNING: ST_AGGRID is in development mode.")
@@ -24,6 +25,47 @@ else:
     parent_dir = os.path.dirname(os.path.abspath(__file__))
     build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
+
+
+def _cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
+    for c, d in dataframe.dtypes.iteritems():
+        if not d.kind == 'M':
+            continue
+        else:
+            dataframe[c] = dataframe[c].apply(lambda s: s.isoformat()) 
+
+
+def _get_row_data(df):
+    def cast_to_serializable(value):
+        if isinstance(value, pd.DataFrame):
+            return _get_row_data(value)
+
+        isoformat = getattr(value, 'isoformat', None)
+
+        if ((isoformat) and callable(isoformat)):
+            return isoformat()
+
+        elif isinstance(value, Number):
+            if (np.isnan(value) or np.isinf(value)):
+                return value.__str__()
+
+            return value
+        else:
+            return value.__str__()
+
+    json_frame = df.applymap(cast_to_serializable) 
+    row_data = json_frame.to_dict(orient="records")
+    row_data = simplejson.dumps(row_data, ignore_nan=True)
+    return row_data
+
+def _add_index_column(grid_options):
+    col_defs = grid_options['columnDefs']
+    col_defs.insert(0,
+        {
+            'headerName': 'index',
+            'valueGetter': "node.rowIndex + 1"
+        })
+    grid_options.update('columnDefs', col_defs)
 
 def AgGrid(
     dataframe: pd.DataFrame,
@@ -155,30 +197,8 @@ def AgGrid(
         gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
         gridOptions = gb.build()
 
-    def get_row_data(df):
-        def cast_to_serializable(value):
-            if isinstance(value, pd.DataFrame):
-                return get_row_data(value)
-
-            isoformat = getattr(value, 'isoformat', None)
-
-            if ((isoformat) and callable(isoformat)):
-                return isoformat()
-
-            elif isinstance(value, Number):
-                if (np.isnan(value) or np.isinf(value)):
-                    return value.__str__()
-
-                return value
-            else:
-                return value.__str__()
-    
-        json_frame = df.applymap(cast_to_serializable) 
-        row_data = json_frame.to_dict(orient="records")
-        row_data = simplejson.dumps(row_data, ignore_nan=True)
-        return row_data
-
-    row_data = get_row_data(dataframe)
+    _cast_date_columns_to_iso8601(dataframe) #this is because pandas lose tz information when serializing to json.
+    row_data = dataframe.to_json(orient='records', date_format='iso')
 
     if allow_unsafe_jscode:
         walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)

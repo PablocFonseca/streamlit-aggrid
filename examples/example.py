@@ -7,13 +7,14 @@ root = os.path.join(os.path.dirname(__file__))
 
 dashboards = {
     "Main Example": os.path.join(root, "main_example.py"),
+    "Adding your License Key": os.path.join(root, "licensing_example.py"),
     "Controling AgGrid redraw": os.path.join(root, "fixed_key_example.py"),
-    "License Key": os.path.join(root, "licensing_example.py"),
-    "Two grids in page": os.path.join(root, "two_grids_example.py"),
-    "Virtual Columns": os.path.join(root, "virtual_columns.py"),
+    "Using Custom Cell Renderer": os.path.join(root, "cell_renderer_class_example.py"),
+    "Adding Two grids to one page": os.path.join(root, "two_grids_example.py"),
+    "Create Virtual Columns": os.path.join(root, "virtual_columns.py"),
     "Highlight Editions": os.path.join(root, "example_highlight_change.py"),
-    "Inside st.form": os.path.join(root, "forms.py"),
-    "Pinned Row": os.path.join(root, "pinned_rows.py"),
+    "Use it inside st.form": os.path.join(root, "forms.py"),
+    "Set Pinned Rows": os.path.join(root, "pinned_rows.py"),
     "Theming & Pre-Selection": os.path.join(root, "themes_and_pre_selection.py"),
     "Nested Grids" : os.path.join(root, "nested_grids.py"), 
     "Rich Cell Editor" : os.path.join(root, "rich_cell_editor.py") 

@@ -10,7 +10,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ColumnApi, GridApi } from 'ag-grid-community'
 import { LicenseManager } from "ag-grid-enterprise";
 
-import { parseISO, compareAsc, parseJSON } from 'date-fns'
+import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";

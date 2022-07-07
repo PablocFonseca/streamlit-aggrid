@@ -166,7 +166,7 @@ node_modules/
 coverage/
 
 # Lockfiles
-yarn.lock
+#yarn.lock
 package-lock.json
 
 ########################################################################
@@ -185,7 +185,7 @@ streamlit_aggrid.egg-info/*
 streamlit_aggrid.egg-info/PKG-INFO
 Pipfile.lock
 Pipfile
-/poetry.lock
+#/poetry.lock
 /.env
 
 ########################################################################

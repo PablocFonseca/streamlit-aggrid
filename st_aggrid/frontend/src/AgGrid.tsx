@@ -68,6 +68,7 @@ class AgGrid extends StreamlitComponentBase<State> {
   private allowUnsafeJsCode: boolean = false
   private fitColumnsOnGridLoad: boolean = false
   private gridOptions: any
+  private defaultColumnFilters: string
 
   constructor(props: any) {
     super(props)
@@ -89,6 +90,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
     this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
+    this.defaultColumnFilters = this.props.args.default_column_filters
     
     this.columnFormaters = {
       columnTypes: {
@@ -204,7 +206,13 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.columnApi = event.columnApi
 
     this.setUpdateMode()
-    this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
+    this.api.addEventListener('firstDataRendered', (e: any) => {
+      this.fitColumns()
+      if (this.defaultColumnFilters) {
+        let filters = JSON.parse(this.defaultColumnFilters)
+        this.api.setFilterModel(filters)
+      }
+    })
 
     this.api.setRowData(this.state.rowData)
 
@@ -271,7 +279,8 @@ class AgGrid extends StreamlitComponentBase<State> {
     let returnValue = {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
-      selectedRows: this.api.getSelectedRows()
+      selectedRows: this.api.getSelectedRows(),
+      columnFilters: JSON.stringify(this.api.getFilterModel())
     }
 
     Streamlit.setComponentValue(returnValue)

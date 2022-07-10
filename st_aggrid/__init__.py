@@ -1,17 +1,91 @@
+
+from decimal import InvalidOperation
 import os
 import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
-import simplejson
+import json
 import warnings
 import typing
 
-from traitlets import default
-
+from dataclasses import dataclass, field
+from decouple import config
+from typing import Any, List, Mapping
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
-from numbers import Number
-from decouple import config
+
+__AVAILABLE_THEMES = ['streamlit','light','dark', 'blue', 'fresh','material']
+@dataclass
+class AgGridReturn(Mapping):
+    """Class to hold AgGrid call return"""
+    data: pd.DataFrame | str = None
+    selected_rows: List[Mapping] = field(default_factory=list)
+
+    #Backwards compatibility with dict interface
+    def __getitem__(self, __k):
+        return self.__dict__.__getitem__(__k)
+
+    def __iter__(self):
+        return self.__dict__.__iter__()
+    
+    def __len__(self) -> int:
+        return self.__dict__.__len__()
+
+    def keys(self):
+        return self.__dict__.keys()
+    
+    def values(self):
+        return self.__dict__.values()
+
+#This function exists because pandas behaviour when converting tz aware datetime to iso format.
+def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
+    """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
+    for c, d in dataframe.dtypes.iteritems():
+        if not d.kind == 'M':
+            continue
+        else:
+            dataframe[c] = dataframe[c].apply(lambda s: s.isoformat()) 
+
+def __parse_row_data(data_parameter):
+    """Internal method to process data from data_parameter"""
+
+    if isinstance(data_parameter, pd.DataFrame):
+        __cast_date_columns_to_iso8601(data_parameter) 
+        row_data = data_parameter.to_json(orient='records', date_format='iso')
+    else:
+        raise ValueError("Invalid data")
+    
+    return row_data
+
+def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parameters, unsafe_allow_jscode):
+    """Internal method to cast gridOptions parameter to a valid gridoptions"""
+    # if no gridOptions is passed, builds a default one.
+    if gridOptions_parameter == None:
+        gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
+        gridOptions = gb.build()
+
+    #if it is a dict-like object, assumes is valid and use it.
+    elif isinstance(gridOptions_parameter, Mapping):
+        gridOptions = gridOptions_parameter
+    
+    #if it is a string check if is valid path or a valid json and use it.
+    elif isinstance(gridOptions_parameter, str):
+        import os
+        import json
+        is_path = gridOptions_parameter.endswith('.json') and os.path.exists(gridOptions_parameter)
+        
+        if is_path:
+            gridOptions = json.load(open(os.path.abspath(gridOptions_parameter)))
+        else:
+            gridOptions = json.loads(gridOptions_parameter)
+    
+    else:
+        raise ValueError("gridOptions is invalid.")
+
+    if unsafe_allow_jscode:
+        walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)
+
+    return gridOptions
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
 
@@ -26,49 +100,8 @@ else:
     build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
-
-def _cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
-    for c, d in dataframe.dtypes.iteritems():
-        if not d.kind == 'M':
-            continue
-        else:
-            dataframe[c] = dataframe[c].apply(lambda s: s.isoformat()) 
-
-
-def _get_row_data(df):
-    def cast_to_serializable(value):
-        if isinstance(value, pd.DataFrame):
-            return _get_row_data(value)
-
-        isoformat = getattr(value, 'isoformat', None)
-
-        if ((isoformat) and callable(isoformat)):
-            return isoformat()
-
-        elif isinstance(value, Number):
-            if (np.isnan(value) or np.isinf(value)):
-                return value.__str__()
-
-            return value
-        else:
-            return value.__str__()
-
-    json_frame = df.applymap(cast_to_serializable) 
-    row_data = json_frame.to_dict(orient="records")
-    row_data = simplejson.dumps(row_data, ignore_nan=True)
-    return row_data
-
-def _add_index_column(grid_options):
-    col_defs = grid_options['columnDefs']
-    col_defs.insert(0,
-        {
-            'headerName': 'index',
-            'valueGetter': "node.rowIndex + 1"
-        })
-    grid_options.update('columnDefs', col_defs)
-
 def AgGrid(
-    dataframe: pd.DataFrame,
+    data: pd.DataFrame | str,
     gridOptions: typing.Dict=None ,
     height: int =400,
     width=None,
@@ -185,48 +218,37 @@ def AgGrid(
     if width:
         warnings.warn("DEPRECATION Warning: width parameter is deprecated and will be removed on next version.")
 
-    response = {}
-    response["data"] = dataframe
-    response["selected_rows"] = []
+    if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
+        raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
     
-    #basic numpy types of dataframe
-    frame_dtypes = dict(zip(dataframe.columns, (t.kind for t in dataframe.dtypes)))
-
-    # if no gridOptions is passed, builds a default one.
-    if gridOptions == None:
-        gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
-        gridOptions = gb.build()
-
-    _cast_date_columns_to_iso8601(dataframe) #this is because pandas lose tz information when serializing to json.
-    row_data = dataframe.to_json(orient='records', date_format='iso')
-
-    if allow_unsafe_jscode:
-        walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)
-
-    _available_themes = ['streamlit','light','dark', 'blue', 'fresh','material']
-    if (not isinstance(theme, str)) or (not theme in _available_themes):
-        raise ValueError(f"{theme} is not valid. Available options: {_available_themes}")
-
-    try:
-        if (not isinstance(data_return_mode, (str, DataReturnMode))):
+    if (not isinstance(data_return_mode, (str, DataReturnMode))):
+        raise ValueError(f"DataReturnMode should be either a DataReturnMode enum value or a string.")
+    elif isinstance(data_return_mode, str):
+        try:
+            data_return_mode = DataReturnMode[data_return_mode.upper()]
+        except:
+            raise ValueError(f"{data_return_mode} is not valid.")
+    
+    if (not isinstance(update_mode, (str, GridUpdateMode))):
+        raise ValueError(f"GridUpdateMode should be either a valid GridUpdateMode enum value or string")
+    elif isinstance(update_mode, str):
+        try:
+            update_mode = GridUpdateMode[update_mode.upper()]
+        except:
             raise ValueError(f"{data_return_mode} is not valid.")
 
-        if isinstance(data_return_mode, str):
-            data_return_mode = DataReturnMode[data_return_mode.upper()]
-    except:
-        raise ValueError(f"{data_return_mode} is not valid.")
+    if try_to_convert_back_to_original_types:
+        if not isinstance(data, pd.DataFrame):
+            raise InvalidOperation(f"If try_to_convert_back_to_original_types is True, data must be a DataFrame.")
 
+        frame_dtypes = dict(zip(data.columns, (t.kind for t in data.dtypes)))
 
-    try:
-        if (not isinstance(update_mode, (str, GridUpdateMode))):
-            raise ValueError(f"{update_mode} is not valid.")
-
-        if isinstance(update_mode, str):
-            update_mode = GridUpdateMode[update_mode.upper()]
-    except:
-        raise ValueError(f"{data_return_mode} is not valid.")
-
+    gridOptions = __parse_grid_options(gridOptions, data, default_column_parameters, allow_unsafe_jscode)
+    row_data = __parse_row_data(data)
     custom_css = custom_css or dict()
+
+    response = AgGridReturn()
+    response.data = data
 
     try:
         component_value = _component_func(
@@ -249,7 +271,7 @@ def AgGrid(
             )
 
     except components.components.MarshallComponentException as ex:
-        #a more complete error message.
+        #uses a more complete error message.
         args = list(ex.args)
         args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
         ex = components.components.MarshallComponentException(*args)
@@ -257,12 +279,11 @@ def AgGrid(
 
     if component_value:
         if isinstance(component_value, str):
-            component_value = simplejson.loads(component_value)
+            component_value = json.loads(component_value)
         frame = pd.DataFrame(component_value["rowData"])
         original_types = component_value["originalDtypes"]
 
         if not frame.empty:
-            #maybe this is not the best solution. Should it store original types? What happens when grid pivots?
             if try_to_convert_back_to_original_types:
                 numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
                 if numeric_columns:
@@ -270,7 +291,7 @@ def AgGrid(
 
                 text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
-                    frame.loc[:,text_columns.keys()]  = frame.loc[:,text_columns.keys()].astype(str)
+                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].astype(str)
 
                 date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:
@@ -286,7 +307,7 @@ def AgGrid(
 
                     frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
 
-        response["data"] = frame
-        response["selected_rows"] = component_value["selectedRows"]
+        response.data = frame
+        response.selected_rows = component_value["selectedRows"]
     
     return response

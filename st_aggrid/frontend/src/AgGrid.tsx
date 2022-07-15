@@ -8,6 +8,7 @@ import { ReactNode } from "react"
 
 import { AgGridReact } from 'ag-grid-react';
 import { ColumnApi, GridApi } from 'ag-grid-community'
+//TODO: Lazy load this so grid doesn't start at enterprise version
 import { LicenseManager } from "ag-grid-enterprise";
 
 import { parseISO, compareAsc } from 'date-fns'

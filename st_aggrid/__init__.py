@@ -52,10 +52,22 @@ def __parse_row_data(data_parameter):
     if isinstance(data_parameter, pd.DataFrame):
         __cast_date_columns_to_iso8601(data_parameter) 
         row_data = data_parameter.to_json(orient='records', date_format='iso')
+        return row_data
+
+    elif isinstance(data_parameter, str):
+        import os
+        import json
+        is_path = data_parameter.endswith('.json') and os.path.exists(data_parameter)
+        
+        if is_path:
+            row_data = json.dumps(json.load(open(os.path.abspath(data_parameter))))
+        else:
+            row_data = json.dumps(json.loads(data_parameter))
+        
+        return row_data
     else:
         raise ValueError("Invalid data")
     
-    return row_data
 
 def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parameters, unsafe_allow_jscode):
     """Internal method to cast gridOptions parameter to a valid gridoptions"""
@@ -216,7 +228,7 @@ def AgGrid(
     """
 
     if width:
-        warnings.warn("DEPRECATION Warning: width parameter is deprecated and will be removed on next version.")
+        warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
 
     if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
         raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
@@ -237,9 +249,11 @@ def AgGrid(
         except:
             raise ValueError(f"{data_return_mode} is not valid.")
 
+    frame_dtypes = []
     if try_to_convert_back_to_original_types:
         if not isinstance(data, pd.DataFrame):
-            raise InvalidOperation(f"If try_to_convert_back_to_original_types is True, data must be a DataFrame.")
+            try_to_convert_back_to_original_types = False
+            #raise InvalidOperation(f"If try_to_convert_back_to_original_types is True, data must be a DataFrame.")
 
         frame_dtypes = dict(zip(data.columns, (t.kind for t in data.dtypes)))
 

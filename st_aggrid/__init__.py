@@ -118,7 +118,7 @@ def AgGrid(
     height: int =400,
     width=None,
     fit_columns_on_grid_load: bool=False,
-    update_mode: GridUpdateMode= 'value_changed' ,
+    update_mode: GridUpdateMode= 'model_changed' ,
     data_return_mode: DataReturnMode= 'as_input' ,
     allow_unsafe_jscode: bool=False,
     enable_enterprise_modules: bool=False,
@@ -128,6 +128,7 @@ def AgGrid(
     reload_data:bool=False,
     theme:str='light',
     custom_css=None,
+    use_legacy_selected_rows=False,
     key: typing.Any=None,
     **default_column_parameters) -> typing.Dict:
     """Reders a DataFrame using AgGrid.
@@ -322,6 +323,10 @@ def AgGrid(
                     frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
 
         response.data = frame
-        response.selected_rows = component_value["selectedRows"]
+        
+        if use_legacy_selected_rows:
+            response.selected_rows = component_value["selectedRows"]
+        else:
+            response.selected_rows = component_value["selectedItems"]
     
     return response

@@ -113,6 +113,26 @@ else:
     build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
+def __parse_update_mode(update_mode: GridUpdateMode) -> list[str | tuple[str, int]]:
+    update_on = []
+
+    if (update_mode & GridUpdateMode.VALUE_CHANGED):
+        update_on.append("cellValueChanged")
+    
+    if (update_mode & GridUpdateMode.SELECTION_CHANGED):
+        update_on.append("selectionChanged")
+
+    if (update_mode & GridUpdateMode.FILTERING_CHANGED):
+        update_on.append("filterChanged")
+    
+    if (update_mode & GridUpdateMode.SORTING_CHANGED):
+        update_on.append("sortChanged")
+    
+    if (update_mode & GridUpdateMode.COLUMN_RESIZED):
+        update_on.append(("columnResized", 500))
+        
+    return update_on
+
 def AgGrid(
     data: pd.DataFrame | str,
     gridOptions: typing.Dict=None ,
@@ -131,6 +151,7 @@ def AgGrid(
     custom_css=None,
     use_legacy_selected_rows=False,
     key: typing.Any=None,
+    update_on: List[str | tuple[str, int]] = [],
     **default_column_parameters) -> typing.Dict:
     """Reders a DataFrame using AgGrid.
 
@@ -232,6 +253,10 @@ def AgGrid(
     if width:
         warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
 
+    if update_mode:
+        update_on = list(update_on)
+        update_on.append(__parse_update_mode(update_mode))
+
     if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
         raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
     
@@ -273,7 +298,6 @@ def AgGrid(
             height=height, 
             width=width,
             fit_columns_on_grid_load=fit_columns_on_grid_load, 
-            update_mode=update_mode, 
             data_return_mode=data_return_mode, 
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
@@ -283,6 +307,7 @@ def AgGrid(
             reload_data=reload_data,
             theme=theme,
             custom_css=custom_css,
+            update_on=update_on,
             key=key
             )
 

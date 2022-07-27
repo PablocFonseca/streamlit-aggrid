@@ -18,7 +18,7 @@ import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-mod
 import { LicenseManager } from "@ag-grid-enterprise/core"
 import {GridChartsModule } from "@ag-grid-enterprise/charts"
 import {SparklinesModule } from "@ag-grid-enterprise/sparklines"
-import {ColumnsToolPanelModule} from "@ag-grid-enterprise/column-tool-panel"yarn 
+import {ColumnsToolPanelModule} from "@ag-grid-enterprise/column-tool-panel"
 import {ExcelExportModule} from "@ag-grid-enterprise/excel-export"
 import {FiltersToolPanelModule} from "@ag-grid-enterprise/filter-tool-panel"
 import {MasterDetailModule} from "@ag-grid-enterprise/master-detail"
@@ -35,6 +35,8 @@ import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";
+
+import { debounce } from "lodash";
 
 import './AgGrid.scss'
 import './scrollbar.css'
@@ -202,44 +204,26 @@ class AgGrid extends StreamlitComponentBase<State> {
   private convertJavascriptCodeOnGridOptions = (obj: object) => {
     return deepMap(obj, this.convertStringToFunction)
   }
+  private attachUpdateEvents() {
+    let updateEvents = this.props.args.update_on[0]
+    const doReturn = (e: any) => this.returnGridValue(e);
+    
+    updateEvents.forEach((element: any) => {
+      if(Array.isArray(element)){
+        this.api.addEventListener(element[0], debounce(doReturn, element[1]))
+        console.log("Attached arr", element)
 
-  private setUpdateMode() {
-    if (this.manualUpdateRequested) {
-      return //If manual update is set, no listeners will be added
+      } else {
+        this.api.addEventListener(element, doReturn);
+      }
+    })
     }
-
-    let updateMode = this.props.args.update_mode
-
-    if ((updateMode & 2) === 2) {
-      this.api.addEventListener('cellValueChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 4) === 4) {
-      this.api.addEventListener('selectionChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 8) === 8) {
-      this.api.addEventListener('filterChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 16) === 16) {
-      this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 32) === 32) {
-      this.api.addEventListener("columnResized", (e: any) =>
-        console.log(e)
-        //this.returnGridValue(e)
-      )
-    }
-
-  }
+    
 
   private onGridReady(event: any) {
     this.api = event.api
     this.columnApi = event.columnApi
-
-    this.setUpdateMode()
+    this.attachUpdateEvents()
     this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
 
     this.api.setRowData(this.state.rowData)

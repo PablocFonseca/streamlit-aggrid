@@ -6,6 +6,7 @@ class GridUpdateMode(IntFlag):
     SELECTION_CHANGED = 0b0100
     FILTERING_CHANGED = 0b1000
     SORTING_CHANGED = 0b10000
+    COLUMN_CHANGED = 0b100000
     MODEL_CHANGED = 0b11111
 
 class DataReturnMode(IntEnum):

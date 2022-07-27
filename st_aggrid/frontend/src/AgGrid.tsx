@@ -6,10 +6,30 @@ import {
 
 import { ReactNode } from "react"
 
-import { AgGridReact } from 'ag-grid-react';
-import { ColumnApi, GridApi } from 'ag-grid-community'
-//TODO: Lazy load this so grid doesn't start at enterprise version
-import { LicenseManager } from "ag-grid-enterprise";
+import { AgGridReact } from '@ag-grid-community/react';
+
+import {
+  ModuleRegistry,
+  ColumnApi,
+  GridApi
+} from "@ag-grid-community/core"
+
+import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
+import { LicenseManager } from "@ag-grid-enterprise/core"
+import {GridChartsModule } from "@ag-grid-enterprise/charts"
+import {SparklinesModule } from "@ag-grid-enterprise/sparklines"
+import {ColumnsToolPanelModule} from "@ag-grid-enterprise/column-tool-panel"yarn 
+import {ExcelExportModule} from "@ag-grid-enterprise/excel-export"
+import {FiltersToolPanelModule} from "@ag-grid-enterprise/filter-tool-panel"
+import {MasterDetailModule} from "@ag-grid-enterprise/master-detail"
+import {MenuModule} from "@ag-grid-enterprise/menu"
+import {RangeSelectionModule} from "@ag-grid-enterprise/range-selection"
+import {RichSelectModule} from "@ag-grid-enterprise/rich-select"
+import {RowGroupingModule} from "@ag-grid-enterprise/row-grouping"
+import {SetFilterModule} from "@ag-grid-enterprise/set-filter"
+import {MultiFilterModule} from "@ag-grid-enterprise/multi-filter"
+import {SideBarModule} from "@ag-grid-enterprise/side-bar"
+import {StatusBarModule} from "@ag-grid-enterprise/status-bar"
 
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
@@ -64,6 +84,7 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
+    ModuleRegistry.register(ClientSideRowModelModule)
 
     
     if (props.args.custom_css) {
@@ -71,13 +92,26 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
 
     if (props.args.enable_enterprise_modules) {
-      // ModuleRegistry.registerModules(AllModules);
+      ModuleRegistry.registerModules([
+        ExcelExportModule,
+        GridChartsModule,
+        SparklinesModule,
+        ColumnsToolPanelModule,
+        FiltersToolPanelModule,
+        MasterDetailModule,
+        MenuModule,
+        RangeSelectionModule,
+        RichSelectModule,
+        RowGroupingModule,
+        SetFilterModule,
+        MultiFilterModule,
+        SideBarModule,
+        StatusBarModule
+      ])
       if ('license_key' in props.args) {
         LicenseManager.setLicenseKey(props.args['license_key']);
       }
-    } else {
-      // ModuleRegistry.registerModules(AllCommunityModules);
-    }
+    } 
 
     this.frameDtypes = this.props.args.frame_dtypes
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
@@ -191,6 +225,14 @@ class AgGrid extends StreamlitComponentBase<State> {
     if ((updateMode & 16) === 16) {
       this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
     }
+
+    if ((updateMode & 32) === 32) {
+      this.api.addEventListener("columnResized", (e: any) =>
+        console.log(e)
+        //this.returnGridValue(e)
+      )
+    }
+
   }
 
   private onGridReady(event: any) {
@@ -266,7 +308,8 @@ class AgGrid extends StreamlitComponentBase<State> {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
       selectedRows: this.api.getSelectedRows(),
-      selectedItems: this.api.getSelectedNodes().map(n => ({'rowIndex': n.rowIndex, ...n.data}))
+      selectedItems: this.api.getSelectedNodes().map(n => ({'rowIndex': n.rowIndex, ...n.data})),
+      colState: this.columnApi.getColumnState()
     }
     
     Streamlit.setComponentValue(returnValue)

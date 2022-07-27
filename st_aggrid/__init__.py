@@ -20,6 +20,7 @@ class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
     data: pd.DataFrame | str = None
     selected_rows: List[Mapping] = field(default_factory=list)
+    column_state: any = None
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
@@ -328,5 +329,8 @@ def AgGrid(
             response.selected_rows = component_value["selectedRows"]
         else:
             response.selected_rows = component_value["selectedItems"]
+
+        response.column_state = component_value["colState"]
+
     
     return response

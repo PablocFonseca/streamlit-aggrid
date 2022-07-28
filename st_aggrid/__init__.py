@@ -147,6 +147,7 @@ def AgGrid(
     try_to_convert_back_to_original_types: bool=True,
     conversion_errors: str='coerce',
     reload_data:bool=False,
+    columns_state = None,
     theme:str='light',
     custom_css=None,
     use_legacy_selected_rows=False,
@@ -174,6 +175,8 @@ def AgGrid(
         Will adjust columns to fit grid width on grid load, by default False
     
     update_mode : GridUpdateMode, optional
+        UPDATE_MODE IS DEPRECATED. USE update_on instead.
+
         Defines how the grid will send results back to streamlit.
         either a string, one or a combination of:
             GridUpdateMode.NO_UPDATE
@@ -188,6 +191,16 @@ def AgGrid(
         GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
         Defaults to GridUpdateMode.VALUE_CHANGED.
         by default 'value_changed'
+
+    update_on: list[string | tuple[sting, int]], optional
+        defines the events that will trigger a refresh and grid return on streamlit app.
+        valid string named events are listed in https://www.ag-grid.com/javascript-data-grid/grid-events/.
+        If a tuple[string, int] is present on the list, that event will be debounced by x milliseconds.
+        for instance:
+            if update_on = ['cellValueChanged', ("columnResized", 500)]
+            Grid will return when cell values are changed AND when columns are resized, however the later will
+            be debounced by 500 ms. More information about debounced functions 
+            here: https://www.freecodecamp.org/news/javascript-debounce-example/
     
     data_return_mode : DataReturnMode, optional
         Defines how the data will be retrieved from components client side. One of:
@@ -305,6 +318,7 @@ def AgGrid(
             license_key=license_key,
             default=None,
             reload_data=reload_data,
+            columns_state=columns_state,
             theme=theme,
             custom_css=custom_css,
             update_on=update_on,

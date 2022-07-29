@@ -3,6 +3,17 @@
 @import "@ag-grid-community/core/dist/styles/ag-theme-balham/sass/ag-theme-balham-mixin.scss";
 @import "@ag-grid-community/core/dist/styles/ag-theme-balham-dark/sass/ag-theme-balham-dark-mixin.scss";
 
+@import '@ag-grid-community/core/dist/styles/ag-theme-blue.css';
+@import '@ag-grid-community/core/dist/styles/ag-theme-fresh.css';
+@import '@ag-grid-community/core/dist/styles/ag-theme-material.css';
+@import '@ag-grid-community/core/dist/styles/ag-theme-alpine.css';
+@import "@ag-grid-community/core/dist/styles/ag-theme-alpine-dark.css";
+@import "@ag-grid-community/core/dist/styles/ag-theme-balham.css";
+@import "@ag-grid-community/core/dist/styles/ag-theme-balham-dark.css";
+@import "@ag-grid-community/core/dist/styles/ag-theme-blue.css";
+@import "@ag-grid-community/core/dist/styles/ag-theme-bootstrap.css";
+@import "@ag-grid-community/core/dist/styles/ag-theme-dark.css";
+
 .ag-theme-light {
     @include ag-theme-balham
 };

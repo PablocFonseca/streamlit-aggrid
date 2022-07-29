@@ -7,24 +7,39 @@ import {
 import { ReactNode } from "react"
 
 import { AgGridReact } from '@ag-grid-community/react';
-import { ColumnApi, GridApi } from '@ag-grid-community/core'
-import { ModuleRegistry } from '@ag-grid-community/core';
-import { AllCommunityModules } from '@ag-grid-community/all-modules'
-import { AllModules } from '@ag-grid-enterprise/all-modules'
-import { LicenseManager } from "@ag-grid-enterprise/core";
+
+import {
+  ModuleRegistry,
+  ColumnApi,
+  GridApi
+} from "@ag-grid-community/core"
+
+import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
+import { LicenseManager } from "@ag-grid-enterprise/core"
+import {GridChartsModule } from "@ag-grid-enterprise/charts"
+import {SparklinesModule } from "@ag-grid-enterprise/sparklines"
+import {ColumnsToolPanelModule} from "@ag-grid-enterprise/column-tool-panel"
+import {ExcelExportModule} from "@ag-grid-enterprise/excel-export"
+import {FiltersToolPanelModule} from "@ag-grid-enterprise/filter-tool-panel"
+import {MasterDetailModule} from "@ag-grid-enterprise/master-detail"
+import {MenuModule} from "@ag-grid-enterprise/menu"
+import {RangeSelectionModule} from "@ag-grid-enterprise/range-selection"
+import {RichSelectModule} from "@ag-grid-enterprise/rich-select"
+import {RowGroupingModule} from "@ag-grid-enterprise/row-grouping"
+import {SetFilterModule} from "@ag-grid-enterprise/set-filter"
+import {MultiFilterModule} from "@ag-grid-enterprise/multi-filter"
+import {SideBarModule} from "@ag-grid-enterprise/side-bar"
+import {StatusBarModule} from "@ag-grid-enterprise/status-bar"
 
 import { parseISO, compareAsc } from 'date-fns'
 import { format } from 'date-fns-tz'
 import deepMap from "./utils"
 import { duration } from "moment";
 
-import '@ag-grid-community/core/dist/styles/ag-theme-blue.css';
-import '@ag-grid-community/core/dist/styles/ag-theme-fresh.css';
-import '@ag-grid-community/core/dist/styles/ag-theme-material.css';
+import { debounce } from "lodash";
 
 import './AgGrid.scss'
 import './scrollbar.css'
-
 interface State {
   rowData: any
   gridHeight: number
@@ -71,19 +86,34 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
+    ModuleRegistry.register(ClientSideRowModelModule)
 
+    
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css);
     }
 
     if (props.args.enable_enterprise_modules) {
-      ModuleRegistry.registerModules(AllModules);
+      ModuleRegistry.registerModules([
+        ExcelExportModule,
+        GridChartsModule,
+        SparklinesModule,
+        ColumnsToolPanelModule,
+        FiltersToolPanelModule,
+        MasterDetailModule,
+        MenuModule,
+        RangeSelectionModule,
+        RichSelectModule,
+        RowGroupingModule,
+        SetFilterModule,
+        MultiFilterModule,
+        SideBarModule,
+        StatusBarModule
+      ])
       if ('license_key' in props.args) {
         LicenseManager.setLicenseKey(props.args['license_key']);
       }
-    } else {
-      ModuleRegistry.registerModules(AllCommunityModules);
-    }
+    } 
 
     this.frameDtypes = this.props.args.frame_dtypes
     this.manualUpdateRequested = (this.props.args.update_mode === 1)
@@ -153,56 +183,47 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   private convertStringToFunction(v: string) {
     const JS_PLACEHOLDER = "--x_x--0_0--"
-
+  
     let funcReg = new RegExp(
-      `${JS_PLACEHOLDER}\\s*(function\\s*.*)\\s*${JS_PLACEHOLDER}`
+      `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
     )
-
+  
     let match = funcReg.exec(v)
-
+  
     if (match) {
       const funcStr = match[1]
       // eslint-disable-next-line
       return new Function("return " + funcStr)()
-
+  
     } else {
       return v
     }
   }
 
+
   private convertJavascriptCodeOnGridOptions = (obj: object) => {
     return deepMap(obj, this.convertStringToFunction)
   }
+  private attachUpdateEvents() {
+    let updateEvents = this.props.args.update_on[0]
+    const doReturn = (e: any) => this.returnGridValue(e);
+    
+    updateEvents.forEach((element: any) => {
+      if(Array.isArray(element)){
+        this.api.addEventListener(element[0], debounce(doReturn, element[1]))
+        console.log("Attached arr", element)
 
-  private setUpdateMode() {
-    if (this.manualUpdateRequested) {
-      return //If manual update is set, no listeners will be added
+      } else {
+        this.api.addEventListener(element, doReturn);
+      }
+    })
     }
-
-    let updateMode = this.props.args.update_mode
-
-    if ((updateMode & 2) === 2) {
-      this.api.addEventListener('cellValueChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 4) === 4) {
-      this.api.addEventListener('selectionChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 8) === 8) {
-      this.api.addEventListener('filterChanged', (e: any) => this.returnGridValue(e))
-    }
-
-    if ((updateMode & 16) === 16) {
-      this.api.addEventListener('sortChanged', (e: any) => this.returnGridValue(e))
-    }
-  }
+    
 
   private onGridReady(event: any) {
     this.api = event.api
     this.columnApi = event.columnApi
-
-    this.setUpdateMode()
+    this.attachUpdateEvents()
     this.api.addEventListener('firstDataRendered', (e: any) => this.fitColumns())
 
     this.api.setRowData(this.state.rowData)
@@ -270,9 +291,11 @@ class AgGrid extends StreamlitComponentBase<State> {
     let returnValue = {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
-      selectedRows: this.api.getSelectedRows()
+      selectedRows: this.api.getSelectedRows(),
+      selectedItems: this.api.getSelectedNodes().map(n => ({'rowIndex': n.rowIndex, ...n.data})),
+      colState: this.columnApi.getColumnState()
     }
-
+    
     Streamlit.setComponentValue(returnValue)
   }
 
@@ -318,6 +341,6 @@ class AgGrid extends StreamlitComponentBase<State> {
       </div >
     )
   }
-}
+ }
 
 export default withStreamlitConnection(AgGrid)

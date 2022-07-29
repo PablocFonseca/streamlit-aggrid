@@ -1,0 +1,16 @@
+{
+  "name": "streamlit-aggrid",
+  "packageManager": "yarn@3.2.1",
+  "version": "0.3.0",
+  "repository": "https://github.com/PablocFonseca/streamlit-aggrid.git",
+  "license": "MIT",
+  "author": "Pablo Fonseca",
+  "private": true,
+  "workspaces": [
+    "st_aggrid/**/frontend*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces foreach -v -i run build && poetry build",
+    "develop": "yarn workspaces foreach -v -j 99 -i -p run start"
+  }
+}

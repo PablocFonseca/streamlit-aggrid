@@ -166,7 +166,7 @@ node_modules/
 coverage/
 
 # Lockfiles
-yarn.lock
+#yarn.lock
 package-lock.json
 
 ########################################################################
@@ -185,10 +185,21 @@ streamlit_aggrid.egg-info/*
 streamlit_aggrid.egg-info/PKG-INFO
 Pipfile.lock
 Pipfile
-/poetry.lock
+#/poetry.lock
 /.env
 
 ########################################################################
 # vim
 ########################################################################
 .vim/
+
+#yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.editorconfig
+st_aggrid/frontend/.yarn/install-state.gz

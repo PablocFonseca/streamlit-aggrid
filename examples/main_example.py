@@ -89,7 +89,7 @@ gb = GridOptionsBuilder.from_dataframe(df)
 
 #customize gridOptions
 gb.configure_default_column(groupable=True, value=True, enableRowGroup=True, aggFunc='sum', editable=True)
-
+gb.configure_column("date_only", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string='yyyy-MM-dd', pivot=True)
 gb.configure_column("date_tz_aware", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string='yyyy-MM-dd HH:mm zzz', pivot=True)
 
 gb.configure_column("apple", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=2, aggFunc='sum')
@@ -150,7 +150,7 @@ grid_response = AgGrid(
     update_mode=update_mode_value,
     fit_columns_on_grid_load=fit_columns_on_grid_load,
     allow_unsafe_jscode=True, #Set it to True to allow jsfunction to be injected
-    enable_enterprise_modules=enable_enterprise_modules,
+    enable_enterprise_modules=enable_enterprise_modules
     )
 
 df = grid_response['data']

@@ -1,12 +1,13 @@
-from enum import IntEnum, IntFlag
-class GridUpdateMode(IntFlag):
-    NO_UPDATE = 0b0000
-    MANUAL = 0b0001
-    VALUE_CHANGED = 0b0010
-    SELECTION_CHANGED = 0b0100
-    FILTERING_CHANGED = 0b1000
-    SORTING_CHANGED = 0b10000
-    MODEL_CHANGED = 0b11111
+from enum import IntEnum, IntFlag, Flag, auto
+class GridUpdateMode(Flag):
+    NO_UPDATE = auto()
+    MANUAL = auto()
+    VALUE_CHANGED = auto()
+    SELECTION_CHANGED = auto()
+    FILTERING_CHANGED = auto()
+    SORTING_CHANGED = auto()
+    COLUMN_RESIZED = auto()
+    MODEL_CHANGED = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
 
 class DataReturnMode(IntEnum):
     AS_INPUT = 0
@@ -25,6 +26,7 @@ class JsCode:
             js_code (str): javascript function code as str
         """        
         import re
+        js_code = re.sub(re.compile("//.*?\n" ), "", js_code)
         js_placeholder = "--x_x--0_0--"
         one_line_jscode = re.sub(r"\s+|\n+", " ", js_code)
         self.js_code = f"{js_placeholder}{one_line_jscode}{js_placeholder}"

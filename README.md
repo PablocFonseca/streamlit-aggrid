@@ -2,7 +2,7 @@
 
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] 
 
-AgGrid is an awsome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
+AgGrid is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
 Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
@@ -75,7 +75,7 @@ Version 0.1.5
 Version 0.1.3
 * Fixed bug where cell was blank after edition.
 * Added enable_enterprise_modules argument to AgGrid call for enabling/disabling [enterprise features](https://www.ag-grid.com/documentation/javascript/licensing/)
-* It is now possible to inject js functions on gridOptions. Enabling advanced customizations such as conditional formating (check 4<sup>th</sup> column on the [example](share_link))
+* It is now possible to inject js functions on gridOptions. Enabling advanced customizations such as conditional formatting (check 4<sup>th</sup> column on the [example](share_link))
 
 Version 0.1.2
 * added customCurrencyFormat as column type

@@ -14,8 +14,6 @@ packages = [{include="st_aggrid"}]
 python = ">=3.7.1,<4.0"
 streamlit = ">=0.87.0"
 pandas = ">=1.2"
-simplejson = ">=3.0"
-python-dotenv = "^0.19.1"
 python-decouple = "^3.6"
 
 [tool.poetry.dev-dependencies]

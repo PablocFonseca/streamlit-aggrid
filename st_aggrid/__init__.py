@@ -10,7 +10,7 @@ import typing
 
 from dataclasses import dataclass, field
 from decouple import config
-from typing import Any, List, Mapping
+from typing import Any, List, Mapping, Union
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
 
@@ -18,7 +18,7 @@ __AVAILABLE_THEMES = ['streamlit','light','dark', 'blue', 'fresh','material']
 @dataclass
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
-    data: pd.DataFrame | str = None
+    data: Union[pd.DataFrame , str] = None
     selected_rows: List[Mapping] = field(default_factory=list)
     column_state: any = None
 
@@ -113,7 +113,7 @@ else:
     build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
-def __parse_update_mode(update_mode: GridUpdateMode) -> list[str | tuple[str, int]]:
+def __parse_update_mode(update_mode: GridUpdateMode) -> list[Union[str , tuple[str, int]]]:
     update_on = []
 
     if (update_mode & GridUpdateMode.VALUE_CHANGED):
@@ -143,7 +143,7 @@ def __parse_update_mode(update_mode: GridUpdateMode) -> list[str | tuple[str, in
     return update_on
 
 def AgGrid(
-    data: pd.DataFrame | str,
+    data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
     height: int =400,
     width=None,
@@ -161,7 +161,7 @@ def AgGrid(
     custom_css=None,
     use_legacy_selected_rows=False,
     key: typing.Any=None,
-    update_on: List[str | tuple[str, int]] = [],
+    update_on: List[Union[str , tuple[str, int]]] = [],
     **default_column_parameters) -> typing.Dict:
     """Reders a DataFrame using AgGrid.
 

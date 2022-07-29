@@ -43,7 +43,7 @@ grid_height = st.sidebar.number_input("Grid height", min_value=200, max_value=80
 return_mode = st.sidebar.selectbox("Return Mode", list(DataReturnMode.__members__), index=1)
 return_mode_value = DataReturnMode.__members__[return_mode]
 
-update_mode = st.sidebar.selectbox("Update Mode", list(GridUpdateMode.__members__), index=6)
+update_mode = st.sidebar.selectbox("Update Mode", list(GridUpdateMode.__members__), index=len(GridUpdateMode.__members__)-1)
 update_mode_value = GridUpdateMode.__members__[update_mode]
 
 #enterprise modules

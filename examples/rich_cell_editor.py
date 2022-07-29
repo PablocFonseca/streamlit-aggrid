@@ -15,7 +15,8 @@ gb.configure_default_column(editable=True)
 
 gb.configure_column('a',
     cellEditor='agRichSelectCellEditor',
-    cellEditorParams={'values':['a','b','c']}
+    cellEditorParams={'values':['a','b','c']},
+    cellEditorPopup=True
 )
 
 gb.configure_grid_options(enableRangeSelection=True)

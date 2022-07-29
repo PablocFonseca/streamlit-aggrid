@@ -129,7 +129,16 @@ def __parse_update_mode(update_mode: GridUpdateMode) -> list[str | tuple[str, in
         update_on.append("sortChanged")
     
     if (update_mode & GridUpdateMode.COLUMN_RESIZED):
-        update_on.append(("columnResized", 500))
+        update_on.append(("columnResized", 300))
+    
+    if (update_mode & GridUpdateMode.COLUMN_MOVED):
+        update_on.append(("columnMoved", 500))
+    
+    if (update_mode & GridUpdateMode.COLUMN_PINNED):
+        update_on.append("columnPinned")
+
+    if (update_mode & GridUpdateMode.COLUMN_VISIBLE):
+        update_on.append("columnVisible")
         
     return update_on
 
@@ -266,10 +275,6 @@ def AgGrid(
     if width:
         warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
 
-    if update_mode:
-        update_on = list(update_on)
-        update_on.append(__parse_update_mode(update_mode))
-
     if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
         raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
     
@@ -287,8 +292,13 @@ def AgGrid(
         try:
             update_mode = GridUpdateMode[update_mode.upper()]
         except:
-            raise ValueError(f"{data_return_mode} is not valid.")
+            raise ValueError(f"{update_mode} is not valid.")
 
+    if update_mode:
+        update_on = list(update_on)
+        update_on.append(__parse_update_mode(update_mode))
+
+    print(update_on)
     frame_dtypes = []
     if try_to_convert_back_to_original_types:
         if not isinstance(data, pd.DataFrame):
@@ -342,7 +352,7 @@ def AgGrid(
             if try_to_convert_back_to_original_types:
                 numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
                 if numeric_columns:
-                    frame.loc[:,numeric_columns.keys()] = frame.loc[:,numeric_columns.keys()] .apply(pd.to_numeric, errors=conversion_errors)
+                    frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
 
                 text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
@@ -350,7 +360,7 @@ def AgGrid(
 
                 date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:
-                    frame.loc[:,date_columns.keys()] = frame.loc[:,date_columns.keys()].apply(pd.to_datetime, errors=conversion_errors)
+                    frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
 
                 timedelta_columns = [k for k,v in original_types.items() if v == "m"]
                 if timedelta_columns:
@@ -360,7 +370,7 @@ def AgGrid(
                         except:
                             return s
 
-                    frame.loc[:,timedelta_columns.keys()] = frame.loc[:,timedelta_columns.keys()].apply(cast_to_timedelta)
+                    frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
 
         response.data = frame
         

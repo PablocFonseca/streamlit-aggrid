@@ -8,7 +8,7 @@ import { ReactNode } from "react"
 
 import { AgGridReact } from "@ag-grid-community/react"
 
-import { ModuleRegistry, ColumnApi, GridApi } from "@ag-grid-community/core"
+import { ModuleRegistry, ColumnApi, GridApi, DetailGridInfo } from "@ag-grid-community/core"
 
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
 import { LicenseManager } from "@ag-grid-enterprise/core"
@@ -216,16 +216,16 @@ class AgGrid extends StreamlitComponentBase<State> {
     return deepMap(obj, this.convertStringToFunction)
   }
 
-  private attachUpdateEvents() {
+  private attachUpdateEvents(api: GridApi) {
     let updateEvents = this.props.args.update_on[0]
     const doReturn = (e: any) => this.returnGridValue(e)
 
     updateEvents.forEach((element: any) => {
       if (Array.isArray(element)) {
-        this.api.addEventListener(element[0], debounce(doReturn, element[1]))
+        api.addEventListener(element[0], debounce(doReturn, element[1]))
         console.log("Attached arr", element)
       } else {
-        this.api.addEventListener(element, doReturn)
+        api.addEventListener(element, doReturn)
       }
     })
   }
@@ -234,7 +234,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     const columnsState = this.props.args.columns_state
 
     if (columnsState != null) {
-      console.dir(columnsState)
+      //console.dir(columnsState)
       this.columnApi.applyColumnState({ state: columnsState, applyOrder: true})
     }
   }
@@ -243,7 +243,19 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api = event.api
     this.columnApi = event.columnApi
 
-    this.attachUpdateEvents()
+    this.api.forEachDetailGridInfo((i: any) => {
+      console.log(i)
+    })
+
+    this.attachUpdateEvents(this.api)
+
+    this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
+      //console.log(i)
+      if (i.api !== undefined) {
+      this.attachUpdateEvents(i.api)
+      }
+    })
+
     this.api.addEventListener("firstDataRendered", (e: any) =>
       this.fitColumns()
     )
@@ -317,6 +329,17 @@ class AgGrid extends StreamlitComponentBase<State> {
         break
     }
 
+      let selected : any  = {}
+      this.api.forEachDetailGridInfo((d:DetailGridInfo) => {
+        selected[d.id] = []
+        d.api?.forEachNode((n: any) => {
+          if (n.isSelected()) {
+            selected[d.id].push(n)
+          }
+        })
+      })
+
+    //console.log(selected)
     let returnValue = {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
@@ -359,6 +382,7 @@ class AgGrid extends StreamlitComponentBase<State> {
       }
     }
     this.loadColumnsState()
+    
 
     return (
       <div

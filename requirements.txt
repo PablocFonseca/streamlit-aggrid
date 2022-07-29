@@ -1,1 +1,1 @@
-streamlit-aggrid==0.3.0
+streamlit-aggrid==0.3.0-2

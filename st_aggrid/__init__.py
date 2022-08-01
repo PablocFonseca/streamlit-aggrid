@@ -20,7 +20,7 @@ class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
     data: Union[pd.DataFrame , str] = None
     selected_rows: List[Mapping] = field(default_factory=list)
-    column_state: any = None
+    column_state = None
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
@@ -29,7 +29,7 @@ class AgGridReturn(Mapping):
     def __iter__(self):
         return self.__dict__.__iter__()
     
-    def __len__(self) -> int:
+    def __len__(self):
         return self.__dict__.__len__()
 
     def keys(self):

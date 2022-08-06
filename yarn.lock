@@ -43,6 +43,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ag-grid-community/styles@npm:^28.1.0":
+  version: 28.1.0
+  resolution: "@ag-grid-community/styles@npm:28.1.0"
+  checksum: 237aa97d79eaa004c0255dc58d1c90f00a04f186c6caa3a8e923cd6258c167d94a4ba4b16e04bf0f2b5d0866a709ad1fcb6246b9da2d87772935876b2aae0037
+  languageName: node
+  linkType: hard
+
 "@ag-grid-enterprise/charts@npm:^28.0.2":
   version: 28.0.2
   resolution: "@ag-grid-enterprise/charts@npm:28.0.2"
@@ -1768,6 +1775,13 @@ __metadata:
     minimatch: ^3.0.4
     strip-json-comments: ^3.1.1
   checksum: 03a7704150b868c318aab6a94d87a33d30dc2ec579d27374575014f06237ba1370ae11178db772f985ef680d469dc237e7b16a1c5d8edaaeb8c3733e7a95a6d3
+  languageName: node
+  linkType: hard
+
+"@fontsource/source-sans-pro@npm:^4.5.10":
+  version: 4.5.10
+  resolution: "@fontsource/source-sans-pro@npm:4.5.10"
+  checksum: d0b786cdff56e2b9f0dbb557473342ac95bc2021eea57097a29244936554a1f452b1ba5b053f11f2f3bcf58ba77823ac1e2a3ff8aba8c4618026a131a025a86d
   languageName: node
   linkType: hard
 
@@ -7190,6 +7204,7 @@ __metadata:
     "@ag-grid-community/core": ^28.0.2
     "@ag-grid-community/csv-export": ^28.0.2
     "@ag-grid-community/react": =26.2.0
+    "@ag-grid-community/styles": ^28.1.0
     "@ag-grid-enterprise/charts": ^28.0.2
     "@ag-grid-enterprise/clipboard": ^28.0.2
     "@ag-grid-enterprise/column-tool-panel": ^28.0.2
@@ -7206,6 +7221,7 @@ __metadata:
     "@ag-grid-enterprise/side-bar": ^28.0.2
     "@ag-grid-enterprise/sparklines": ^28.0.2
     "@ag-grid-enterprise/status-bar": ^28.0.2
+    "@fontsource/source-sans-pro": ^4.5.10
     "@types/jest": ^27.0.2
     "@types/lodash": ^4.14.182
     "@types/node": ^16.11.6

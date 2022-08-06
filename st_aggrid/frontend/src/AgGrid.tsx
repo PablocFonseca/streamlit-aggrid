@@ -35,8 +35,10 @@ import { duration } from "moment"
 
 import { debounce } from "lodash"
 
-import "./AgGrid.scss"
+import"./AgGrid.scss"
 import "./scrollbar.css"
+
+import "@fontsource/source-sans-pro"
 interface State {
   rowData: any
   gridHeight: number
@@ -83,7 +85,8 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
-    
+    console.log(props)
+
     ModuleRegistry.register(ClientSideRowModelModule)
     ModuleRegistry.register(CsvExportModule)
     if (props.args.custom_css) {
@@ -384,6 +387,18 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
   }
 
+  private getThemeClass() {
+    const themeName = this.props.args.theme
+    const themeBase = this.props.theme?.base
+    
+    var themeClass = "ag-theme-" + themeName
+
+    if ((themeBase === "dark") && (themeName !== "material")) {
+      themeClass = themeClass + "-dark"
+    }
+    return themeClass
+  }
+
   public render = (): ReactNode => {
     if (this.api !== undefined) {
       if (this.state.should_update) {
@@ -396,7 +411,8 @@ class AgGrid extends StreamlitComponentBase<State> {
     return (
       <div
         id="gridContainer"
-        className={"ag-theme-" + this.props.args.theme}
+        //className={"ag-theme-" + this.props.args.theme}
+        className={this.getThemeClass()}
         ref = {this.gridContainerRef}
         style={this.defineContainerHeight()}
       >

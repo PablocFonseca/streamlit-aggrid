@@ -12,9 +12,7 @@ from dataclasses import dataclass, field
 from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode
-
-__AVAILABLE_THEMES = ['streamlit','light','dark', 'blue', 'fresh','material']
+from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme
 @dataclass
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
@@ -158,7 +156,7 @@ def AgGrid(
     conversion_errors: str='coerce',
     reload_data:bool=False,
     columns_state = None,
-    theme:str='light',
+    theme:str=AgGridTheme.STREAMLIT,
     custom_css=None,
     use_legacy_selected_rows=False,
     key: typing.Any=None,
@@ -260,6 +258,7 @@ def AgGrid(
     
     theme : str, optional
         theme used by ag-grid. One of:
+            
             'streamlit' -> follows default streamlit colors
             'light'     -> ag-grid balham-light theme
             'dark'      -> ag-grid balham-dark theme
@@ -292,8 +291,11 @@ def AgGrid(
         warnings.warn(DeprecationWarning("fit_columns_on_grid_load is deprecated and will be removed on next version."))
         columns_auto_size_mode = ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
 
-    if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
-        raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
+    if  not (isinstance(theme, (str, AgGridTheme)) and (theme in AgGridTheme)):
+        raise ValueError(f"{theme} is not valid. Available options: {AgGridTheme.__members__}")
+    else:
+        if isinstance(theme, AgGridTheme):
+            theme = theme.value
     
     if (not isinstance(data_return_mode, (str, DataReturnMode))):
         raise ValueError(f"DataReturnMode should be either a DataReturnMode enum value or a string.")

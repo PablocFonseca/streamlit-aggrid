@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions
+from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode
 
 __AVAILABLE_THEMES = ['streamlit','light','dark', 'blue', 'fresh','material']
 @dataclass
@@ -145,11 +145,12 @@ def __parse_update_mode(update_mode: GridUpdateMode):
 def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
-    height: int =400,
+    height: int = 400,
     width=None,
     fit_columns_on_grid_load: bool=False,
-    update_mode: GridUpdateMode= 'model_changed' ,
-    data_return_mode: DataReturnMode= 'as_input' ,
+    columns_auto_size_mode: ColumnsAutoSizeMode = ColumnsAutoSizeMode.NO_AUTOSIZE,
+    update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
+    data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
     allow_unsafe_jscode: bool=False,
     enable_enterprise_modules: bool=False,
     license_key: str=None,
@@ -181,7 +182,15 @@ def AgGrid(
         Deprecated, by default None
     
     fit_columns_on_grid_load : bool, optional
+        Deprecated, use columns_auto_size_mode
         Will adjust columns to fit grid width on grid load, by default False
+
+    columns_auto_size_mode: ColumnsAutoSizeMode, optional
+        Sets columns auto size behavior on grid load event.
+        More info: https://www.ag-grid.com/react-data-grid/column-sizing/#auto-size-columns
+            ColumnsAutoSizeMode.NO_AUTOSIZE             -> No column resizing. Width defined at gridOptins is used.
+            ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW -> Make the currently visible columns fit the screen. The columns will scale (growing or shrinking) to fit the available width.
+            ColumnsAutoSizeMode.FIT_CONTENTS    -> Grid will work out the best width to fit the contents of the cells in the column.
     
     update_mode : GridUpdateMode, optional
         UPDATE_MODE IS DEPRECATED. USE update_on instead.
@@ -275,6 +284,10 @@ def AgGrid(
     if width:
         warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
 
+    if fit_columns_on_grid_load:
+        warnings.warn(DeprecationWarning("fit_columns_on_grid_load is deprecated and will be removed on next version."))
+        columns_auto_size_mode = ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
+
     if (not isinstance(theme, str)) or (not theme in __AVAILABLE_THEMES):
         raise ValueError(f"{theme} is not valid. Available options: {__AVAILABLE_THEMES}")
     
@@ -319,7 +332,7 @@ def AgGrid(
             row_data=row_data,
             height=height, 
             width=width,
-            fit_columns_on_grid_load=fit_columns_on_grid_load, 
+            columns_auto_size_mode=columns_auto_size_mode, 
             data_return_mode=data_return_mode, 
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,

@@ -76,13 +76,11 @@ class AgGrid extends StreamlitComponentBase<State> {
   private columnFormaters: any
   private manualUpdateRequested: boolean = false
   private allowUnsafeJsCode: boolean = false
-  private fitColumnsOnGridLoad: boolean = false
   private gridOptions: any
 
   constructor(props: any) {
     super(props)
     ModuleRegistry.register(ClientSideRowModelModule)
-
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css)
     }
@@ -112,7 +110,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.frameDtypes = this.props.args.frame_dtypes
     this.manualUpdateRequested = this.props.args.update_mode === 1
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
-    this.fitColumnsOnGridLoad = this.props.args.fit_columns_on_grid_load
 
     this.columnFormaters = {
       columnTypes: {
@@ -260,10 +257,21 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 
   private fitColumns() {
-    if (this.fitColumnsOnGridLoad) {
-      this.api.sizeColumnsToFit()
-    } else {
-      this.columnApi.autoSizeAllColumns()
+    const columns_auto_size_mode = this.props.args.columns_auto_size_mode
+
+    switch (columns_auto_size_mode) {
+      case 1:
+      case "FIT_ALL_COLUMNS_TO_VIEW":
+        this.api.sizeColumnsToFit()
+        break
+
+      case 2:
+      case "FIT_CONTENTS":
+        this.columnApi.autoSizeAllColumns()
+        break
+
+      default:
+        break
     }
   }
 

@@ -19,6 +19,11 @@ class DataReturnMode(IntEnum):
     FILTERED = 1
     FILTERED_AND_SORTED = 2
 
+class ColumnsAutoSizeMode(IntEnum):
+    NO_AUTOSIZE = 0
+    FIT_ALL_COLUMNS_TO_VIEW = 1
+    FIT_CONTENTS = 2
+
 # stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
 class JsCode:
     def __init__(self, js_code: str):

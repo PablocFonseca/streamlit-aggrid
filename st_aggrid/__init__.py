@@ -152,7 +152,7 @@ def AgGrid(
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
     allow_unsafe_jscode: bool=False,
-    enable_enterprise_modules: bool=False,
+    enable_enterprise_modules: bool=True,
     license_key: str=None,
     try_to_convert_back_to_original_types: bool=True,
     conversion_errors: str='coerce',

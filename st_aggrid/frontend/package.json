@@ -6,7 +6,7 @@
     "@ag-grid-community/client-side-row-model": "^28.0.2",
     "@ag-grid-community/core": "^28.0.2",
     "@ag-grid-community/csv-export": "^28.0.2",
-    "@ag-grid-community/react": "^26.1.0",
+    "@ag-grid-community/react": "=26.2.0",
     "@ag-grid-enterprise/charts": "^28.0.2",
     "@ag-grid-enterprise/clipboard": "^28.0.2",
     "@ag-grid-enterprise/column-tool-panel": "^28.0.2",

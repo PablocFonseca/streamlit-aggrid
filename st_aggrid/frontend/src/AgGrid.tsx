@@ -66,7 +66,6 @@ function addCustomCSS(custom_css: CSSDict): void {
   var styleSheet = document.createElement("style")
   styleSheet.type = "text/css"
   styleSheet.innerText = css
-  console.log(`Adding cutom css: `, css)
   document.head.appendChild(styleSheet)
 }
 
@@ -223,7 +222,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     updateEvents.forEach((element: any) => {
       if (Array.isArray(element)) {
         api.addEventListener(element[0], debounce(doReturn, element[1]))
-        console.log("Attached arr", element)
       } else {
         api.addEventListener(element, doReturn)
       }
@@ -234,7 +232,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     const columnsState = this.props.args.columns_state
 
     if (columnsState != null) {
-      //console.dir(columnsState)
       this.columnApi.applyColumnState({ state: columnsState, applyOrder: true})
     }
   }
@@ -243,14 +240,9 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api = event.api
     this.columnApi = event.columnApi
 
-    this.api.forEachDetailGridInfo((i: any) => {
-      console.log(i)
-    })
-
     this.attachUpdateEvents(this.api)
 
     this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
-      //console.log(i)
       if (i.api !== undefined) {
       this.attachUpdateEvents(i.api)
       }
@@ -339,7 +331,6 @@ class AgGrid extends StreamlitComponentBase<State> {
         })
       })
 
-    //console.log(selected)
     let returnValue = {
       originalDtypes: this.frameDtypes,
       rowData: returnData,

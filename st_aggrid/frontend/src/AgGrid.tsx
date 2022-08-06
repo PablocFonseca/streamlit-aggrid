@@ -4,7 +4,7 @@ import {
   withStreamlitConnection,
 } from "streamlit-component-lib"
 
-import { ReactNode } from "react"
+import React, { ReactNode } from "react"
 import { AgGridReact } from "@ag-grid-community/react"
 
 import { ModuleRegistry, ColumnApi, GridApi, DetailGridInfo } from "@ag-grid-community/core"
@@ -78,9 +78,12 @@ class AgGrid extends StreamlitComponentBase<State> {
   private manualUpdateRequested: boolean = false
   private allowUnsafeJsCode: boolean = false
   private gridOptions: any
+  private gridContainerRef: React.RefObject<HTMLDivElement>
+  private isGridAutoHeightOn: boolean
 
   constructor(props: any) {
     super(props)
+    
     ModuleRegistry.register(ClientSideRowModelModule)
     ModuleRegistry.register(CsvExportModule)
     if (props.args.custom_css) {
@@ -113,6 +116,8 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.frameDtypes = this.props.args.frame_dtypes
     this.manualUpdateRequested = this.props.args.update_mode === 1
     this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
+    this.gridContainerRef = React.createRef();
+    this.isGridAutoHeightOn = this.props.args.gridOptions?.domLayout === "autoHeight"
 
     this.columnFormaters = {
       columnTypes: {
@@ -241,7 +246,6 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.columnApi = event.columnApi
 
     this.attachUpdateEvents(this.api)
-
     this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
       this.attachUpdateEvents(i.api)
@@ -251,11 +255,15 @@ class AgGrid extends StreamlitComponentBase<State> {
     this.api.addEventListener("firstDataRendered", (e: any) =>
       this.fitColumns()
     )
-
+    
     this.api.setRowData(this.state.rowData)
 
     for (var idx in this.gridOptions["preSelectedRows"]) {
       this.api.selectIndex(this.gridOptions["preSelectedRows"][idx], true, true)
+    }
+    if (this.isGridAutoHeightOn) {
+        const renderedGridHeight = this.gridContainerRef.current?.clientHeight
+        Streamlit.setFrameHeight(renderedGridHeight)
     }
   }
 
@@ -364,16 +372,15 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 
   private defineContainerHeight() {
-    if ("domLayout" in this.gridOptions) {
-      if (this.gridOptions["domLayout"] === "autoHeight") {
-        return {
-          width: this.props.width,
-        }
+    if (this.isGridAutoHeightOn) {
+      return {
+        width: this.props.width,
       }
-    }
-    return {
-      width: this.props.width,
-      height: this.state.gridHeight,
+    } else {
+      return {
+        width: this.props.width,
+        height: this.state.gridHeight,
+      }
     }
   }
 
@@ -388,7 +395,9 @@ class AgGrid extends StreamlitComponentBase<State> {
 
     return (
       <div
+        id="gridContainer"
         className={"ag-theme-" + this.props.args.theme}
+        ref = {this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
         <this.ManualUpdateButton

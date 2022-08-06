@@ -145,7 +145,7 @@ def __parse_update_mode(update_mode: GridUpdateMode):
 def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
-    height: int = 400,
+    height: int = None,
     width=None,
     fit_columns_on_grid_load: bool=False,
     columns_auto_size_mode: ColumnsAutoSizeMode = ColumnsAutoSizeMode.NO_AUTOSIZE,
@@ -173,17 +173,21 @@ def AgGrid(
 
     gridOptions : typing.Dict, optional
         A dictionary of options for ag-grid. Documentation on www.ag-grid.com
-        If None default grid options will be created with GridOptionsBuilder.from_dataframe() call. By default None
+        If None default grid options will be created with GridOptionsBuilder.from_dataframe() call.
+        Default: None
     
     height : int, optional
-        The grid height, by default 400
-    
+        The grid height in pixels.
+        If None, grid will enable Auto Height by default https://www.ag-grid.com/react-data-grid/grid-size/#dom-layout
+        Default: None
+
     width : [type], optional
-        Deprecated, by default None
+        Deprecated.
     
     fit_columns_on_grid_load : bool, optional
         Deprecated, use columns_auto_size_mode
-        Will adjust columns to fit grid width on grid load, by default False
+        Will adjust columns to fit grid width on grid load.
+        Default False
 
     columns_auto_size_mode: ColumnsAutoSizeMode, optional
         Sets columns auto size behavior on grid load event.
@@ -191,7 +195,8 @@ def AgGrid(
             ColumnsAutoSizeMode.NO_AUTOSIZE             -> No column resizing. Width defined at gridOptins is used.
             ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW -> Make the currently visible columns fit the screen. The columns will scale (growing or shrinking) to fit the available width.
             ColumnsAutoSizeMode.FIT_CONTENTS    -> Grid will work out the best width to fit the contents of the cells in the column.
-    
+        Default: ColumnsAutoSizeMode.NO_AUTOSIZE    
+
     update_mode : GridUpdateMode, optional
         UPDATE_MODE IS DEPRECATED. USE update_on instead.
 
@@ -207,8 +212,7 @@ def AgGrid(
         When using manual a save button will be drawn on top of grid.
         modes can be combined with bitwise OR operator |, for instance:
         GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
-        Defaults to GridUpdateMode.VALUE_CHANGED.
-        by default 'value_changed'
+        Default: GridUpdateMode.MODEL_CHANGED
 
     update_on: list[string | tuple[sting, int]], optional
         defines the events that will trigger a refresh and grid return on streamlit app.
@@ -323,8 +327,12 @@ def AgGrid(
     row_data = __parse_row_data(data)
     custom_css = custom_css or dict()
 
+
     response = AgGridReturn()
     response.data = data
+
+    if height == None:
+        gridOptions['domLayout'] ='autoHeight'
 
     try:
         component_value = _component_func(

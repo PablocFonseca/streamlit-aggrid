@@ -1,4 +1,14 @@
-from enum import IntEnum, IntFlag, Flag, auto
+from enum import Enum, IntEnum, IntFlag, Flag, auto, EnumMeta
+
+class MetaEnum(EnumMeta):
+    def __contains__(cls, item):
+        try:
+            cls(item)
+        except ValueError:
+            return False
+        return True   
+class BaseEnum(Enum, metaclass=MetaEnum):
+    pass
 class GridUpdateMode(Flag):
     NO_UPDATE = auto()
     MANUAL = auto()
@@ -23,6 +33,13 @@ class ColumnsAutoSizeMode(IntEnum):
     NO_AUTOSIZE = 0
     FIT_ALL_COLUMNS_TO_VIEW = 1
     FIT_CONTENTS = 2
+
+class AgGridTheme(BaseEnum):
+    STREAMLIT = "streamlit"
+    ALPINE = "alpine"
+    BALHAM = "balham"
+    MATERIAL = "material"
+
 
 # stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
 class JsCode:

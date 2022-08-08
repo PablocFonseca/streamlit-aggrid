@@ -12,5 +12,8 @@
   "scripts": {
     "build": "yarn workspaces foreach -v -i run build && poetry build",
     "develop": "yarn workspaces foreach -v -j 99 -i -p run start"
+  },
+  "resolutions": {
+    "streamlit-component-lib/apache-arrow": "9.0.0"
   }
 }

@@ -35,8 +35,7 @@ import { duration } from "moment"
 
 import { debounce } from "lodash"
 
-import"./AgGrid.scss"
-import "./scrollbar.css"
+import"./agGridStyle.scss"
 
 import "@fontsource/source-sans-pro"
 interface State {
@@ -203,7 +202,6 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   private convertStringToFunction(v: string) {
     const JS_PLACEHOLDER = "--x_x--0_0--"
-
     let funcReg = new RegExp(
       `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
     )

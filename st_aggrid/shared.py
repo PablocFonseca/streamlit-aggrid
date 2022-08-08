@@ -53,9 +53,15 @@ class JsCode:
             js_code (str): javascript function code as str
         """        
         import re
-        js_code = re.sub(re.compile("//.*?\n" ), "", js_code)
+        match_js_comment_expression = r"\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$"
+        js_code = re.sub(re.compile(match_js_comment_expression, re.MULTILINE), r"\1", js_code)
+        
+        match_js_spaces = r"\s+(?=(?:[^\'\"]*[\'\"][^\'\"]*[\'\"])*[^\'\"]*$)"
+        one_line_jscode = re.sub(match_js_spaces, " ", js_code, flags=re.MULTILINE)
+        
         js_placeholder = "--x_x--0_0--"
-        one_line_jscode = re.sub(r"\s+|\n+", " ", js_code)
+        one_line_jscode = re.sub(r"\s+|\r\s*|\n+", " ", js_code, flags=re.MULTILINE)
+        
         self.js_code = f"{js_placeholder}{one_line_jscode}{js_placeholder}"
 
 def walk_gridOptions(go, func):

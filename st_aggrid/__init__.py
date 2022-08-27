@@ -161,7 +161,7 @@ def AgGrid(
     use_legacy_selected_rows=False,
     key: typing.Any=None,
     update_on = [],
-    **default_column_parameters) -> typing.Dict:
+    **default_column_parameters) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
 
     Parameters
@@ -315,7 +315,11 @@ def AgGrid(
 
     if update_mode:
         update_on = list(update_on)
-        update_on.append(__parse_update_mode(update_mode))
+        if update_mode == GridUpdateMode.MANUAL:
+            manual_update=True
+        else:
+            manual_update=False
+            update_on.extend(__parse_update_mode(update_mode))
 
     frame_dtypes = []
     if try_to_convert_back_to_original_types:
@@ -354,6 +358,7 @@ def AgGrid(
             theme=theme,
             custom_css=custom_css,
             update_on=update_on,
+            manual_update=manual_update,
             key=key
             )
 

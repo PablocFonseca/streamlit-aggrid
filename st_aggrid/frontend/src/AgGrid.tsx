@@ -7,7 +7,7 @@ import {
 import React, { ReactNode } from "react"
 import { AgGridReact } from "@ag-grid-community/react"
 
-import { ModuleRegistry, ColumnApi, GridApi, DetailGridInfo } from "@ag-grid-community/core"
+import { ModuleRegistry, ColumnApi, GridApi, DetailGridInfo, RowNode } from "@ag-grid-community/core"
 import { CsvExportModule } from "@ag-grid-community/csv-export"
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
 import { LicenseManager } from "@ag-grid-enterprise/core"
@@ -84,7 +84,7 @@ class AgGrid extends StreamlitComponentBase<State> {
 
   constructor(props: any) {
     super(props)
-    console.log(props)
+    //console.log(props)
 
     ModuleRegistry.register(ClientSideRowModelModule)
     ModuleRegistry.register(CsvExportModule)
@@ -222,7 +222,7 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 
   private attachUpdateEvents(api: GridApi) {
-    let updateEvents = this.props.args.update_on[0]
+    let updateEvents = this.props.args.update_on
     const doReturn = (e: any) => this.returnGridValue(e)
 
     updateEvents.forEach((element: any) => {
@@ -344,7 +344,7 @@ class AgGrid extends StreamlitComponentBase<State> {
       let selected : any  = {}
       this.api.forEachDetailGridInfo((d:DetailGridInfo) => {
         selected[d.id] = []
-        d.api?.forEachNode((n: any) => {
+        d.api?.forEachNode((n: RowNode<any>) => {
           if (n.isSelected()) {
             selected[d.id].push(n)
           }
@@ -357,7 +357,7 @@ class AgGrid extends StreamlitComponentBase<State> {
       selectedRows: this.api.getSelectedRows(),
       selectedItems: this.api
         .getSelectedNodes()
-        .map((n) => ({ rowIndex: n.rowIndex, ...n.data })),
+        .map((n, i) => ({ _selectedRowNodeInfo: {nodeRowIndex: n.rowIndex, nodeId: n.id}, ...n.data })),
       colState: this.columnApi.getColumnState(),
     }
 
@@ -415,7 +415,7 @@ class AgGrid extends StreamlitComponentBase<State> {
         style={this.defineContainerHeight()}
       >
         <this.ManualUpdateButton
-          manual_update={this.manualUpdateRequested}
+          manual_update={this.props.args.manual_update}
           onClick={(e: any) => this.returnGridValue(e)}
         />
         <AgGridReact

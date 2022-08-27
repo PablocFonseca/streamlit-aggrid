@@ -7,7 +7,7 @@ AgGrid is an awesome grid for web frontend. More information in [https://www.ag-
 Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 <br>
-Live example [https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com/](On streamlit cloud.)
+Live example [https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com](On streamlit cloud.)
 Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 
@@ -37,6 +37,13 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 0.3.3
+* Fixes [#132](https://github.com/PablocFonseca/streamlit-aggrid/issues/132)
+* Fixes [#131](https://github.com/PablocFonseca/streamlit-aggrid/issues/131) and [#130](https://github.com/PablocFonseca/streamlit-aggrid/issues/130)
+* Added Sparklines [#118](https://github.com/PablocFonseca/streamlit-aggrid/issues/118)
+* Changed Grid Return to support [#117](https://github.com/PablocFonseca/streamlit-aggrid/issues/117)
+* Rebuilt streamlit theme
+
 Version 0.3.0  
 * Merged some PR (Thanks everybody!) check PR at github!
 * Added class parsing in React Side, so more advanced CellRenderers can be used. (Thanks [kjakaitis](https://github.com/kjakaitis))
@@ -48,7 +55,6 @@ Version 0.3.0
 * Changed GridReturnMode behaviour. Now update_on accepts a list of gridEvents that will trigger a streamlit refresh, making it possible to subscribe to any [gridEvent](https://www.ag-grid.com/javascript-data-grid/grid-events/).
 * Removed dot-env and simplejson dependencies.
 * Other smaller fixes and typos corrections.
-
 
 Version 0.2.3
 * small fixes

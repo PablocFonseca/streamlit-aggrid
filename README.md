@@ -7,8 +7,7 @@ AgGrid is an awesome grid for web frontend. More information in [https://www.ag-
 Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 <br>
-Live example [https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com](On streamlit cloud.)
-Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
+Live example [on Streamlit Cloud](https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com/). Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 
 # Install

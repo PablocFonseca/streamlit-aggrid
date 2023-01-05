@@ -39,7 +39,7 @@ class AgGridReturn(Mapping):
 #This function exists because pandas behaviour when converting tz aware datetime to iso format.
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
     """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
-    for c, d in dataframe.dtypes.iteritems():
+    for c, d in dataframe.dtypes.items():
         if not d.kind == 'M':
             continue
         else:

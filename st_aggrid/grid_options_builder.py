@@ -1,7 +1,6 @@
 from collections import defaultdict
 import pandas as pd
 
-
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""
 
@@ -192,16 +191,17 @@ class GridOptionsBuilder:
 
     def configure_selection(
         self,
-        selection_mode="single",
-        use_checkbox=False,
-        header_checkbox=False,
-        header_checkbox_filtered_only=True,
-        pre_selected_rows=None,
-        rowMultiSelectWithClick=False,
-        suppressRowDeselection=False,
-        suppressRowClickSelection=False,
-        groupSelectsChildren=True,
-        groupSelectsFiltered=True,
+        selection_mode: str ="single",
+        use_checkbox: bool =False,
+        header_checkbox: bool =False,
+        header_checkbox_filtered_only: bool =True,
+        pre_select_all_rows: bool = False,
+        pre_selected_rows: list =None,
+        rowMultiSelectWithClick: bool=False,
+        suppressRowDeselection: bool=False,
+        suppressRowClickSelection: bool=False,
+        groupSelectsChildren: bool=True,
+        groupSelectsFiltered: bool=True,
     ):
         """Configure grid selection features
 
@@ -271,6 +271,7 @@ class GridOptionsBuilder:
         self.__grid_options["suppressRowClickSelection"] = suppressRowClickSelection
         self.__grid_options["groupSelectsChildren"] = groupSelectsChildren and selection_mode == "multiple"
         self.__grid_options["groupSelectsFiltered"] = groupSelectsFiltered
+        self.__grid_options["preSelectAllRows"] = pre_select_all_rows
     
     def configure_pagination(self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10):
         """Configure grid's pagination features

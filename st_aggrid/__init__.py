@@ -161,6 +161,7 @@ def AgGrid(
     use_legacy_selected_rows=False,
     key: typing.Any=None,
     update_on = [],
+    enable_quicksearch=False,
     **default_column_parameters) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
 
@@ -359,6 +360,7 @@ def AgGrid(
             custom_css=custom_css,
             update_on=update_on,
             manual_update=manual_update,
+            enable_quicksearch=enable_quicksearch,
             key=key
             )
 

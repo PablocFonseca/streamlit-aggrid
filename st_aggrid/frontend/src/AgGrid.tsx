@@ -254,28 +254,41 @@ class AgGrid extends StreamlitComponentBase<State> {
       }
     })
 
-    this.api.addEventListener("firstDataRendered", (e: any) =>
-      this.fitColumns()
+    this.api.addEventListener("rowGroupOpened", (e: any) =>
+      this.resizeGridContainer(e)
     )
+
+    // this.api.addEventListener("firstDataRendered", (e: any) =>
+    //   this.fitColumns()
+    // )
 
     this.api.setRowData(this.state.rowData)
 
-    var preSelectAllRows = this.props.args.gridOptions["preSelectAllRows"] || false
-    
+    var preSelectAllRows =
+      this.props.args.gridOptions["preSelectAllRows"] || false
     if (preSelectAllRows) {
       this.api.selectAll()
-    } else  {
-    if ((this.gridOptions['preSelectedRows']) || (this.gridOptions['preSelectedRows']?.length() > 0)){
-      for (var idx in this.gridOptions["preSelectedRows"]) {
-        this.api.getRowNode(idx)?.setSelected(true, false, true)
+      this.returnGridValue(event)
+    } else {
+      if (
+        this.gridOptions["preSelectedRows"] ||
+        this.gridOptions["preSelectedRows"]?.length() > 0
+      ) {
+        for (var idx in this.gridOptions["preSelectedRows"]) {
+          this.api.getRowNode(idx)?.setSelected(true, false, true)
+          this.returnGridValue(event)
+        }
       }
+    }
+
+    if (this.isGridAutoHeightOn) {
+      this.resizeGridContainer(null)
     }
   }
 
-  if (this.isGridAutoHeightOn) {
-      const renderedGridHeight = this.gridContainerRef.current?.clientHeight
-      Streamlit.setFrameHeight(renderedGridHeight)
-    }
+  private resizeGridContainer(event: any) {
+    const renderedGridHeight = this.gridContainerRef.current?.clientHeight
+    Streamlit.setFrameHeight(renderedGridHeight)
   }
 
   private fitColumns() {
@@ -365,12 +378,10 @@ class AgGrid extends StreamlitComponentBase<State> {
       originalDtypes: this.frameDtypes,
       rowData: returnData,
       selectedRows: this.api.getSelectedRows(),
-      selectedItems: this.api
-        .getSelectedNodes()
-        .map((n, i) => ({
-          _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
-          ...n.data,
-        })),
+      selectedItems: this.api.getSelectedNodes().map((n, i) => ({
+        _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
+        ...n.data,
+      })),
       colState: this.columnApi.getColumnState(),
     }
 
@@ -380,7 +391,7 @@ class AgGrid extends StreamlitComponentBase<State> {
   private ManualUpdateButton(props: any) {
     if (props.manualUpdate) {
       return (
-        <button onClick={props.onClick} style={{marginLeft: 10}}>
+        <button onClick={props.onClick} style={{ marginLeft: 10 }}>
           Update
         </button>
       )
@@ -414,17 +425,17 @@ class AgGrid extends StreamlitComponentBase<State> {
   }
 
   private QuickSearch(props: any) {
-      if (props.enableQuickSearch){
-        return (
-          <input
-            className="ag-cell-value"
-            type="text"
-            onChange={props.onChange}
-            placeholder="quickfilter..."
-          />
-        )
-      }
-      return <></>
+    if (props.enableQuickSearch) {
+      return (
+        <input
+          className="ag-cell-value"
+          type="text"
+          onChange={props.onChange}
+          placeholder="quickfilter..."
+        />
+      )
+    }
+    return <></>
   }
 
   private GridToolBar(props: any) {
@@ -433,9 +444,7 @@ class AgGrid extends StreamlitComponentBase<State> {
         <div id="gridToolBar" style={{ paddingBottom: 30 }}>
           <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
             <div className="">
-              <div className="ag-cell-wrapper">
-                {props.children}
-              </div>
+              <div className="ag-cell-wrapper">{props.children}</div>
             </div>
           </div>
         </div>
@@ -451,31 +460,33 @@ class AgGrid extends StreamlitComponentBase<State> {
       }
     }
     this.loadColumnsState()
-    let shouldRenderGridToolbar = (this.props.args.enable_quicksearch === true) || (this.props.args.manual_update)
+    let shouldRenderGridToolbar =
+      this.props.args.enable_quicksearch === true ||
+      this.props.args.manual_update
 
-      return (
-        <div
-          id="gridContainer"
-          className={this.getThemeClass()}
-          ref={this.gridContainerRef}
-          style={this.defineContainerHeight()}
-        >
-          <this.GridToolBar enabled={shouldRenderGridToolbar}>
-            <this.ManualUpdateButton
-              manualUpdate={this.props.args.manual_update}
-              onClick={(e: any) => this.returnGridValue(e)}
-            />
-            <this.QuickSearch
-              enableQuickSearch={this.props.args.enable_quicksearch}
-              onChange={(e: any) => this.api.setQuickFilter(e.target.value)}
-            />
-          </this.GridToolBar>
-          <AgGridReact
-            onGridReady={(e) => this.onGridReady(e)}
-            gridOptions={this.gridOptions}
-          ></AgGridReact>
-        </div>
-      )
+    return (
+      <div
+        id="gridContainer"
+        className={this.getThemeClass()}
+        ref={this.gridContainerRef}
+        style={this.defineContainerHeight()}
+      >
+        <this.GridToolBar enabled={shouldRenderGridToolbar}>
+          <this.ManualUpdateButton
+            manualUpdate={this.props.args.manual_update}
+            onClick={(e: any) => this.returnGridValue(e)}
+          />
+          <this.QuickSearch
+            enableQuickSearch={this.props.args.enable_quicksearch}
+            onChange={(e: any) => this.api.setQuickFilter(e.target.value)}
+          />
+        </this.GridToolBar>
+        <AgGridReact
+          onGridReady={(e) => this.onGridReady(e)}
+          gridOptions={this.gridOptions}
+        ></AgGridReact>
+      </div>
+    )
   }
 }
 

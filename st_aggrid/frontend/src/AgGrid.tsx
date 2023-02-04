@@ -258,9 +258,9 @@ class AgGrid extends StreamlitComponentBase<State> {
       this.resizeGridContainer(e)
     )
 
-    // this.api.addEventListener("firstDataRendered", (e: any) =>
-    //   this.fitColumns()
-    // )
+    this.api.addEventListener("firstDataRendered", (e: any) =>
+      this.fitColumns()
+    )
 
     this.api.setRowData(this.state.rowData)
 

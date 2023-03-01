@@ -2,7 +2,23 @@
 
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] 
 
-AgGrid is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
+---
+  
+  **Note**
+  
+Folks, I wish I had more time to work on this.. But, I'm still bound to those 24 hours a day have, and vey busy days.
+I'm writing this on  my free time, most features I'm adding are what I found necessary to implement on the projects I'm
+using Streamlit Ag-Grid. I check the issues here and the PR once in a while, and try to focues on what's more requested.
+I'm working on documentation and some examples too. [Check Here](https://staggrid-examples.streamlit.app/)
+  
+>"I'm just a Latin American young man  
+>No money in the bank no important relatives  
+>And coming from the countyside"  [♫](https://www.youtube.com/watch?v=2HlpJaatYH4)
+  
+---
+
+  
+**AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
 Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
@@ -36,6 +52,13 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 0.3.4
+* Added quickfilter
+* Added Excel Export Module
+* Bugfixes (an probably introduced new ones :/)
+* Code cleanup
+
+
 Version 0.3.3
 * Fixes [#132](https://github.com/PablocFonseca/streamlit-aggrid/issues/132)
 * Fixes [#131](https://github.com/PablocFonseca/streamlit-aggrid/issues/131) and [#130](https://github.com/PablocFonseca/streamlit-aggrid/issues/130)

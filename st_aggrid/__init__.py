@@ -12,13 +12,14 @@ from dataclasses import dataclass, field
 from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme
+from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
 @dataclass
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
     data: Union[pd.DataFrame , str] = None
     selected_rows: List[Mapping] = field(default_factory=list)
     column_state = None
+    excel_blob = None
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
@@ -162,6 +163,8 @@ def AgGrid(
     key: typing.Any=None,
     update_on = [],
     enable_quicksearch=False,
+    excel_export_mode: ExcelExportMode = ExcelExportMode.NONE,
+    excel_export_multiple_sheet_params: Mapping = None,
     **default_column_parameters) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
 
@@ -255,7 +258,20 @@ def AgGrid(
     
     reload_data : bool, optional
         Force AgGrid to reload data using api calls. Should be false on most use cases
-        By default False
+        Default False
+
+    enable_quicksearch: bool, optional
+        Adds a quicksearch text field on top of grid.
+        Defaults to False
+    
+    excel_export_mode: ExcelExportMode, optional
+        Defines how Excel Export integration behaves:
+            NONE -> Nothing Changes. Default grid behaviour.
+            MANUAL -> Adds a download button on grid's top that triggers download.
+            FILE_BLOB_IN_GRID_RESPONSE -> include in grid's return an ExcelBlob Property with file binary encoded as B64 String
+            TRIGGER_DOWNLOAD_AFTER_REFRESH -> Triggers file download before returning results to streamlit.
+            SHEET_BLOB_IN_GRID_RESPONSE -> include in grid's return a SheetlBlob Property with sheet binary encoded as B64 String. Meant to be used with MULTIPLE
+            MULTIPLE_SHEETS -> Same as TRIGGER_DOWNLOAD_AFTER_REFRESH but will include b64 encoded *SHEETS* returned with SHEET_BLOB_IN_GRID_RESPONSE and supplied to grid's call using excel_export_extra_sheets parameter.
     
     theme : str, optional
         theme used by ag-grid. One of:
@@ -314,6 +330,12 @@ def AgGrid(
         except:
             raise ValueError(f"{update_mode} is not valid.")
 
+    if  not (isinstance(excel_export_mode, (str, ExcelExportMode)) and (excel_export_mode in ExcelExportMode)):
+        raise ValueError(f"{excel_export_mode} is not valid. Available options: {ExcelExportMode.__members__}")
+    else:
+        if isinstance(excel_export_mode, ExcelExportMode):
+            excel_export_mode = excel_export_mode.value
+
     if update_mode:
         update_on = list(update_on)
         if update_mode == GridUpdateMode.MANUAL:
@@ -361,6 +383,8 @@ def AgGrid(
             update_on=update_on,
             manual_update=manual_update,
             enable_quicksearch=enable_quicksearch,
+            excel_export_mode=excel_export_mode,
+            ExcelExportMultipleSheetParams=excel_export_multiple_sheet_params,
             key=key
             )
 
@@ -409,6 +433,7 @@ def AgGrid(
             response.selected_rows = component_value["selectedItems"]
 
         response.column_state = component_value["colState"]
+        response.excel_blob = component_value['ExcelBlob']
 
     
     return response

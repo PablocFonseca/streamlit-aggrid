@@ -1,13 +1,19 @@
 import {
   Streamlit,
-  StreamlitComponentBase,
+  ComponentProps,
   withStreamlitConnection,
 } from "streamlit-component-lib"
 
 import React, { ReactNode } from "react"
 import { AgGridReact } from "@ag-grid-community/react"
 
-import { ModuleRegistry, ColumnApi, GridApi, DetailGridInfo, RowNode } from "@ag-grid-community/core"
+import {
+  ModuleRegistry,
+  ColumnApi,
+  GridApi,
+  DetailGridInfo,
+  RowNode,
+} from "@ag-grid-community/core"
 import { CsvExportModule } from "@ag-grid-community/csv-export"
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
 import { LicenseManager } from "@ag-grid-enterprise/core"
@@ -33,16 +39,14 @@ import { format } from "date-fns-tz"
 import deepMap from "./utils"
 import { duration } from "moment"
 
-import { debounce } from "lodash"
+import { debounce, throttle, isEqual } from "lodash"
 
-import"./agGridStyle.scss"
+import { encode, decode } from "base64-arraybuffer"
+import { Buffer} from 'buffer'
+
+import "./agGridStyle.scss"
 
 import "@fontsource/source-sans-pro"
-interface State {
-  rowData: any
-  gridHeight: number
-  should_update: boolean
-}
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
@@ -71,23 +75,157 @@ function addCustomCSS(custom_css: CSSDict): void {
   document.head.appendChild(styleSheet)
 }
 
-class AgGrid extends StreamlitComponentBase<State> {
-  private frameDtypes: any
+function dateFormatter(isoString: string, formaterString: string): String {
+  try {
+    let date = parseISO(isoString)
+    return format(date, formaterString)
+  } catch {
+    return isoString
+  } finally {
+  }
+}
+
+function currencyFormatter(number: any, currencySymbol: string): String {
+  let n = Number.parseFloat(number)
+  if (!Number.isNaN(n)) {
+    return currencySymbol + n.toFixed(2)
+  } else {
+    return number
+  }
+}
+
+function numberFormatter(number: any, precision: number): String {
+  let n = Number.parseFloat(number)
+  if (!Number.isNaN(n)) {
+    return n.toFixed(precision)
+  } else {
+    return number
+  }
+}
+
+const columnFormaters = {
+  columnTypes: {
+    dateColumnFilter: {
+      filter: "agDateColumnFilter",
+      filterParams: {
+        comparator: (filterValue: any, cellValue: string) =>
+          compareAsc(parseISO(cellValue), filterValue),
+      },
+    },
+    numberColumnFilter: {
+      filter: "agNumberColumnFilter",
+    },
+    shortDateTimeFormat: {
+      valueFormatter: (params: any) =>
+        dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
+    },
+    customDateTimeFormat: {
+      valueFormatter: (params: any) =>
+        dateFormatter(params.value, params.column.colDef.custom_format_string),
+    },
+    customNumericFormat: {
+      valueFormatter: (params: any) =>
+        numberFormatter(params.value, params.column.colDef.precision ?? 2),
+    },
+    customCurrencyFormat: {
+      valueFormatter: (params: any) =>
+        currencyFormatter(
+          params.value,
+          params.column.colDef.custom_currency_symbol
+        ),
+    },
+    timedeltaFormat: {
+      valueFormatter: (params: any) => duration(params.value).humanize(true),
+    },
+  },
+}
+
+function parseJsCodeFromPython(v: string) {
+  const JS_PLACEHOLDER = "--x_x--0_0--"
+  let funcReg = new RegExp(
+    `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
+  )
+
+  let match = funcReg.exec(v)
+
+  if (match) {
+    const funcStr = match[1]
+    // eslint-disable-next-line
+    return new Function("return " + funcStr)()
+  } else {
+    return v
+  }
+}
+
+function GridToolBar(props: any) {
+  if (true) {
+    return (
+      <div id="gridToolBar" style={{ paddingBottom: 30 }}>
+        <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
+          <div className="">
+            <div className="ag-cell-wrapper">{props.children}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return <></>
+}
+
+function QuickSearch(props: any) {
+  if (props.enableQuickSearch) {
+    return (
+      <input
+        className="ag-cell-value"
+        type="text"
+        onChange={props.onChange}
+        onKeyUp={props.showOverlay}
+        placeholder="quickfilter..."
+        style={{ marginLeft: 5, marginRight: 5 }}
+      />
+    )
+  }
+  return <></>
+}
+
+function ManualUpdateButton(props: any) {
+  if (props.manualUpdate) {
+    return (
+      <button onClick={props.onClick} style={{ marginLeft: 5, marginRight: 5 }}>
+        Update
+      </button>
+    )
+  }
+  return <></>
+}
+
+function ManualDownloadButton(props: any) {
+  if (props.enabled) {
+    return (
+      <button onClick={props.onClick} style={{ marginLeft: 5, marginRight: 5 }}>
+        Download
+      </button>
+    )
+  }
+  return <></>
+}
+class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
   private api!: GridApi
   private columnApi!: ColumnApi
   private columnFormaters: any
-  private manualUpdateRequested: boolean = false
-  private allowUnsafeJsCode: boolean = false
   private gridOptions: any
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
 
   constructor(props: any) {
     super(props)
-    //console.log(props)
+    //console.log("Grid INIT called", props)
+
+    this.gridContainerRef = React.createRef()
 
     ModuleRegistry.register(ClientSideRowModelModule)
     ModuleRegistry.register(CsvExportModule)
+
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css)
     }
@@ -110,121 +248,35 @@ class AgGrid extends StreamlitComponentBase<State> {
         StatusBarModule,
         ClipboardModule,
       ])
+
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])
       }
     }
 
-    this.frameDtypes = this.props.args.frame_dtypes
-    this.manualUpdateRequested = this.props.args.update_mode === 1
-    this.allowUnsafeJsCode = this.props.args.allow_unsafe_jscode
-    this.gridContainerRef = React.createRef()
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
-    this.columnFormaters = {
-      columnTypes: {
-        dateColumnFilter: {
-          filter: "agDateColumnFilter",
-          filterParams: {
-            comparator: (filterValue: any, cellValue: string) =>
-              compareAsc(parseISO(cellValue), filterValue),
-          },
-        },
-        numberColumnFilter: {
-          filter: "agNumberColumnFilter",
-        },
-        shortDateTimeFormat: {
-          valueFormatter: (params: any) =>
-            this.dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
-        },
-        customDateTimeFormat: {
-          valueFormatter: (params: any) =>
-            this.dateFormatter(
-              params.value,
-              params.column.colDef.custom_format_string
-            ),
-        },
-        customNumericFormat: {
-          valueFormatter: (params: any) =>
-            this.numberFormatter(
-              params.value,
-              params.column.colDef.precision ?? 2
-            ),
-        },
-        customCurrencyFormat: {
-          valueFormatter: (params: any) =>
-            this.currencyFormatter(
-              params.value,
-              params.column.colDef.custom_currency_symbol
-            ),
-        },
-        timedeltaFormat: {
-          valueFormatter: (params: any) =>
-            duration(params.value).humanize(true),
-        },
-      },
-    }
+    this.parseGridoptions()
+  }
 
+  private parseGridoptions() {
     let gridOptions = Object.assign(
       {},
-      this.columnFormaters,
+      columnFormaters,
       this.props.args.gridOptions
     )
 
-    if (this.allowUnsafeJsCode) {
+    if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
-      gridOptions = this.convertJavascriptCodeOnGridOptions(gridOptions)
+      gridOptions = deepMap(gridOptions, parseJsCodeFromPython)
     }
     this.gridOptions = gridOptions
-
-    this.state = {
-      rowData: JSON.parse(props.args.row_data),
-      gridHeight: this.props.args.height,
-      should_update: false,
-    }
   }
 
-  static getDerivedStateFromProps(props: any, state: any) {
-    if (props.args.reload_data) {
-      let new_row_data = JSON.parse(props.args.row_data)
-
-      return {
-        rowData: new_row_data,
-        gridHeight: props.args.height,
-        should_update: true,
-      }
-    } else {
-      return {
-        gridHeight: props.args.height,
-      }
-    }
-  }
-
-  private convertStringToFunction(v: string) {
-    const JS_PLACEHOLDER = "--x_x--0_0--"
-    let funcReg = new RegExp(
-      `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
-    )
-
-    let match = funcReg.exec(v)
-
-    if (match) {
-      const funcStr = match[1]
-      // eslint-disable-next-line
-      return new Function("return " + funcStr)()
-    } else {
-      return v
-    }
-  }
-
-  private convertJavascriptCodeOnGridOptions = (obj: object) => {
-    return deepMap(obj, this.convertStringToFunction)
-  }
-
-  private attachUpdateEvents(api: GridApi) {
-    let updateEvents = this.props.args.update_on
-    const doReturn = (e: any) => this.returnGridValue(e)
+  private attachStreamlitRerunToEvents(api: GridApi) {
+    const updateEvents = this.props.args.update_on
+    const doReturn = (e: any) => this.returnGridValue()
 
     updateEvents.forEach((element: any) => {
       if (Array.isArray(element)) {
@@ -243,50 +295,55 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
   }
 
-  private onGridReady(event: any) {
-    this.api = event.api
-    this.columnApi = event.columnApi
+  private DownloadAsExcelIfRequested() {
+    if (this.api) {
 
-    this.attachUpdateEvents(this.api)
-    this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
-      if (i.api !== undefined) {
-        this.attachUpdateEvents(i.api)
-      }
-    })
 
-    this.api.addEventListener("rowGroupOpened", (e: any) =>
-      this.resizeGridContainer(e)
-    )
-
-    this.api.addEventListener("firstDataRendered", (e: any) =>
-      this.fitColumns()
-    )
-
-    this.api.setRowData(this.state.rowData)
-
-    var preSelectAllRows =
-      this.props.args.gridOptions["preSelectAllRows"] || false
-    if (preSelectAllRows) {
-      this.api.selectAll()
-      this.returnGridValue(event)
-    } else {
       if (
-        this.gridOptions["preSelectedRows"] ||
-        this.gridOptions["preSelectedRows"]?.length() > 0
+        this.props.args.excel_export_mode === "MULTIPLE_SHEETS" &&
+        this.props.args.ExcelExportMultipleSheetParams
       ) {
-        for (var idx in this.gridOptions["preSelectedRows"]) {
-          this.api.getRowNode(idx)?.setSelected(true, false, true)
-          this.returnGridValue(event)
-        }
-      }
-    }
+        let params = this.props.args.ExcelExportMultipleSheetParams
 
-    if (this.isGridAutoHeightOn) {
-      this.resizeGridContainer(null)
+        let data = params.data.map((v: string) =>
+          Buffer.from(decode(v)).toString("latin1")
+        )
+        params.data = data
+        
+        this.api.exportMultipleSheetsAsExcel(params)
+      }
+      if (this.props.args.excel_export_mode === "TRIGGER_DOWNLOAD") {
+        this.api.exportDataAsExcel()
+      }
     }
   }
 
-  private resizeGridContainer(event: any) {
+  private handleExcelExport() {
+    if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
+      let blob = this.api.getDataAsExcel() as Blob
+      let buffer;
+      (async () => {
+        await new Promise((resolve, reject) => {
+          blob.arrayBuffer().then((v) => {
+            buffer = encode(v)
+            resolve(buffer)
+          })
+        })
+      })()
+      return buffer
+    }
+
+    if (this.props.args.excel_export_mode === "SHEET_BLOB_IN_GRID_RESPONSE") {
+      let blob = this.api.getSheetDataForExcel({
+        sheetName: Math.round(Date.now() / 1000).toString(),
+      })
+      if (blob) return encode(Buffer.from(blob, 'latin1')) ///Buffer.from(blob).toString('base64')
+    }
+
+    return null
+  }
+
+  private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
     Streamlit.setFrameHeight(renderedGridHeight)
   }
@@ -310,35 +367,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     }
   }
 
-  private dateFormatter(isoString: string, formaterString: string): String {
-    try {
-      let date = parseISO(isoString)
-      return format(date, formaterString)
-    } catch {
-      return isoString
-    } finally {
-    }
-  }
-
-  private currencyFormatter(number: any, currencySymbol: string): String {
-    let n = Number.parseFloat(number)
-    if (!Number.isNaN(n)) {
-      return currencySymbol + n.toFixed(2)
-    } else {
-      return number
-    }
-  }
-
-  private numberFormatter(number: any, precision: number): String {
-    let n = Number.parseFloat(number)
-    if (!Number.isNaN(n)) {
-      return n.toFixed(precision)
-    } else {
-      return number
-    }
-  }
-
-  private returnGridValue(e: any) {
+  private async getGridReturnValue() {
     let returnData: any[] = []
     let returnMode = this.props.args.data_return_mode
 
@@ -367,7 +396,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     let selected: any = {}
     this.api.forEachDetailGridInfo((d: DetailGridInfo) => {
       selected[d.id] = []
-      d.api?.forEachNode((n: RowNode<any>) => {
+      d.api?.forEachNode((n) => {
         if (n.isSelected()) {
           selected[d.id].push(n)
         }
@@ -375,7 +404,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     })
 
     let returnValue = {
-      originalDtypes: this.frameDtypes,
+      originalDtypes: this.props.args.frame_dtypes,
       rowData: returnData,
       selectedRows: this.api.getSelectedRows(),
       selectedItems: this.api.getSelectedNodes().map((n, i) => ({
@@ -383,20 +412,14 @@ class AgGrid extends StreamlitComponentBase<State> {
         ...n.data,
       })),
       colState: this.columnApi.getColumnState(),
+      ExcelBlob: this.handleExcelExport(),
     }
-
-    Streamlit.setComponentValue(returnValue)
+    //console.dir(returnValue)
+    return returnValue
   }
 
-  private ManualUpdateButton(props: any) {
-    if (props.manualUpdate) {
-      return (
-        <button onClick={props.onClick} style={{ marginLeft: 10 }}>
-          Update
-        </button>
-      )
-    }
-    return <></>
+  private returnGridValue() {
+    this.getGridReturnValue().then((v) => Streamlit.setComponentValue(v))
   }
 
   private defineContainerHeight() {
@@ -407,7 +430,7 @@ class AgGrid extends StreamlitComponentBase<State> {
     } else {
       return {
         width: this.props.width,
-        height: this.state.gridHeight,
+        height: this.props.args.height,
       }
     }
   }
@@ -424,45 +447,71 @@ class AgGrid extends StreamlitComponentBase<State> {
     return themeClass
   }
 
-  private QuickSearch(props: any) {
-    if (props.enableQuickSearch) {
-      return (
-        <input
-          className="ag-cell-value"
-          type="text"
-          onChange={props.onChange}
-          placeholder="quickfilter..."
-        />
-      )
+  public componentDidUpdate(prevProps: any, prevState: S, snapshot?: any) {
+
+    const previous_export_mode = prevProps.args.excel_export_mode
+    const current_export_mode = this.props.args.excel_export_mode
+
+    if (
+      ((previous_export_mode !== "TRIGGER_DOWNLOAD") && (current_export_mode === "TRIGGER_DOWNLOAD")) ||
+      ((previous_export_mode !== "MULTIPLE_SHEETS") && (current_export_mode === "MULTIPLE_SHEETS"))
+    ) {
+      this.DownloadAsExcelIfRequested()
     }
-    return <></>
+
+    this.resizeGridContainer()
   }
 
-  private GridToolBar(props: any) {
-    if (true) {
-      return (
-        <div id="gridToolBar" style={{ paddingBottom: 30 }}>
-          <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
-            <div className="">
-              <div className="ag-cell-wrapper">{props.children}</div>
-            </div>
-          </div>
-        </div>
-      )
+  private onGridReady(event: any) {
+    this.api = event.api
+    this.columnApi = event.columnApi
+
+    this.api.addEventListener(
+      "rowGroupOpened",
+      (e: any) => this.resizeGridContainer()
+    )
+
+    this.api.addEventListener("firstDataRendered", (e: any) => {
+      if (this.isGridAutoHeightOn) this.resizeGridContainer();
+      this.fitColumns()
+    })
+
+    this.attachStreamlitRerunToEvents(this.api)
+    this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
+      if (i.api !== undefined) {
+        this.attachStreamlitRerunToEvents(i.api)
+      }
+    })
+
+    this.api.setRowData(JSON.parse(this.props.args.row_data))
+
+    this.processPreselection()
+  }
+
+  private processPreselection() {
+    var preSelectAllRows =
+      this.props.args.gridOptions["preSelectAllRows"] || false
+    if (preSelectAllRows) {
+      this.api.selectAll()
+      this.returnGridValue()
+    } else {
+      if (
+        this.gridOptions["preSelectedRows"] ||
+        this.gridOptions["preSelectedRows"]?.length() > 0
+      ) {
+        for (var idx in this.gridOptions["preSelectedRows"]) {
+          this.api.getRowNode(idx)?.setSelected(true, false, true)
+          this.returnGridValue()
+        }
+      }
     }
-    return <></>
   }
 
   public render = (): ReactNode => {
-    if (this.api !== undefined) {
-      if (this.state.should_update) {
-        this.api.setRowData(this.state.rowData)
-      }
-    }
-    this.loadColumnsState()
     let shouldRenderGridToolbar =
       this.props.args.enable_quicksearch === true ||
-      this.props.args.manual_update
+      this.props.args.manual_update ||
+      this.props.args.excelExportMode === "MANUAL"
 
     return (
       <div
@@ -471,16 +520,26 @@ class AgGrid extends StreamlitComponentBase<State> {
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
-        <this.GridToolBar enabled={shouldRenderGridToolbar}>
-          <this.ManualUpdateButton
+        <GridToolBar enabled={shouldRenderGridToolbar}>
+          <ManualUpdateButton
             manualUpdate={this.props.args.manual_update}
-            onClick={(e: any) => this.returnGridValue(e)}
+            onClick={(e: any) => this.returnGridValue()}
           />
-          <this.QuickSearch
+          <ManualDownloadButton
+            enabled={this.props.args.excelExportMode === "MANUAL"}
+            onClick={(e: any) => this.api?.exportDataAsExcel()}
+          />
+          <QuickSearch
             enableQuickSearch={this.props.args.enable_quicksearch}
-            onChange={(e: any) => this.api.setQuickFilter(e.target.value)}
+            showOverlay={throttle(() => this.api.showLoadingOverlay(), 1000, {
+              trailing: false,
+            })}
+            onChange={debounce((e) => {
+              this.api.setQuickFilter(e.target.value)
+              this.api.hideOverlay()
+            }, 1000)}
           />
-        </this.GridToolBar>
+        </GridToolBar>
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
           gridOptions={this.gridOptions}
@@ -491,5 +550,3 @@ class AgGrid extends StreamlitComponentBase<State> {
 }
 
 export default withStreamlitConnection(AgGrid)
-
-

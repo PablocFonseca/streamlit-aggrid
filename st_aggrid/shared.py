@@ -40,6 +40,13 @@ class AgGridTheme(BaseEnum):
     BALHAM = "balham"
     MATERIAL = "material"
 
+class ExcelExportMode(BaseEnum):
+    NONE = "NONE"
+    MANUAL = "MANUAL" #Add a download button to the grid
+    FILE_BLOB_IN_GRID_RESPONSE = "FILE_BLOB_IN_GRID_RESPONSE" #include in grid's return an Excel Blob Property with file binary encoded as B64 String
+    TRIGGER_DOWNLOAD = "TRIGGER_DOWNLOAD" #After Grid Refreshes triggers the download.
+    SHEET_BLOB_IN_GRID_RESPONSE = "SHEET_BLOB_IN_GRID_RESPONSE" #include in grid's return a SheetlBlob Property with sheet binary encoded as B64 String. Meant to be used with MULTIPLE
+    MULTIPLE_SHEETS = "MULTIPLE_SHEETS" #Triggers the download and add other B64 encoded sheets. Send sheets as a list using excel_export_extra_sheets parameter
 
 # stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
 class JsCode:

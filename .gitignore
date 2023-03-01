@@ -204,3 +204,4 @@ Pipfile
 .editorconfig
 st_aggrid/frontend/.yarn/install-state.gz
 quick_examples*
+test/*

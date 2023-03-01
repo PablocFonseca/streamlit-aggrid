@@ -1,10 +1,9 @@
 import React from "react"
-import ReactDOM from "react-dom"
+import { createRoot } from 'react-dom/client';
 import AgGrid from "./AgGrid"
 
-ReactDOM.render(
-  <React.StrictMode>
-    <AgGrid />
-  </React.StrictMode>,
-  document.getElementById("root")
-)
+const domNode = document.getElementById("root")
+if (domNode) {
+   const root = createRoot(domNode)
+   root.render(<AgGrid />)
+  }

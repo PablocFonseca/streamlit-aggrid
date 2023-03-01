@@ -123,7 +123,7 @@ class GridOptionsBuilder:
 
         Args:
             column_names (list, optional):
-                columns field properties. If any of colDefs mathces **props dict is merged.
+                columns field properties. If any of colDefs matches **props dict is merged.
                 Defaults to [].
         """
         for k in self.__grid_options["columnDefs"]:

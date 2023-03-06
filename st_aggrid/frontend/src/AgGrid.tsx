@@ -472,7 +472,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     )
 
     this.api.addEventListener("firstDataRendered", (e: any) => {
-      if (this.isGridAutoHeightOn) this.resizeGridContainer();
+      this.resizeGridContainer();
       this.fitColumns()
     })
 

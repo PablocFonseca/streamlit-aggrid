@@ -11,8 +11,7 @@ import {
   ModuleRegistry,
   ColumnApi,
   GridApi,
-  DetailGridInfo,
-  RowNode,
+  DetailGridInfo
 } from "@ag-grid-community/core"
 import { CsvExportModule } from "@ag-grid-community/csv-export"
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
@@ -39,7 +38,7 @@ import { format } from "date-fns-tz"
 import deepMap from "./utils"
 import { duration } from "moment"
 
-import { debounce, throttle, isEqual } from "lodash"
+import { debounce, throttle } from "lodash"
 
 import { encode, decode } from "base64-arraybuffer"
 import { Buffer} from 'buffer'

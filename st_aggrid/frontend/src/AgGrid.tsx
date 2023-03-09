@@ -297,7 +297,6 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
   private DownloadAsExcelIfRequested() {
     if (this.api) {
 
-
       if (
         this.props.args.excel_export_mode === "MULTIPLE_SHEETS" &&
         this.props.args.ExcelExportMultipleSheetParams
@@ -457,6 +456,11 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     ) {
       this.DownloadAsExcelIfRequested()
     }
+
+    if ((this.props.args.reload_data) && (this.api)){
+        this.api.setRowData(JSON.parse(this.props.args.row_data))
+    }
+
 
     this.resizeGridContainer()
   }

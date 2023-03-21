@@ -343,7 +343,9 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
-    Streamlit.setFrameHeight(renderedGridHeight)
+    if (renderedGridHeight && renderedGridHeight > 0) {
+      Streamlit.setFrameHeight(renderedGridHeight)
+    }
   }
 
   private fitColumns() {

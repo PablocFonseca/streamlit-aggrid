@@ -42,3 +42,8 @@
 ));
 
 @import "@fontsource/source-sans-pro";
+
+// Hack to fix last column clipping issue with grids in st.tabs
+.ag-center-cols-clipper {
+  margin-right: 16px
+}

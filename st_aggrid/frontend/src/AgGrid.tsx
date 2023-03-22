@@ -157,7 +157,7 @@ function parseJsCodeFromPython(v: string) {
 }
 
 function GridToolBar(props: any) {
-  if (true) {
+  if (props.enabled) {
     return (
       <div id="gridToolBar" style={{ paddingBottom: 30 }}>
         <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">

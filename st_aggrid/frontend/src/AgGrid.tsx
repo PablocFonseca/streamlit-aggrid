@@ -215,6 +215,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
   private gridOptions: any
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
+  private fitColumnsDone: boolean = false
 
   constructor(props: any) {
     super(props)
@@ -345,6 +346,12 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
     if (renderedGridHeight && renderedGridHeight > 0) {
       Streamlit.setFrameHeight(renderedGridHeight)
+      // Run fitColumns only once when the grid first becomes visible with height > 0
+      // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
+      if (!this.fitColumnsDone) {
+        this.fitColumns()
+        this.fitColumnsDone = true
+      }
     }
   }
 
@@ -478,7 +485,6 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
     this.api.addEventListener("firstDataRendered", (e: any) => {
       this.resizeGridContainer();
-      this.fitColumns()
     })
 
     this.attachStreamlitRerunToEvents(this.api)

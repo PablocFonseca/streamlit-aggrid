@@ -81,7 +81,7 @@ Code below is equivalent to first example, but makes only the first column edita
     grid_options = {
         "columnDefs": [
             {
-                "headerName": "col1,
+                "headerName": "col1",
                 "field": "col1",
                 "editable": True,
             },

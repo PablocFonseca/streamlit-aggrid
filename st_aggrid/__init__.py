@@ -13,15 +13,17 @@ from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
+
+
 @dataclass
 class AgGridReturn(Mapping):
-    """Class to hold AgGrid call return"""
+    """ Class to hold AgGrid call return. """
     data: Union[pd.DataFrame , str] = None
     selected_rows: List[Mapping] = field(default_factory=list)
     column_state = None
     excel_blob = None
 
-    #Backwards compatibility with dict interface
+    # Backwards compatibility with dict interface
     def __getitem__(self, __k):
         return self.__dict__.__getitem__(__k)
 
@@ -37,17 +39,18 @@ class AgGridReturn(Mapping):
     def values(self):
         return self.__dict__.values()
 
-#This function exists because pandas behaviour when converting tz aware datetime to iso format.
+
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
-    """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
+    """ Internal Method to convert tz-aware datetime columns to correct ISO8601 format. """
     for c, d in dataframe.dtypes.items():
         if not d.kind == 'M':
             continue
         else:
             dataframe[c] = dataframe[c].apply(lambda s: s.isoformat()) 
 
+
 def __parse_row_data(data_parameter):
-    """Internal method to process data from data_parameter"""
+    """ Internal method to process data from data_parameter. """
 
     if isinstance(data_parameter, pd.DataFrame):
         __cast_date_columns_to_iso8601(data_parameter) 
@@ -70,7 +73,7 @@ def __parse_row_data(data_parameter):
     
 
 def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parameters, unsafe_allow_jscode):
-    """Internal method to cast gridOptions parameter to a valid gridoptions"""
+    """ Internal method to cast gridOptions parameter to a valid gridoptions. """
     # if no gridOptions is passed, builds a default one.
     if gridOptions_parameter == None:
         gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
@@ -99,6 +102,7 @@ def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parame
 
     return gridOptions
 
+
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
 
 if not _RELEASE:
@@ -112,7 +116,9 @@ else:
     build_dir = os.path.join(parent_dir, "frontend","build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
+
 def __parse_update_mode(update_mode: GridUpdateMode):
+    """ Backwards compatible function for deprecated argument `update_mode`; should be deleted """
     update_on = []
 
     if (update_mode & GridUpdateMode.VALUE_CHANGED):
@@ -141,6 +147,8 @@ def __parse_update_mode(update_mode: GridUpdateMode):
         
     return update_on
 
+
+# FIXME: rename to pep8 conventions (namely `ag_grid` instead fo `AgGrid`)
 def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
@@ -166,6 +174,7 @@ def AgGrid(
     excel_export_mode: ExcelExportMode = ExcelExportMode.NONE,
     excel_export_multiple_sheet_params: Mapping = None,
     **default_column_parameters) -> AgGridReturn:
+        # FIXME: improve the docstrings
     """Reders a DataFrame using AgGrid.
 
     Parameters
@@ -300,6 +309,7 @@ def AgGrid(
         returns a dictionary with grid's data is in dictionary's 'data' key. 
         Other keys may be present depending on gridOptions parameters
     """
+    # FIXME: convert the inputs to all PODs and then create a class to cleanse them
 
     if width:
         warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
@@ -395,6 +405,7 @@ def AgGrid(
         ex = components.components.MarshallComponentException(*args)
         raise(ex)
 
+    # FIXME: This should be it's own function to return (e.g., return generate_response(...))
     if component_value:
         if isinstance(component_value, str):
             component_value = json.loads(component_value)
@@ -409,7 +420,7 @@ def AgGrid(
 
                 text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
                 if text_columns:
-                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].astype(str)
+                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].applymap(lambda x: np.nan if x is None else str(x))
 
                 date_columns = [k for k,v in original_types.items() if v == "M"]
                 if date_columns:

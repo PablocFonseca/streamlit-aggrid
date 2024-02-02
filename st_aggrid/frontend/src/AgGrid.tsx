@@ -33,8 +33,8 @@ import { MultiFilterModule } from "@ag-grid-enterprise/multi-filter"
 import { SideBarModule } from "@ag-grid-enterprise/side-bar"
 import { StatusBarModule } from "@ag-grid-enterprise/status-bar"
 
-import { parseISO, compareAsc } from "date-fns"
-import { format } from "date-fns-tz"
+import { parseISO, compareAsc, format } from "date-fns"
+
 import deepMap from "./utils"
 import { duration } from "moment"
 
@@ -503,7 +503,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
         this.gridOptions["preSelectedRows"]?.length() > 0
       ) {
         for (var idx in this.gridOptions["preSelectedRows"]) {
-          this.api.getRowNode(idx)?.setSelected(true, false, true)
+          this.api.getRowNode(idx)?.setSelected(true, false)
           this.returnGridValue()
         }
       }

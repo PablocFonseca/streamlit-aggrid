@@ -16,7 +16,7 @@ with focus on (on this priority):
 - More examples (if you write a PR, please include a simple Streamlit app demonstrating how it works, if possible)
 
 
-If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com?subject=stAggrid Contact).   
+If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
 if like the project [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 ---

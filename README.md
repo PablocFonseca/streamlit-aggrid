@@ -4,22 +4,26 @@
 
 ---
 
-**Note**
+**Note** (feb 2024 update)
 
-Folks, I wish I had more time to work on this.. But, I'm still bound to those 24 hours a day have, and vey busy days.
-I'm writing this on my free time, most features I'm adding are what I found necessary to implement on the projects I'm
-using Streamlit Ag-Grid. I check the issues here and the PR once in a while, and try to focus on what's more requested.
-I'm working on documentation and some examples too. [Check Here](https://staggrid-examples.streamlit.app/)
+(feb 2024 update)
+I had to stop the development during last year, bc my main job took a lot of my time in 2023... Many people had 
+reached me stating how Streamlit AgGrid devlivered value to them. I'll dedicate some more time over the next months
+with focus on (on this priority):
+    - Stability and dependency updates.
+    - Compatibility with late streamlit versions
+    - PR review and merges to main trunk.
+    - More examples (if you write a PR, please include a simple Streamlit app demonstrating how it works, if possible)
 
-> "I'm just a Latin American young man  
-> No money in the bank no important relatives  
-> And coming from the countryside" [♫](https://www.youtube.com/watch?v=2HlpJaatYH4)
+
+If you want to sponsor or support this project you can <a href="javascript:window.location.href=atob('cGFibG9mb25zZWNhQGdtYWlsLmNvbQ==')">email me</a>.
+if like the project [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 ---
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
-Comment on [discuss.streamlit.io](https://discuss.streamlit.io/t/ag-grid-component-with-input-support/) If you like it or [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
+
 
 <br>
 Live example [on Streamlit Cloud](https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com/). Some basic documentation is available: https://streamlit-aggrid.readthedocs.io

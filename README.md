@@ -17,7 +17,9 @@ with focus on (on this priority):
 
 
 If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
-if like the project [Buy me a beer 🍺!](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
+
+
+if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) (a beer actually)  or  if you prefer send it through [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 ---
 

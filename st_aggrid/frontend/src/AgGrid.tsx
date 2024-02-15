@@ -11,7 +11,7 @@ import {
   ModuleRegistry,
   ColumnApi,
   GridApi,
-  DetailGridInfo,
+  DetailGridInfo
 } from "@ag-grid-community/core"
 import { CsvExportModule } from "@ag-grid-community/csv-export"
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
@@ -41,18 +41,13 @@ import { duration } from "moment"
 import { debounce, throttle } from "lodash"
 
 import { encode, decode } from "base64-arraybuffer"
-import { Buffer } from "buffer"
+import { Buffer} from 'buffer'
 
 import "./agGridStyle.scss"
 
 import "@fontsource/source-sans-pro"
 
 type CSSDict = { [key: string]: { [key: string]: string } }
-interface State {
-  rowData: any
-  gridHeight: number
-  should_update: boolean
-}
 
 function getCSS(styles: CSSDict): string {
   var css = []
@@ -213,8 +208,7 @@ function ManualDownloadButton(props: any) {
   }
   return <></>
 }
-class AgGrid extends React.Component<ComponentProps, State> {
-  public state: State
+class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
   private api!: GridApi
   private columnApi!: ColumnApi
   private columnFormaters: any
@@ -222,7 +216,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
 
-  constructor(props: ComponentProps) {
+  constructor(props: any) {
     super(props)
     //console.log("Grid INIT called", props)
 
@@ -263,11 +257,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
     this.parseGridoptions()
-    this.state = {
-      rowData: [],
-      gridHeight: this.props.args.height,
-      should_update: false,
-    } as State
   }
 
   private parseGridoptions() {
@@ -307,6 +296,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
   private DownloadAsExcelIfRequested() {
     if (this.api) {
+
       if (
         this.props.args.excel_export_mode === "MULTIPLE_SHEETS" &&
         this.props.args.ExcelExportMultipleSheetParams
@@ -317,7 +307,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
           Buffer.from(decode(v)).toString("latin1")
         )
         params.data = data
-
+        
         this.api.exportMultipleSheetsAsExcel(params)
       }
       if (this.props.args.excel_export_mode === "TRIGGER_DOWNLOAD") {
@@ -329,8 +319,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private handleExcelExport() {
     if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
       let blob = this.api.getDataAsExcel() as Blob
-      let buffer
-      ;(async () => {
+      let buffer;
+      (async () => {
         await new Promise((resolve, reject) => {
           blob.arrayBuffer().then((v) => {
             buffer = encode(v)
@@ -345,7 +335,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       let blob = this.api.getSheetDataForExcel({
         sheetName: Math.round(Date.now() / 1000).toString(),
       })
-      if (blob) return encode(Buffer.from(blob, "latin1")) ///Buffer.from(blob).toString('base64')
+      if (blob) return encode(Buffer.from(blob, 'latin1')) ///Buffer.from(blob).toString('base64')
     }
 
     return null
@@ -455,37 +445,22 @@ class AgGrid extends React.Component<ComponentProps, State> {
     return themeClass
   }
 
-  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
+  public componentDidUpdate(prevProps: any, prevState: S, snapshot?: any) {
+
     const previous_export_mode = prevProps.args.excel_export_mode
     const current_export_mode = this.props.args.excel_export_mode
 
     if (
-      (previous_export_mode !== "TRIGGER_DOWNLOAD" &&
-        current_export_mode === "TRIGGER_DOWNLOAD") ||
-      (previous_export_mode !== "MULTIPLE_SHEETS" &&
-        current_export_mode === "MULTIPLE_SHEETS")
+      ((previous_export_mode !== "TRIGGER_DOWNLOAD") && (current_export_mode === "TRIGGER_DOWNLOAD")) ||
+      ((previous_export_mode !== "MULTIPLE_SHEETS") && (current_export_mode === "MULTIPLE_SHEETS"))
     ) {
       this.DownloadAsExcelIfRequested()
     }
 
-    if (this.props.args.reload_data && this.api) {
-      this.api.setRowData(JSON.parse(this.props.args.row_data))
+    if ((this.props.args.reload_data) && (this.api)){
+        this.api.setRowData(JSON.parse(this.props.args.row_data))
     }
 
-    this.resizeGridContainer()
-
-    const prevRowData = prevProps.args.row_data
-    const currRowData = this.props.args.row_data
-    const currRowDataArr = JSON.parse(currRowData)
-    if (currRowDataArr.length > 0) {
-      console.log(currRowDataArr[0])
-      console.log(currRowDataArr[1])
-    }
-
-    // If props change is detected then update state
-    if (prevRowData !== currRowData) {
-      this.setState({ rowData: currRowDataArr })
-    }
 
     this.resizeGridContainer()
   }
@@ -494,12 +469,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.api = event.api
     this.columnApi = event.columnApi
 
-    this.api.addEventListener("rowGroupOpened", (e: any) =>
-      this.resizeGridContainer()
+    this.api.addEventListener(
+      "rowGroupOpened",
+      (e: any) => this.resizeGridContainer()
     )
 
     this.api.addEventListener("firstDataRendered", (e: any) => {
-      this.resizeGridContainer()
+      this.resizeGridContainer();
       this.fitColumns()
     })
 
@@ -568,7 +544,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
           />
         </GridToolBar>
         <AgGridReact
-          rowData={this.state.rowData}
           onGridReady={(e) => this.onGridReady(e)}
           gridOptions={this.gridOptions}
         ></AgGridReact>

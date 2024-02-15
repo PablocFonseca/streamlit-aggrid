@@ -157,7 +157,7 @@ function parseJsCodeFromPython(v: string) {
 }
 
 function GridToolBar(props: any) {
-  if (true) {
+  if (props.enabled) {
     return (
       <div id="gridToolBar" style={{ paddingBottom: 30 }}>
         <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
@@ -215,6 +215,8 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
   private gridOptions: any
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
+  private fitColumnsDone: boolean = false
+  private renderedGridHeightPrevious: number = 0
 
   constructor(props: any) {
     super(props)
@@ -343,7 +345,16 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
-    Streamlit.setFrameHeight(renderedGridHeight)
+    if (renderedGridHeight && renderedGridHeight > 0 && renderedGridHeight != this.renderedGridHeightPrevious) {
+      this.renderedGridHeightPrevious = renderedGridHeight
+      Streamlit.setFrameHeight(renderedGridHeight)
+      // Run fitColumns only once when the grid first becomes visible with height > 0
+      // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
+      if (!this.fitColumnsDone) {
+        this.fitColumns()
+        this.fitColumnsDone = true
+      }
+    }
   }
 
   private fitColumns() {
@@ -461,23 +472,11 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
         this.api.setRowData(JSON.parse(this.props.args.row_data))
     }
 
-
-    this.resizeGridContainer()
   }
 
   private onGridReady(event: any) {
     this.api = event.api
     this.columnApi = event.columnApi
-
-    this.api.addEventListener(
-      "rowGroupOpened",
-      (e: any) => this.resizeGridContainer()
-    )
-
-    this.api.addEventListener("firstDataRendered", (e: any) => {
-      this.resizeGridContainer();
-      this.fitColumns()
-    })
 
     this.attachStreamlitRerunToEvents(this.api)
     this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
@@ -489,6 +488,10 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     this.api.setRowData(JSON.parse(this.props.args.row_data))
 
     this.processPreselection()
+  }
+
+  private onGridSizeChanged(event: any) {
+    this.resizeGridContainer()
   }
 
   private processPreselection() {
@@ -545,6 +548,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
         </GridToolBar>
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
+          onGridSizeChanged={(e) => this.onGridSizeChanged(e)}
           gridOptions={this.gridOptions}
         ></AgGridReact>
       </div>

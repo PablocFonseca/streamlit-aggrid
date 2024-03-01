@@ -1,0 +1,3 @@
+[submodule "streamlit-aggrid-examples"]
+	path = streamlit-aggrid-examples
+	url = https://github.com/PablocFonseca/streamlit-aggrid-examples

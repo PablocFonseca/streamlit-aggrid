@@ -540,7 +540,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         this.gridOptions["preSelectedRows"]?.length() > 0
       ) {
         for (var idx in this.gridOptions["preSelectedRows"]) {
-          this.api.getRowNode(this.gridOptions["preSelectedRows"][idx])?.setSelected(true, false, true)
+          this.api.getRowNode(this.gridOptions["preSelectedRows"][idx])?.setSelected(true, false)
           this.returnGridValue()
         }
       }

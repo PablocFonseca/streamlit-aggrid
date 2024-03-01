@@ -205,4 +205,5 @@ Pipfile
 st_aggrid/frontend/.yarn/install-state.gz
 quick_examples*
 test/*
-streamlit-aggrid-examples*
+streamlit-aggrid-examples/*
+streamlit-aggrid-examples

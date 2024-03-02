@@ -28,7 +28,7 @@ if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/
 
 
 <br>
-Live example [on Streamlit Cloud](https://pablocfonseca-streamlit-aggrid-examples-example-jyosi3.streamlitapp.com/). Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
+Live examples [on Streamlit Cloud](https://staggrid-examples.streamlit.app/). Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 # Install
 

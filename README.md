@@ -19,16 +19,15 @@ with focus on (on this priority):
 If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
 
 
-if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) (a beer actually)  or  if you prefer send it through [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
+if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) or  if you prefer send it through [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
 ---
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
 
-
-<br>
-Live examples [on Streamlit Cloud](https://staggrid-examples.streamlit.app/). Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
+<\br>
+Live examples [on Streamlit Cloud](https://staggrid-examples.streamlit.app/) Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 # Install
 

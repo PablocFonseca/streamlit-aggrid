@@ -20,6 +20,7 @@ class AgGridReturn(Mapping):
     selected_rows: List[Mapping] = field(default_factory=list)
     column_state = None
     excel_blob = None
+    grid_response = {}
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
@@ -257,6 +258,7 @@ def AgGrid(
         Defaults to 'coerce'.
     
     reload_data : bool, optional
+        DEPRECATED
         Force AgGrid to reload data using api calls. Should be false on most use cases
         Default False
 
@@ -356,7 +358,6 @@ def AgGrid(
     row_data = __parse_row_data(data)
     custom_css = custom_css or dict()
 
-
     response = AgGridReturn()
     response.data = data
 
@@ -376,7 +377,6 @@ def AgGrid(
             enable_enterprise_modules=enable_enterprise_modules,
             license_key=license_key,
             default=None,
-            reload_data=reload_data,
             columns_state=columns_state,
             theme=theme,
             custom_css=custom_css,
@@ -396,6 +396,8 @@ def AgGrid(
         raise(ex)
 
     if component_value:
+        response.grid_response = component_value
+        
         if isinstance(component_value, str):
             component_value = json.loads(component_value)
         frame = pd.DataFrame(component_value["rowData"])
@@ -432,8 +434,8 @@ def AgGrid(
         else:
             response.selected_rows = component_value["selectedItems"]
 
-        response.column_state = component_value["colState"]
-        response.excel_blob = component_value['ExcelBlob']
+        #response.column_state = component_value["colState"]
+        #response.excel_blob = component_value['ExcelBlob']
 
     
     return response

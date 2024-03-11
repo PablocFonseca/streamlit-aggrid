@@ -459,6 +459,13 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
     if ((this.props.args.reload_data) && (this.api)){
         this.api.setRowData(JSON.parse(this.props.args.row_data))
+        // pinned top and bottom rows are passed in not via row data but as gridOptions
+        if (this.props.args.gridOptions['pinnedTopRowData']) {
+          this.api.setPinnedTopRowData(this.props.args.gridOptions['pinnedTopRowData'])
+        }
+        if (this.props.args.gridOptions['pinnedBottomRowData']) {
+          this.api.setPinnedBottomRowData(this.props.args.gridOptions['pinnedBottomRowData'])
+        }
     }
 
 

@@ -6,8 +6,8 @@
 
 **Note** (feb 2024 update)
 
-(feb 2024 update)
-I had to stop the development during last year, bc my main job took a lot of my time in 2023... Many people had 
+(feb 2024 update)   
+I had to stop the development during last year, for things outside of my control... Many people had 
 reached me stating how Streamlit AgGrid devlivered value to them. I'll dedicate some more time over the next months
 with focus on (on this priority):
     - Stability and dependency updates.
@@ -60,6 +60,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 0.3.5
+ - Merged many PR, thanks everybody.
+ - Grid State can be saved and retrieved. Many people requested this one. Live Example [Here]() 
+
 
 Version 0.3.4
 

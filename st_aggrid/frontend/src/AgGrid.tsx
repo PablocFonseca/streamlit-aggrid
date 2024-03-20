@@ -292,14 +292,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
       } else {
         api.addEventListener(element, doReturn)
       }
+      console.log("Attached grid return event %s", element)
     })
   }
 
   private loadColumnsState() {
     const columnsState = this.props.args.columns_state
-
     if (columnsState != null) {
-      this.state.api.applyColumnState({ state: columnsState, applyOrder: true })
+      this.state.api?.applyColumnState({ state: columnsState, applyOrder: true })
     }
   }
 
@@ -316,17 +316,17 @@ class AgGrid extends React.Component<ComponentProps, State> {
         )
         params.data = data
 
-        this.state.api.exportMultipleSheetsAsExcel(params)
+        this.state.api?.exportMultipleSheetsAsExcel(params)
       }
       if (this.props.args.excel_export_mode === "TRIGGER_DOWNLOAD") {
-        this.state.api.exportDataAsExcel()
+        this.state.api?.exportDataAsExcel()
       }
     }
   }
 
   private handleExcelExport() {
     if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.state.api.getDataAsExcel() as Blob
+      let blob = this.state.api?.getDataAsExcel() as Blob
       let buffer
       ;(async () => {
         await new Promise((resolve, reject) => {
@@ -340,7 +340,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     if (this.props.args.excel_export_mode === "SHEET_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.state.api.getSheetDataForExcel({
+      let blob = this.state.api?.getSheetDataForExcel({
         sheetName: Math.round(Date.now() / 1000).toString(),
       })
       if (blob) return encode(Buffer.from(blob, "latin1")) ///Buffer.from(blob).toString('base64')
@@ -361,10 +361,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.fitColumns()
       // Run fitColumns only once when the grid first becomes visible with height > 0
       // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
-      // if (!this.fitColumnsDone) {
-      //   this.fitColumns()
-      //   this.fitColumnsDone = true
-      // }
+      if (!this.fitColumnsDone) {
+        this.fitColumns()
+        this.fitColumnsDone = true
+      }
     }
   }
 
@@ -375,12 +375,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
     switch (columns_auto_size_mode) {
       case 1:
       case "FIT_ALL_COLUMNS_TO_VIEW":
-        this.state.api.sizeColumnsToFit()
+        this.state.api?.sizeColumnsToFit()
         break
 
       case 2:
       case "FIT_CONTENTS":
-        this.state.api.autoSizeAllColumns()
+        this.state.api?.autoSizeAllColumns()
         break
 
       default:
@@ -394,11 +394,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     switch (returnMode) {
       case 0: //ALL_DATA
-        this.state.api.forEachLeafNode((row) => returnData.push(row.data))
+        this.state.api?.forEachLeafNode((row) => returnData.push(row.data))
         break
 
       case 1: //FILTERED_DATA
-        this.state.api.forEachNodeAfterFilter((row) => {
+        this.state.api?.forEachNodeAfterFilter((row) => {
           if (!row.group) {
             returnData.push(row.data)
           }
@@ -406,7 +406,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         break
 
       case 2: //FILTERED_SORTED_DATA
-        this.state.api.forEachNodeAfterFilterAndSort((row) => {
+        this.state.api?.forEachNodeAfterFilterAndSort((row) => {
           if (!row.group) {
             returnData.push(row.data)
           }
@@ -415,7 +415,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     let selected: any = {}
-    this.state.api.forEachDetailGridInfo((d: DetailGridInfo) => {
+    this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
       selected[d.id] = []
       d.api?.forEachNode((n) => {
         if (n.isSelected()) {
@@ -427,13 +427,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
     let returnValue = {
       originalDtypes: this.props.args.frame_dtypes,
       rowData: returnData,
-      selectedRows: this.state.api.getSelectedRows(),
-      selectedItems: this.state.api.getSelectedNodes().map((n, i) => ({
+      selectedRows: this.state.api?.getSelectedRows(),
+      selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
         _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
         ...n.data,
       })),
-      gridState: this.state.api.getState(),
-      columnsState: this.state.api.getColumnState()
+      gridState: this.state.api?.getState(),
+      columnsState: this.state.api?.getColumnState()
       //ExcelBlob: this.handleExcelExport(),
     }
     //console.dir(returnValue)
@@ -480,26 +480,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     this.loadColumnsState()
-
-
-    // let columnState =  this.props.args.columns_state;
-    
-    // if (columnState != null) {
-    //   this.state.api.applyColumnState({state: columnState, applyOrder: true})
-    // }
-
-    // const previous_export_mode = prevProps.args.excel_export_mode
-    // const current_export_mode = this.props.args.excel_export_mode
-
-    // if (
-    //   (previous_export_mode !== "TRIGGER_DOWNLOAD" &&
-    //     current_export_mode === "TRIGGER_DOWNLOAD") ||
-    //   (previous_export_mode !== "MULTIPLE_SHEETS" &&
-    //     current_export_mode === "MULTIPLE_SHEETS")
-    // ) {
-    //   this.DownloadAsExcelIfRequested()
-    // }
-
   }
 
   private onGridReady(event: GridReadyEvent) {
@@ -508,17 +488,17 @@ class AgGrid extends React.Component<ComponentProps, State> {
     //Is it ugly? Yes. Does it work? Yes. 
     this.state.api = event.api
 
-    this.state.api.addEventListener("rowGroupOpened", (e: any) =>
+    this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
       this.resizeGridContainer()
     )
 
-    this.state.api.addEventListener("firstDataRendered", (e: any) => {
+    this.state.api?.addEventListener("firstDataRendered", (e: any) => {
       this.resizeGridContainer()
       //this.fitColumns()
     })
 
     this.attachStreamlitRerunToEvents(this.state.api)
-    this.state.api.forEachDetailGridInfo((i: DetailGridInfo) => {
+    this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
         this.attachStreamlitRerunToEvents(i.api)
       }
@@ -536,14 +516,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.props.args.gridOptions["preSelectAllRows"] || false
 
     if (preSelectAllRows) {
-      this.state.api.selectAll()
-      //this.returnGridValue()
+      this.state.api?.selectAll()
+      
     } else {
       var preselectedRows = this.props.args.gridOptions["preSelectedRows"]
       if (preselectedRows || preselectedRows?.length() > 0) {
         for (var idx in preselectedRows) {
-          this.state.api.getRowNode(preselectedRows[idx])?.setSelected(true, false)
-          //this.returnGridValue()
+          this.state.api?.getRowNode(preselectedRows[idx])?.setSelected(true, false)
+          
         }
       }
     }
@@ -573,12 +553,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
           />
           <QuickSearch
             enableQuickSearch={this.props.args.enable_quicksearch}
-            showOverlay={throttle(() => this.state.api.showLoadingOverlay(), 1000, {
+            showOverlay={throttle(() => this.state.api?.showLoadingOverlay(), 1000, {
               trailing: false,
             })}
             onChange={debounce((e) => {
-              this.state.api.setQuickFilter(e.target.value)
-              this.state.api.hideOverlay()
+              this.state.api?.setQuickFilter(e.target.value)
+              this.state.api?.hideOverlay()
             }, 1000)}
           />
         </GridToolBar>

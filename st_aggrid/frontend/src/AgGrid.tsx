@@ -9,10 +9,12 @@ import { AgGridReact } from "@ag-grid-community/react"
 
 import {
   ModuleRegistry,
-  ColumnApi,
   GridApi,
-  DetailGridInfo
+  DetailGridInfo,
+  GridReadyEvent,
+  GridOptions,
 } from "@ag-grid-community/core"
+
 import { CsvExportModule } from "@ag-grid-community/csv-export"
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
 import { LicenseManager } from "@ag-grid-enterprise/core"
@@ -33,15 +35,15 @@ import { MultiFilterModule } from "@ag-grid-enterprise/multi-filter"
 import { SideBarModule } from "@ag-grid-enterprise/side-bar"
 import { StatusBarModule } from "@ag-grid-enterprise/status-bar"
 
-import { parseISO, compareAsc } from "date-fns"
-import { format } from "date-fns-tz"
+import { parseISO, compareAsc, format } from "date-fns"
+
 import deepMap from "./utils"
 import { duration } from "moment"
 
 import { debounce, throttle } from "lodash"
 
 import { encode, decode } from "base64-arraybuffer"
-import { Buffer} from 'buffer'
+import { Buffer } from "buffer"
 
 import "./agGridStyle.scss"
 
@@ -74,6 +76,24 @@ function addCustomCSS(custom_css: CSSDict): void {
   document.head.appendChild(styleSheet)
 }
 
+function parseJsCodeFromPython(v: string) {
+  const JS_PLACEHOLDER = "--x_x--0_0--"
+  let funcReg = new RegExp(
+    `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
+  )
+
+  let match = funcReg.exec(v)
+
+  if (match) {
+    const funcStr = match[1]
+    // eslint-disable-next-line
+    return new Function("return " + funcStr)()
+  } else {
+    return v
+  }
+}
+
+//TODO: mover formaters to gridOptionsBuilder options
 function dateFormatter(isoString: string, formaterString: string): String {
   try {
     let date = parseISO(isoString)
@@ -139,25 +159,9 @@ const columnFormaters = {
   },
 }
 
-function parseJsCodeFromPython(v: string) {
-  const JS_PLACEHOLDER = "--x_x--0_0--"
-  let funcReg = new RegExp(
-    `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
-  )
-
-  let match = funcReg.exec(v)
-
-  if (match) {
-    const funcStr = match[1]
-    // eslint-disable-next-line
-    return new Function("return " + funcStr)()
-  } else {
-    return v
-  }
-}
 
 function GridToolBar(props: any) {
-  if (true) {
+  if (props.enabled) {
     return (
       <div id="gridToolBar" style={{ paddingBottom: 30 }}>
         <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
@@ -208,26 +212,30 @@ function ManualDownloadButton(props: any) {
   }
   return <></>
 }
-class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
-  private api!: GridApi
-  private columnApi!: ColumnApi
-  private columnFormaters: any
-  private gridOptions: any
+
+interface State {
+  gridHeight: number
+  gridOptions: GridOptions
+  api: GridApi
+}
+class AgGrid extends React.Component<ComponentProps, State> {
+  public state: State
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
+  private fitColumnsDone: boolean = false
+  private renderedGridHeightPrevious: number = 0
 
-  constructor(props: any) {
+  constructor(props: ComponentProps) {
+    console.log("grid contructor")
     super(props)
-    //console.log("Grid INIT called", props)
-
     this.gridContainerRef = React.createRef()
-
-    ModuleRegistry.register(ClientSideRowModelModule)
-    ModuleRegistry.register(CsvExportModule)
 
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css)
     }
+
+    ModuleRegistry.register(ClientSideRowModelModule)
+    ModuleRegistry.register(CsvExportModule)
 
     if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules([
@@ -256,21 +264,22 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
-    this.parseGridoptions()
+    this.state = {
+      gridHeight: this.props.args.height,
+      gridOptions: this.parseGridoptions()
+    } as State
   }
 
   private parseGridoptions() {
-    let gridOptions = Object.assign(
-      {},
-      columnFormaters,
-      this.props.args.gridOptions
-    )
+    let gridOptions: GridOptions = Object.assign({}, this.props.args.gridOptions, columnFormaters)
+      
 
     if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython)
     }
-    this.gridOptions = gridOptions
+      gridOptions.rowData = JSON.parse(this.props.args.row_data)
+      return gridOptions
   }
 
   private attachStreamlitRerunToEvents(api: GridApi) {
@@ -283,20 +292,19 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
       } else {
         api.addEventListener(element, doReturn)
       }
+      console.log("Attached grid return event %s", element)
     })
   }
 
   private loadColumnsState() {
     const columnsState = this.props.args.columns_state
-
     if (columnsState != null) {
-      this.columnApi.applyColumnState({ state: columnsState, applyOrder: true })
+      this.state.api?.applyColumnState({ state: columnsState, applyOrder: true })
     }
   }
 
   private DownloadAsExcelIfRequested() {
-    if (this.api) {
-
+    if (this.state.api) {
       if (
         this.props.args.excel_export_mode === "MULTIPLE_SHEETS" &&
         this.props.args.ExcelExportMultipleSheetParams
@@ -307,20 +315,20 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
           Buffer.from(decode(v)).toString("latin1")
         )
         params.data = data
-        
-        this.api.exportMultipleSheetsAsExcel(params)
+
+        this.state.api?.exportMultipleSheetsAsExcel(params)
       }
       if (this.props.args.excel_export_mode === "TRIGGER_DOWNLOAD") {
-        this.api.exportDataAsExcel()
+        this.state.api?.exportDataAsExcel()
       }
     }
   }
 
   private handleExcelExport() {
     if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.api.getDataAsExcel() as Blob
-      let buffer;
-      (async () => {
+      let blob = this.state.api?.getDataAsExcel() as Blob
+      let buffer
+      ;(async () => {
         await new Promise((resolve, reject) => {
           blob.arrayBuffer().then((v) => {
             buffer = encode(v)
@@ -332,10 +340,10 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     }
 
     if (this.props.args.excel_export_mode === "SHEET_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.api.getSheetDataForExcel({
+      let blob = this.state.api?.getSheetDataForExcel({
         sheetName: Math.round(Date.now() / 1000).toString(),
       })
-      if (blob) return encode(Buffer.from(blob, 'latin1')) ///Buffer.from(blob).toString('base64')
+      if (blob) return encode(Buffer.from(blob, "latin1")) ///Buffer.from(blob).toString('base64')
     }
 
     return null
@@ -343,21 +351,36 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
-    Streamlit.setFrameHeight(renderedGridHeight)
+    if (
+      renderedGridHeight &&
+      renderedGridHeight > 0 &&
+      renderedGridHeight !== this.renderedGridHeightPrevious
+    ) {
+      this.renderedGridHeightPrevious = renderedGridHeight
+      Streamlit.setFrameHeight(renderedGridHeight)
+      this.fitColumns()
+      // Run fitColumns only once when the grid first becomes visible with height > 0
+      // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
+      if (!this.fitColumnsDone) {
+        this.fitColumns()
+        this.fitColumnsDone = true
+      }
+    }
   }
 
   private fitColumns() {
+
     const columns_auto_size_mode = this.props.args.columns_auto_size_mode
 
     switch (columns_auto_size_mode) {
       case 1:
       case "FIT_ALL_COLUMNS_TO_VIEW":
-        this.api.sizeColumnsToFit()
+        this.state.api?.sizeColumnsToFit()
         break
 
       case 2:
       case "FIT_CONTENTS":
-        this.columnApi.autoSizeAllColumns()
+        this.state.api?.autoSizeAllColumns()
         break
 
       default:
@@ -371,11 +394,11 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
 
     switch (returnMode) {
       case 0: //ALL_DATA
-        this.api.forEachLeafNode((row) => returnData.push(row.data))
+        this.state.api?.forEachLeafNode((row) => returnData.push(row.data))
         break
 
       case 1: //FILTERED_DATA
-        this.api.forEachNodeAfterFilter((row) => {
+        this.state.api?.forEachNodeAfterFilter((row) => {
           if (!row.group) {
             returnData.push(row.data)
           }
@@ -383,7 +406,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
         break
 
       case 2: //FILTERED_SORTED_DATA
-        this.api.forEachNodeAfterFilterAndSort((row) => {
+        this.state.api?.forEachNodeAfterFilterAndSort((row) => {
           if (!row.group) {
             returnData.push(row.data)
           }
@@ -392,7 +415,7 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     }
 
     let selected: any = {}
-    this.api.forEachDetailGridInfo((d: DetailGridInfo) => {
+    this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
       selected[d.id] = []
       d.api?.forEachNode((n) => {
         if (n.isSelected()) {
@@ -404,13 +427,14 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     let returnValue = {
       originalDtypes: this.props.args.frame_dtypes,
       rowData: returnData,
-      selectedRows: this.api.getSelectedRows(),
-      selectedItems: this.api.getSelectedNodes().map((n, i) => ({
+      selectedRows: this.state.api?.getSelectedRows(),
+      selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
         _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
         ...n.data,
       })),
-      colState: this.columnApi.getColumnState(),
-      ExcelBlob: this.handleExcelExport(),
+      gridState: this.state.api?.getState(),
+      columnsState: this.state.api?.getColumnState()
+      //ExcelBlob: this.handleExcelExport(),
     }
     //console.dir(returnValue)
     return returnValue
@@ -445,66 +469,61 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
     return themeClass
   }
 
-  public componentDidUpdate(prevProps: any, prevState: S, snapshot?: any) {
+  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
+    // If rowwData change is detected then update state
+    const prevRowData = prevProps.args.row_data
+    const currRowData = this.props.args.row_data
+    const currRowDataArr = JSON.parse(currRowData)
 
-    const previous_export_mode = prevProps.args.excel_export_mode
-    const current_export_mode = this.props.args.excel_export_mode
-
-    if (
-      ((previous_export_mode !== "TRIGGER_DOWNLOAD") && (current_export_mode === "TRIGGER_DOWNLOAD")) ||
-      ((previous_export_mode !== "MULTIPLE_SHEETS") && (current_export_mode === "MULTIPLE_SHEETS"))
-    ) {
-      this.DownloadAsExcelIfRequested()
+    if (prevRowData !== currRowData) {
+      this.state.api.updateGridOptions({ rowData: currRowDataArr })
     }
 
-    if ((this.props.args.reload_data) && (this.api)){
-        this.api.setRowData(JSON.parse(this.props.args.row_data))
-    }
-
-
-    this.resizeGridContainer()
+    this.loadColumnsState()
   }
 
-  private onGridReady(event: any) {
-    this.api = event.api
-    this.columnApi = event.columnApi
+  private onGridReady(event: GridReadyEvent) {
+    this.setState({api: event.api})
+    
+    //Is it ugly? Yes. Does it work? Yes. 
+    this.state.api = event.api
 
-    this.api.addEventListener(
-      "rowGroupOpened",
-      (e: any) => this.resizeGridContainer()
+    this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
+      this.resizeGridContainer()
     )
 
-    this.api.addEventListener("firstDataRendered", (e: any) => {
-      this.resizeGridContainer();
-      this.fitColumns()
+    this.state.api?.addEventListener("firstDataRendered", (e: any) => {
+      this.resizeGridContainer()
+      //this.fitColumns()
     })
 
-    this.attachStreamlitRerunToEvents(this.api)
-    this.api.forEachDetailGridInfo((i: DetailGridInfo) => {
+    this.attachStreamlitRerunToEvents(this.state.api)
+    this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
         this.attachStreamlitRerunToEvents(i.api)
       }
-    })
-
-    this.api.setRowData(JSON.parse(this.props.args.row_data))
-
+    }) 
     this.processPreselection()
   }
 
+  private onGridSizeChanged(event: any) {
+    this.resizeGridContainer()
+  }
+
   private processPreselection() {
+    //TODO: do not pass grid Options that doesn't exist in aggrid (preSelectAllRows,  preSelectedRows)
     var preSelectAllRows =
       this.props.args.gridOptions["preSelectAllRows"] || false
+
     if (preSelectAllRows) {
-      this.api.selectAll()
-      this.returnGridValue()
+      this.state.api?.selectAll()
+      
     } else {
-      if (
-        this.gridOptions["preSelectedRows"] ||
-        this.gridOptions["preSelectedRows"]?.length() > 0
-      ) {
-        for (var idx in this.gridOptions["preSelectedRows"]) {
-          this.api.getRowNode(idx)?.setSelected(true, false, true)
-          this.returnGridValue()
+      var preselectedRows = this.props.args.gridOptions["preSelectedRows"]
+      if (preselectedRows || preselectedRows?.length() > 0) {
+        for (var idx in preselectedRows) {
+          this.state.api?.getRowNode(preselectedRows[idx])?.setSelected(true, false)
+          
         }
       }
     }
@@ -530,22 +549,23 @@ class AgGrid<S = {}> extends React.Component<ComponentProps, S> {
           />
           <ManualDownloadButton
             enabled={this.props.args.excelExportMode === "MANUAL"}
-            onClick={(e: any) => this.api?.exportDataAsExcel()}
+            onClick={(e: any) => this.state.api?.exportDataAsExcel()}
           />
           <QuickSearch
             enableQuickSearch={this.props.args.enable_quicksearch}
-            showOverlay={throttle(() => this.api.showLoadingOverlay(), 1000, {
+            showOverlay={throttle(() => this.state.api?.showLoadingOverlay(), 1000, {
               trailing: false,
             })}
             onChange={debounce((e) => {
-              this.api.setQuickFilter(e.target.value)
-              this.api.hideOverlay()
+              this.state.api?.setQuickFilter(e.target.value)
+              this.state.api?.hideOverlay()
             }, 1000)}
           />
         </GridToolBar>
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
-          gridOptions={this.gridOptions}
+          onGridSizeChanged={(e) => this.onGridSizeChanged(e)}
+          gridOptions={this.state.gridOptions}
         ></AgGridReact>
       </div>
     )

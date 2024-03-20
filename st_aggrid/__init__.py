@@ -13,6 +13,7 @@ from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
+
 @dataclass
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
@@ -21,6 +22,10 @@ class AgGridReturn(Mapping):
     column_state = None
     excel_blob = None
     grid_response = {}
+
+    @property
+    def columns_state(self)-> List[Mapping]:
+        return self.grid_response.get("columnsState", {})
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
@@ -434,8 +439,6 @@ def AgGrid(
         else:
             response.selected_rows = component_value["selectedItems"]
 
-        #response.column_state = component_value["colState"]
-        #response.excel_blob = component_value['ExcelBlob']
 
     
     return response

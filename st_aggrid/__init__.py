@@ -154,7 +154,7 @@ def AgGrid(
     width=None,
     fit_columns_on_grid_load: bool=False,
     columns_auto_size_mode: ColumnsAutoSizeMode = ColumnsAutoSizeMode.NO_AUTOSIZE,
-    update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
+    update_mode: GridUpdateMode = GridUpdateMode.NO_UPDATE,
     data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
     allow_unsafe_jscode: bool=False,
     enable_enterprise_modules: bool=True,
@@ -220,7 +220,7 @@ def AgGrid(
         When using manual a save button will be drawn on top of grid.
         modes can be combined with bitwise OR operator |, for instance:
         GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
-        Default: GridUpdateMode.MODEL_CHANGED
+        Default: GridUpdateMode.NO_UPDATE
 
     update_on: list[string | tuple[sting, int]], optional
         defines the events that will trigger a refresh and grid return on streamlit app.

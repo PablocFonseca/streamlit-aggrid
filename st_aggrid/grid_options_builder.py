@@ -196,7 +196,7 @@ class GridOptionsBuilder:
         header_checkbox: bool =False,
         header_checkbox_filtered_only: bool =True,
         pre_select_all_rows: bool = False,
-        pre_selected_rows: list =None,
+        pre_selected_rows: list|None = None,
         rowMultiSelectWithClick: bool=False,
         suppressRowDeselection: bool=False,
         suppressRowClickSelection: bool=False,

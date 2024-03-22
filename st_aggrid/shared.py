@@ -1,4 +1,42 @@
 from enum import Enum, IntEnum, IntFlag, Flag, auto, EnumMeta
+import json
+
+DEFAULT_COLUMN_PROPS = [
+        "cellDataType",
+        "checkboxSelection",
+        "suppressNavigable",
+        "editable",
+        "cellEditorPopupPosition",
+        "singleClickEdit",
+        "useValueParserForImport",
+        "autoHeaderHeight",
+        "suppressHeaderMenuButton",
+        "suppressHeaderFilterButton",
+        "suppressHeaderContextMenu",
+        "headerCheckboxSelectionFilteredOnly",
+        "headerCheckboxSelectionCurrentPageOnly",
+        "lockPinned",
+        "enablePivot",
+        "autoHeight",
+        "wrapText",
+        "enableCellChangeFlash",
+        "rowDrag",
+        "rowGroup",
+        "enableRowGroup",
+        "enableValue",
+        "defaultAggFunc",
+        "sortable",
+        "unSortIcon",
+        "resizable",
+        "suppressSizeToFit",
+        "suppressAutoSize",
+        "marryChildren",
+        "suppressStickyLabel",
+        "openByDefault",
+        "suppressColumnsToolPanel",
+        "suppressFiltersToolPanel",
+        "suppressSpanHeaderHeight"
+    ]
 
 class MetaEnum(EnumMeta):
     def __contains__(cls, item):
@@ -66,10 +104,18 @@ class JsCode:
         match_js_spaces = r"\s+(?=(?:[^\'\"]*[\'\"][^\'\"]*[\'\"])*[^\'\"]*$)"
         one_line_jscode = re.sub(match_js_spaces, " ", js_code, flags=re.MULTILINE)
         
-        js_placeholder = "--x_x--0_0--"
+        js_placeholder = "::JSCODE::"
         one_line_jscode = re.sub(r"\s+|\r\s*|\n+", " ", js_code, flags=re.MULTILINE)
         
         self.js_code = f"{js_placeholder}{one_line_jscode}{js_placeholder}"
+        
+class JsCodeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, JsCode):
+            return o.js_code
+            
+        return super().default(o)
+    
 
 def walk_gridOptions(go, func):
     """Recursively walk grid options applying func at each leaf node

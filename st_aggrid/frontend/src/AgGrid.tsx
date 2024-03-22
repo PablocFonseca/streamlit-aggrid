@@ -13,6 +13,9 @@ import {
   DetailGridInfo,
   GridReadyEvent,
   GridOptions,
+  GetRowIdParams,
+  GridSizeChangedEvent,
+  CellValueChangedEvent,
 } from "@ag-grid-community/core"
 
 import { CsvExportModule } from "@ag-grid-community/csv-export"
@@ -40,13 +43,12 @@ import { parseISO, compareAsc, format } from "date-fns"
 import deepMap from "./utils"
 import { duration } from "moment"
 
-import { debounce, throttle } from "lodash"
+import _, { debounce, throttle } from "lodash"
 
 import { encode, decode } from "base64-arraybuffer"
 import { Buffer } from "buffer"
 
 import "./agGridStyle.scss"
-
 import "@fontsource/source-sans-pro"
 
 type CSSDict = { [key: string]: { [key: string]: string } }
@@ -77,7 +79,7 @@ function addCustomCSS(custom_css: CSSDict): void {
 }
 
 function parseJsCodeFromPython(v: string) {
-  const JS_PLACEHOLDER = "--x_x--0_0--"
+  const JS_PLACEHOLDER = "::JSCODE::"
   let funcReg = new RegExp(
     `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
   )
@@ -85,6 +87,7 @@ function parseJsCodeFromPython(v: string) {
   let match = funcReg.exec(v)
 
   if (match) {
+    
     const funcStr = match[1]
     // eslint-disable-next-line
     return new Function("return " + funcStr)()
@@ -122,42 +125,42 @@ function numberFormatter(number: any, precision: number): String {
   }
 }
 
-const columnFormaters = {
-  columnTypes: {
-    dateColumnFilter: {
-      filter: "agDateColumnFilter",
-      filterParams: {
-        comparator: (filterValue: any, cellValue: string) =>
-          compareAsc(parseISO(cellValue), filterValue),
-      },
-    },
-    numberColumnFilter: {
-      filter: "agNumberColumnFilter",
-    },
-    shortDateTimeFormat: {
-      valueFormatter: (params: any) =>
-        dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
-    },
-    customDateTimeFormat: {
-      valueFormatter: (params: any) =>
-        dateFormatter(params.value, params.column.colDef.custom_format_string),
-    },
-    customNumericFormat: {
-      valueFormatter: (params: any) =>
-        numberFormatter(params.value, params.column.colDef.precision ?? 2),
-    },
-    customCurrencyFormat: {
-      valueFormatter: (params: any) =>
-        currencyFormatter(
-          params.value,
-          params.column.colDef.custom_currency_symbol
-        ),
-    },
-    timedeltaFormat: {
-      valueFormatter: (params: any) => duration(params.value).humanize(true),
-    },
-  },
-}
+// const columnFormaters = {
+//   columnTypes: {
+//     dateColumnFilter: {
+//       filter: "agDateColumnFilter",
+//       filterParams: {
+//         comparator: (filterValue: any, cellValue: string) =>
+//           compareAsc(parseISO(cellValue), filterValue),
+//       },
+//     },
+//     numberColumnFilter: {
+//       filter: "agNumberColumnFilter",
+//     },
+//     shortDateTimeFormat: {
+//       valueFormatter: (params: any) =>
+//         dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
+//     },
+//     customDateTimeFormat: {
+//       valueFormatter: (params: any) =>
+//         dateFormatter(params.value, params.column.colDef.custom_format_string),
+//     },
+//     customNumericFormat: {
+//       valueFormatter: (params: any) =>
+//         numberFormatter(params.value, params.column.colDef.precision ?? 2),
+//     },
+//     customCurrencyFormat: {
+//       valueFormatter: (params: any) =>
+//         currencyFormatter(
+//           params.value,
+//           params.column.colDef.custom_currency_symbol
+//         ),
+//     },
+//     timedeltaFormat: {
+//       valueFormatter: (params: any) => duration(params.value).humanize(true),
+//     },
+//   },
+// }
 
 
 function GridToolBar(props: any) {
@@ -216,7 +219,8 @@ function ManualDownloadButton(props: any) {
 interface State {
   gridHeight: number
   gridOptions: GridOptions
-  api: GridApi
+  isRowDataEdited: Boolean
+  api?: GridApi
 }
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
@@ -226,7 +230,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private renderedGridHeightPrevious: number = 0
 
   constructor(props: ComponentProps) {
-    console.log("grid contructor")
     super(props)
     this.gridContainerRef = React.createRef()
 
@@ -264,21 +267,38 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
+    var go = this.parseGridoptions()
+    go.rowData = JSON.parse(this.props.args.row_data)
+
+    console.log('grid constuctor.')
     this.state = {
       gridHeight: this.props.args.height,
-      gridOptions: this.parseGridoptions()
+      gridOptions: go,
+      isRowDataEdited: false,
+      api: undefined
     } as State
   }
 
   private parseGridoptions() {
-    let gridOptions: GridOptions = Object.assign({}, this.props.args.gridOptions, columnFormaters)
-      
-
+    let gridOptions: GridOptions = _.cloneDeep(this.props.args.gridOptions)
+    
     if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython)
     }
-      gridOptions.rowData = JSON.parse(this.props.args.row_data)
+      
+      //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
+      if(_.every(gridOptions.rowData, (o) => '__pandas_index' in o)){
+        if (!('getRowId' in gridOptions)){
+            gridOptions['getRowId'] = (params: GetRowIdParams) => params.data.__pandas_index
+            console.info("gridRowId() function set as underlying pandas dataframe index.")
+        }
+      }
+
+      if (!('getRowId' in gridOptions)){
+        console.warn("getRowId was not set. Grid may behave bad when updating.")
+      }
+      console.log("GridOptions for", this.props.args.key, ":", gridOptions)
       return gridOptions
   }
 
@@ -358,12 +378,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
     ) {
       this.renderedGridHeightPrevious = renderedGridHeight
       Streamlit.setFrameHeight(renderedGridHeight)
-      this.fitColumns()
+      //this.fitColumns()
       // Run fitColumns only once when the grid first becomes visible with height > 0
       // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
       if (!this.fitColumnsDone) {
-        this.fitColumns()
-        this.fitColumnsDone = true
+        //this.fitColumns()
+        //this.fitColumnsDone = true
       }
     }
   }
@@ -469,17 +489,30 @@ class AgGrid extends React.Component<ComponentProps, State> {
     return themeClass
   }
 
-  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
+
+  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {   
     // If rowwData change is detected then update state
     const prevRowData = prevProps.args.row_data
     const currRowData = this.props.args.row_data
     const currRowDataArr = JSON.parse(currRowData)
 
-    if (prevRowData !== currRowData) {
-      this.state.api.updateGridOptions({ rowData: currRowDataArr })
+    if ((!_.isEqual(prevRowData,currRowData)) && !this.state.isRowDataEdited) {
+      this.state.api?.updateGridOptions({ rowData: currRowDataArr })
     }
 
-    this.loadColumnsState()
+    const prevGridOptions = prevProps.args.gridOptions
+    const currGridOptions = this.props.args.gridOptions
+
+
+    const objectDiff = (a: any, b: any)  => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
+    if(!_.isEqual(prevGridOptions, currGridOptions)){
+      console.dir(objectDiff(prevGridOptions, currGridOptions))
+      this.state.api?.updateGridOptions(this.parseGridoptions())
+    }
+
+    if(!_.isEqual(prevProps.args.columns_state,this.props.args.columns_state)){
+      this.loadColumnsState()
+    }
   }
 
   private onGridReady(event: GridReadyEvent) {
@@ -503,11 +536,17 @@ class AgGrid extends React.Component<ComponentProps, State> {
         this.attachStreamlitRerunToEvents(i.api)
       }
     }) 
-    this.processPreselection()
+    //this.processPreselection()
   }
 
-  private onGridSizeChanged(event: any) {
+  private onGridSizeChanged(event: GridSizeChangedEvent) {
     this.resizeGridContainer()
+  }
+
+  private cellValueChanged(event: CellValueChangedEvent){
+    console.log("cellValueChanged")
+    this.setState({isRowDataEdited: true})
+
   }
 
   private processPreselection() {
@@ -565,6 +604,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         <AgGridReact
           onGridReady={(e) => this.onGridReady(e)}
           onGridSizeChanged={(e) => this.onGridSizeChanged(e)}
+          onCellValueChanged={(e) => this.cellValueChanged(e)}
           gridOptions={this.state.gridOptions}
         ></AgGridReact>
       </div>

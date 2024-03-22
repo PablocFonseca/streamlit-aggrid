@@ -57,6 +57,12 @@ def __parse_row_data(data_parameter):
 
     if isinstance(data_parameter, pd.DataFrame):
         __cast_date_columns_to_iso8601(data_parameter) 
+        #creates an index column that uniquely identify the rows, this index will be used in AgGrid getRowId call on the Javascript side.
+        #if dataframe index is unique use it, else use a range
+        if data_parameter.index.is_unique:
+            data_parameter['__pandas_index'] = data_parameter.index
+        else:
+            data_parameter['__pandas_index'] = range(data_parameter.shape[0])       
         row_data = data_parameter.to_json(orient='records', date_format='iso')
         return row_data
 
@@ -101,6 +107,7 @@ def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parame
         raise ValueError("gridOptions is invalid.")
 
     if unsafe_allow_jscode:
+        #NOTE: Streamlit should allow passing a class to its inner component dumps, this way any class could serialized on AgGrid call.
         walk_gridOptions(gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v)
 
     return gridOptions

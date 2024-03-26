@@ -1,13 +1,17 @@
 from collections import defaultdict
 import pandas as pd
-from st_aggrid.shared import DEFAULT_COLUMN_PROPS
+from st_aggrid.shared import getAllColumnProps, getAllGridOptions
 
 
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""
 
     def __init__(self):
-        self.__grid_options: defaultdict = defaultdict(dict)
+        
+        def ddict():
+            return defaultdict(ddict)
+
+        self.__grid_options = ddict()
         self.sideBar: dict = dict()
 
     @staticmethod
@@ -38,14 +42,20 @@ class GridOptionsBuilder:
             "V": [],
         }
 
+        COLUMN_PROPS = [i['name'] for i in getAllColumnProps()]
+        GRID_OPTIONS = [i['name'] for i in getAllGridOptions()]
+
         gb = GridOptionsBuilder()
 
         # fetch extra args that should go to DefaultColumns
         for k,v in default_column_parameters.items():
-            if k in DEFAULT_COLUMN_PROPS:
+            
+            if k in COLUMN_PROPS:
                gb.configure_default_column(**{k:v})
-            else:
+            elif k in GRID_OPTIONS:
                 gb.configure_grid_options(**{k:v})
+            else:
+                print(f"{k} is not a valid gridOption or columnDef.")
 
         if any("." in col for col in dataframe.columns):
             gb.configure_grid_options(suppressFieldDotNotation=True)
@@ -57,13 +67,13 @@ class GridOptionsBuilder:
 
     def configure_default_column(
         self,
-        min_column_width=5,
-        resizable=True,
-        filterable=True,
-        sortable=True,
-        editable=False,
-        groupable=False,
-        sorteable=None,
+        # min_column_width=5,
+        # resizable=True,
+        # filterable=True,
+        # sortable=True,
+        # editable=False,
+        # groupable=False,
+        # sorteable=None,
         **other_default_column_properties
     ):
         """Configure default column.
@@ -97,23 +107,23 @@ class GridOptionsBuilder:
                 Key value pairs that will be merged to defaultColDef dict.
                 Chech ag-grid documentation.
         """
-        if sorteable is not None:
-            sortable = sorteable
+        # if sorteable is not None:
+        #     sortable = sorteable
 
-        defaultColDef = {
-            "minWidth": min_column_width,
-            "editable": editable,
-            "filter": filterable,
-            "resizable": resizable,
-            "sortable": sortable,
-        }
-        if groupable:
-            defaultColDef["enableRowGroup"] = groupable
-
+        # defaultColDef = {
+        #     "minWidth": min_column_width,
+        #     "editable": editable,
+        #     "filter": filterable,
+        #     "resizable": resizable,
+        #     "sortable": sortable,
+        # }
+        # if groupable:
+        #     defaultColDef["enableRowGroup"] = groupable
+        defaultColDef = {}
         if other_default_column_properties:
             defaultColDef = {**defaultColDef, **other_default_column_properties}
 
-        self.__grid_options["defaultColDef"] = defaultColDef
+        self.__grid_options["defaultColDef"] = {**self.__grid_options["defaultColDef"], **other_default_column_properties}
 
     def configure_auto_height(self, autoHeight=True):
         """
@@ -290,7 +300,8 @@ class GridOptionsBuilder:
                     ] = True
 
         if pre_selected_rows:
-            self.__grid_options["preSelectedRows"] = pre_selected_rows
+            #self.__grid_options["preSelectedRows"] = pre_selected_rows
+            self.__grid_options['initialState']['rowSelection'] = pre_selected_rows
 
         self.__grid_options["rowSelection"] = selection_mode
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick
@@ -300,7 +311,7 @@ class GridOptionsBuilder:
             groupSelectsChildren and selection_mode == "multiple"
         )
         self.__grid_options["groupSelectsFiltered"] = groupSelectsFiltered
-        self.__grid_options["preSelectAllRows"] = pre_select_all_rows
+        #self.__grid_options["preSelectAllRows"] = pre_select_all_rows
 
     def configure_pagination(
         self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10

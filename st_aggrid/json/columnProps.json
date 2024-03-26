@@ -1,0 +1,1040 @@
+[
+    {
+        "name": "field",
+        "props": {
+            "Type": "ColDefField"
+        },
+        "description": "The field of the row object to get the cell's data from.\nDeep references into a row object is supported via dot notation, i.e 'address.firstLine'.See: Accessing Row Data Values"
+    },
+    {
+        "name": "colId",
+        "props": {
+            "Type": "string"
+        },
+        "description": "The unique ID to give the column. This is optional. If missing, the ID will default to the field.\nIf both field and colId are missing, a unique ID will be generated.\nThis ID is used to identify the column in the API for sorting, filtering etc."
+    },
+    {
+        "name": "type",
+        "props": {
+            "Type": "string | string[]"
+        },
+        "description": "A comma separated string or array of strings containing ColumnType keys which can be used as a template for a column.\nThis helps to reduce duplication of properties when you have a lot of common column properties.See: Column Types"
+    },
+    {
+        "name": "cellDataType",
+        "props": {
+            "Type": "boolean | string",
+            "Default": "true"
+        },
+        "description": "The data type of the cell values for this column.\nCan either infer the data type from the row data (true - the default behaviour),\ndefine a specific data type (string), or have no data type (false).\n\nIf setting a specific data type (string value),\nthis can either be one of the pre-defined data types\n'text', 'number',  'boolean',  'date',  'dateString' or  'object',\nor a custom data type that has been defined in the dataTypeDefinitions grid option.\n \nData type inference only works for the Client-Side Row Model, and requires non-null data.\nIt will also not work if the valueGetter, valueParser or refData properties are defined,\nor if this column is a sparkline.See: Cell Data Types"
+    },
+    {
+        "name": "valueGetter",
+        "props": {
+            "Type": "string | ValueGetterFunc"
+        },
+        "description": "Function or expression. Gets the value from your data for display.More details See: Value Getters"
+    },
+    {
+        "name": "valueFormatter",
+        "props": {
+            "Type": "string | ValueFormatterFunc"
+        },
+        "description": "A function or expression to format a value, should return a string. Not used for CSV export or copy to clipboard, only for UI cell rendering.More details See: Value Formatters"
+    },
+    {
+        "name": "refData",
+        "props": {
+            "Type": "{ [key: string]: string; }"
+        },
+        "description": "Provided a reference data map to be used to map column values to their respective value from the map.See: Using the 'refData' Property"
+    },
+    {
+        "name": "keyCreator",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Function to return a string key for a value.\nThis string is used for grouping, Set filtering, and searching within cell editor dropdowns.\nWhen filtering and searching the string is exposed to the user, so make sure to return a human-readable value.More details "
+    },
+    {
+        "name": "equals",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Custom comparator for values, used by renderer to know if values have changed. Cells whose values have not changed don't get refreshed.\nBy default the grid uses === which should work for most use cases.More details See: Change Detection Comparing Values"
+    },
+    {
+        "name": "checkboxSelection",
+        "props": {
+            "Type": "boolean | CheckboxSelectionCallback",
+            "Default": "false"
+        },
+        "description": "Set to true (or return true from function) to render a selection checkbox in the column.More details "
+    },
+    {
+        "name": "showDisabledCheckboxes",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to display a disabled checkbox when row is not selectable and checkboxes are enabled."
+    },
+    {
+        "name": "toolPanelClass",
+        "props": {
+            "Type": "ToolPanelClass"
+        },
+        "description": "CSS class to use for the tool panel cell. Can be a string, array of strings, or function.More details "
+    },
+    {
+        "name": "suppressColumnsToolPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column or group to appear in the Columns Tool Panel."
+    },
+    {
+        "name": "columnGroupShow",
+        "props": {
+            "Type": "ColumnGroupShowType"
+        },
+        "description": "Whether to only show the column when the group is open / closed. If not set the column is always displayed as part of the group.More details "
+    },
+    {
+        "name": "icons",
+        "props": {
+            "Type": "{ [key: string]: Function | string; }",
+            "Initial": null
+        },
+        "description": "Icons to use inside the column instead of the grid's default icons. Leave undefined to use defaults.See: Custom Icons"
+    },
+    {
+        "name": "suppressNavigable",
+        "props": {
+            "Type": "boolean | SuppressNavigableCallback",
+            "Default": "false"
+        },
+        "description": "Set to true if this column is not navigable (i.e. cannot be tabbed into), otherwise false.\nCan also be a callback function to have different rows navigable.More details "
+    },
+    {
+        "name": "suppressKeyboardEvent",
+        "props": {
+            "Type": "Function",
+            "Default": "false"
+        },
+        "description": "Allows the user to suppress certain keyboard events in the grid cell.More details See: Suppress Keyboard Events"
+    },
+    {
+        "name": "suppressPaste",
+        "props": {
+            "Type": "boolean | SuppressPasteCallback"
+        },
+        "description": "Pasting is on by default as long as cells are editable (non-editable cells cannot be modified, even with a paste operation).\nSet to true turn paste operations off.More details "
+    },
+    {
+        "name": "suppressFillHandle",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "Set to true to prevent the fillHandle from being rendered in any cell that belongs to this columnSee: Suppressing the Fill Handle"
+    },
+    {
+        "name": "contextMenuItems",
+        "props": {
+            "Type": "(string | MenuItemDef)[] | GetContextMenuItems"
+        },
+        "description": "Customise the list of menu items available in the context menu.More details See: Configuring the Context Menu"
+    },
+    {
+        "name": "cellAriaRole",
+        "props": {
+            "Type": "string",
+            "Default": "'gridcell'"
+        },
+        "description": "Used for screen reader announcements - the role property of the cells that belong to this column."
+    },
+    {
+        "name": "hide",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true for this column to be hidden."
+    },
+    {
+        "name": "initialHide",
+        "props": {
+            "Type": "boolean",
+            "Initial": null
+        },
+        "description": "Same as hide, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "lockVisible",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to block making column visible / hidden via the UI (API will still work)."
+    },
+    {
+        "name": "lockPosition",
+        "props": {
+            "Type": "boolean | 'left' | 'right'"
+        },
+        "description": "Lock a column to position to 'left' or'right' to always have this column displayed in that position. true is treated as 'left'"
+    },
+    {
+        "name": "suppressMovable",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column to be movable via dragging."
+    },
+    {
+        "name": "useValueFormatterForExport",
+        "props": {
+            "Type": "boolean",
+            "Default": "true"
+        },
+        "description": "By default, values are formatted using the column's valueFormatter when exporting data from the grid.\nThis applies to CSV and Excel export, as well as clipboard operations and the fill handle.\nSet to false to prevent values from being formatted for these operations.\nRegardless of this option, if custom handling is provided for the export operation, the value formatter will not be used.See: Using Value Formatters with Other Grid Features"
+    },
+    {
+        "name": "editable",
+        "props": {
+            "Type": "boolean | EditableCallback",
+            "Default": "false"
+        },
+        "description": "Set to true if this column is editable, otherwise false. Can also be a function to have different rows editable.More details "
+    },
+    {
+        "name": "valueSetter",
+        "props": {
+            "Type": "string | ValueSetterFunc"
+        },
+        "description": "Function or expression. Custom function to modify your data based off the new value for saving. Return true if the data changed.More details See: Saving Values"
+    },
+    {
+        "name": "valueParser",
+        "props": {
+            "Type": "string | ValueParserFunc"
+        },
+        "description": "Function or expression. Parses the value for saving.More details See: Parsing Values"
+    },
+    {
+        "name": "cellEditor",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own cell editor component for this column's cells.See: Cell Editors"
+    },
+    {
+        "name": "cellEditorParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Params to be passed to the cellEditor component."
+    },
+    {
+        "name": "cellEditorSelector",
+        "props": {
+            "Type": "CellEditorSelectorFunc"
+        },
+        "description": "Callback to select which cell editor to be used for a given row within the same column.More details See: Many Editors One Column"
+    },
+    {
+        "name": "cellEditorPopup",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "Set to true, to have the cell editor appear in a popup."
+    },
+    {
+        "name": "cellEditorPopupPosition",
+        "props": {
+            "Type": "'over' | 'under'",
+            "Default": "'over'"
+        },
+        "description": "Set the position for the popup cell editor. Possible values are over Popup will be positioned over the cell  under Popup will be positioned below the cell leaving the cell value visible. "
+    },
+    {
+        "name": "singleClickEdit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to have cells under this column enter edit mode after single click."
+    },
+    {
+        "name": "useValueParserForImport",
+        "props": {
+            "Type": "boolean",
+            "Default": "true"
+        },
+        "description": "By default, values are parsed using the column's valueParser when importing data to the grid.\nThis applies to clipboard operations and the fill handle.\nSet to false to prevent values from being parsed for these operations.\nRegardless of this option, if custom handling is provided for the import operation, the value parser will not be used.See: Using Value Parsers with Other Grid Features"
+    },
+    {
+        "name": "onCellValueChanged",
+        "props": {
+            "Type": "NewValueParams"
+        },
+        "description": "Callback for after the value of a cell has changed, either due to editing or the application calling api.setValue().More details "
+    },
+    {
+        "name": "onCellClicked",
+        "props": {
+            "Type": "CellClickedEvent"
+        },
+        "description": "Callback called when a cell is clicked.More details "
+    },
+    {
+        "name": "onCellDoubleClicked",
+        "props": {
+            "Type": "CellDoubleClickedEvent"
+        },
+        "description": "Callback called when a cell is double clicked.More details "
+    },
+    {
+        "name": "onCellContextMenu",
+        "props": {
+            "Type": "CellContextMenuEvent"
+        },
+        "description": "Callback called when a cell is right clicked.More details "
+    },
+    {
+        "name": "filter",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Filter component to use for this column. Set to true to use the default filter. Set to the name of a Provided Filter or set to a IFilterComp.See: Column Filters"
+    },
+    {
+        "name": "filterParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Params to be passed to the filter component specified in filter.See: Filter Parameters"
+    },
+    {
+        "name": "filterValueGetter",
+        "props": {
+            "Type": "string | ValueGetterFunc"
+        },
+        "description": "Function or expression. Gets the value for filtering purposes.More details "
+    },
+    {
+        "name": "getQuickFilterText",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "A function to tell the grid what Quick Filter text to use for this column if you don't want to use the default (which is calling toString on the value).More details See: Overriding the Quick Filter Value"
+    },
+    {
+        "name": "floatingFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Whether to display a floating filter for this column.See: Floating Filter"
+    },
+    {
+        "name": "floatingFilterComponent",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The custom component to be used for rendering the floating filter.\nIf none is specified the default AG Grid is used.See: Floating Filter Component"
+    },
+    {
+        "name": "floatingFilterComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Params to be passed to floatingFilterComponent.See: Floating Filter Parameters"
+    },
+    {
+        "name": "suppressFiltersToolPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column (filter) or group (filter group) to appear in the Filters Tool Panel."
+    },
+    {
+        "name": "headerName",
+        "props": {
+            "Type": "string"
+        },
+        "description": "The name to render in the column header. If not specified and field is specified, the field name will be used as the header name."
+    },
+    {
+        "name": "headerValueGetter",
+        "props": {
+            "Type": "string | HeaderValueGetterFunc"
+        },
+        "description": "Function or expression. Gets the value for display in the header.More details "
+    },
+    {
+        "name": "headerTooltip",
+        "props": {
+            "Type": "string"
+        },
+        "description": "Tooltip for the column header"
+    },
+    {
+        "name": "headerClass",
+        "props": {
+            "Type": "HeaderClass"
+        },
+        "description": "CSS class to use for the header cell. Can be a string, array of strings, or function.More details "
+    },
+    {
+        "name": "headerComponent",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The custom header group component to be used for rendering the component header. If none specified the default AG Grid is used.See: Header Component"
+    },
+    {
+        "name": "headerComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The parameters to be passed to the headerComponent."
+    },
+    {
+        "name": "wrapHeaderText",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "If enabled then column header names that are too long for the column width will wrap onto the next line. Default false"
+    },
+    {
+        "name": "autoHeaderHeight",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If enabled then the column header row will automatically adjust height to accommodate the size of the header cell.\nThis can be useful when using your own headerComponent or long header names in conjunction with wrapHeaderText.See: Auto Header Height"
+    },
+    {
+        "name": "menuTabs",
+        "props": {
+            "Type": "ColumnMenuTab[]"
+        },
+        "description": "Set to an array containing zero, one or many of the following options: 'filterMenuTab' | 'generalMenuTab' | 'columnsMenuTab'.\nThis is used to figure out which menu tabs are present and in which order the tabs are shown.More details See: Default Column Menu"
+    },
+    {
+        "name": "columnChooserParams",
+        "props": {
+            "Type": "ColumnChooserParams"
+        },
+        "description": "Params used to change the behaviour and appearance of the Column Chooser/Columns Menu tab.More details See: Customising the Column Chooser"
+    },
+    {
+        "name": "mainMenuItems",
+        "props": {
+            "Type": "(string | MenuItemDef)[] | GetMainMenuItems"
+        },
+        "description": "Customise the list of menu items available in the column menu.More details See: Customising the Menu Items"
+    },
+    {
+        "name": "suppressHeaderMenuButton",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if no menu button should be shown for this column header.See: Customising the Column Menu"
+    },
+    {
+        "name": "suppressHeaderFilterButton",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to not display the filter button in the column header.\nOnly applies when columnMenu = 'new'.See: Customising the Column Menu"
+    },
+    {
+        "name": "suppressHeaderContextMenu",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to not display the column menu when the column header is right-clicked.\nOnly applies when columnMenu = 'new'.See: Customising the Column Menu"
+    },
+    {
+        "name": "suppressHeaderKeyboardEvent",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Suppress the grid taking action for the relevant keyboard event when a header is focused.More details See: Suppress Keyboard Events"
+    },
+    {
+        "name": "headerCheckboxSelection",
+        "props": {
+            "Type": "boolean | HeaderCheckboxSelectionCallback"
+        },
+        "description": "If true or the callback returns true, a 'select all' checkbox will be put into the header.More details See: Header Checkbox Selection"
+    },
+    {
+        "name": "headerCheckboxSelectionFilteredOnly",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, the header checkbox selection will only select filtered items.See: Select Everything or Just Filtered"
+    },
+    {
+        "name": "headerCheckboxSelectionCurrentPageOnly",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, the header checkbox selection will only select nodes on the current page.See: Select Everything on the Current Page"
+    },
+    {
+        "name": "suppressFloatingFilterButton",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "If true, the button in the floating filter that opens the parent filter in a popup will not be displayed.\nOnly applies if floatingFilter = true.See: Floating Filters"
+    },
+    {
+        "name": "chartDataType",
+        "props": {
+            "Type": "'category' | 'series' | 'time' | 'excluded'"
+        },
+        "description": "Defines the chart data type that should be used for a column."
+    },
+    {
+        "name": "pinned",
+        "props": {
+            "Type": "boolean | 'left' | 'right' | null"
+        },
+        "description": "Pin a column to one side: right or left. A value of true is converted to 'left'."
+    },
+    {
+        "name": "initialPinned",
+        "props": {
+            "Type": "boolean | 'left' | 'right'",
+            "Initial": null
+        },
+        "description": "Same as pinned, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "lockPinned",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to block the user pinning the column, the column can only be pinned via definitions or API."
+    },
+    {
+        "name": "pivot",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "Set to true to pivot by this column."
+    },
+    {
+        "name": "initialPivot",
+        "props": {
+            "Type": "boolean",
+            "Initial": null
+        },
+        "description": "Same as pivot, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "pivotIndex",
+        "props": {
+            "Type": "number | null"
+        },
+        "description": "Set this in columns you want to pivot by.\nIf only pivoting by one column, set this to any number (e.g. 0).\nIf pivoting by multiple columns, set this to where you want this column to be in the order of pivots (e.g. 0 for first, 1 for second, and so on)."
+    },
+    {
+        "name": "initialPivotIndex",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Same as pivotIndex, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "pivotComparator",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Only for CSRM, see SSRM Pivoting.\n\nComparator to use when ordering the pivot columns, when this column is used to pivot on.\nThe values will always be strings, as the pivot service uses strings as keys for the pivot groups.More details "
+    },
+    {
+        "name": "enablePivot",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you want to be able to pivot by this column via the GUI. This will not block the API or properties being used to achieve pivot."
+    },
+    {
+        "name": "cellStyle",
+        "props": {
+            "Type": "CellStyle | CellStyleFunc"
+        },
+        "description": "An object of css values / or function returning an object of css values for a particular cell.More details See: Cell Style"
+    },
+    {
+        "name": "cellClass",
+        "props": {
+            "Type": "string | string[] | CellClassFunc"
+        },
+        "description": "Class to use for the cell. Can be string, array of strings, or function that returns a string or array of strings.More details See: Cell Class"
+    },
+    {
+        "name": "cellClassRules",
+        "props": {
+            "Type": "CellClassRules"
+        },
+        "description": "Rules which can be applied to include certain CSS classes.More details See: Cell Class Rules"
+    },
+    {
+        "name": "cellRenderer",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own cell Renderer component for this column's cells.See: Cell Renderer"
+    },
+    {
+        "name": "cellRendererParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Params to be passed to the cellRenderer component.See: Cell Renderer Params"
+    },
+    {
+        "name": "cellRendererSelector",
+        "props": {
+            "Type": "CellRendererSelectorFunc"
+        },
+        "description": "Callback to select which cell renderer to be used for a given row within the same column.More details See: Many Renderers One Column"
+    },
+    {
+        "name": "autoHeight",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to have the grid calculate the height of a row based on contents of this column."
+    },
+    {
+        "name": "wrapText",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to have the text wrap inside the cell - typically used with autoHeight."
+    },
+    {
+        "name": "enableCellChangeFlash",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to flash a cell when it's refreshed."
+    },
+    {
+        "name": "rowDrag",
+        "props": {
+            "Type": "boolean | RowDragCallback",
+            "Default": "false"
+        },
+        "description": "boolean or Function. Set to true (or return true from function) to allow row dragging.More details "
+    },
+    {
+        "name": "rowDragText",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "A callback that should return a string to be displayed by the rowDragComp while dragging a row.\nIf this callback is not set, the rowDragText callback in the gridOptions will be used and\nif there is no callback in the gridOptions the current cell value will be used.More details "
+    },
+    {
+        "name": "rowGroup",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to row group by this column."
+    },
+    {
+        "name": "initialRowGroup",
+        "props": {
+            "Type": "boolean",
+            "Initial": null
+        },
+        "description": "Same as rowGroup, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "rowGroupIndex",
+        "props": {
+            "Type": "number | null"
+        },
+        "description": "Set this in columns you want to group by.\nIf only grouping by one column, set this to any number (e.g. 0).\nIf grouping by multiple columns, set this to where you want this column to be in the group (e.g. 0 for first, 1 for second, and so on)."
+    },
+    {
+        "name": "initialRowGroupIndex",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Same as rowGroupIndex, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "enableRowGroup",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you want to be able to row group by this column via the GUI.\nThis will not block the API or properties being used to achieve row grouping."
+    },
+    {
+        "name": "showRowGroup",
+        "props": {
+            "Type": "string | boolean",
+            "Initial": null
+        },
+        "description": "Set to true to have the grid place the values for the group into the cell, or put the name of a grouped column to just show that group.See: Custom Group Columns"
+    },
+    {
+        "name": "enableValue",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you want to be able to aggregate by this column via the GUI.\nThis will not block the API or properties being used to achieve aggregation."
+    },
+    {
+        "name": "aggFunc",
+        "props": {
+            "Type": null
+        },
+        "description": "Name of function to use for aggregation. In-built options are: sum, min, max, count, avg, first, last. Also accepts a custom aggregation name or an aggregation function.More details "
+    },
+    {
+        "name": "initialAggFunc",
+        "props": {
+            "Type": null,
+            "Initial": null
+        },
+        "description": "Same as aggFunc, except only applied when creating a new column. Not applied when updating column definitions.More details "
+    },
+    {
+        "name": "allowedAggFuncs",
+        "props": {
+            "Type": "string[]"
+        },
+        "description": "Aggregation functions allowed on this column e.g. ['sum', 'avg'].\nIf missing, all installed functions are allowed.\nThis will only restrict what the GUI allows a user to select, it does not impact when you set a function via the API."
+    },
+    {
+        "name": "defaultAggFunc",
+        "props": {
+            "Type": "string",
+            "Default": "'sum'"
+        },
+        "description": "The name of the aggregation function to use for this column when it is enabled via the GUI.\nNote that this does not immediately apply the aggregation function like aggFunc"
+    },
+    {
+        "name": "sortable",
+        "props": {
+            "Type": "boolean",
+            "Default": "true"
+        },
+        "description": "Set to false to disable sorting which is enabled by default."
+    },
+    {
+        "name": "sort",
+        "props": {
+            "Type": "SortDirection"
+        },
+        "description": "If sorting by default, set it here. Set to asc or desc.More details "
+    },
+    {
+        "name": "initialSort",
+        "props": {
+            "Type": "SortDirection",
+            "Initial": null
+        },
+        "description": "Same as sort, except only applied when creating a new column. Not applied when updating column definitions.More details "
+    },
+    {
+        "name": "sortIndex",
+        "props": {
+            "Type": "number | null"
+        },
+        "description": "If sorting more than one column by default, specifies order in which the sorting should be applied."
+    },
+    {
+        "name": "initialSortIndex",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Same as sortIndex, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "sortingOrder",
+        "props": {
+            "Type": "(SortDirection)[]"
+        },
+        "description": "Array defining the order in which sorting occurs (if sorting is enabled). An array with any of the following in any order ['asc','desc',null]More details "
+    },
+    {
+        "name": "comparator",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Override the default sorting order by providing a custom sort comparator. valueA, valueB are the values to compare.  nodeA,  nodeB are the corresponding RowNodes. Useful if additional details are required by the sort.  isDescending - true if sort direction is desc. Not to be used for inverting the return value as the grid already applies asc or desc ordering. \n\nReturn: 0  valueA is the same as valueB  > 0 Sort valueA after valueB  < 0 Sort valueA before valueB More details "
+    },
+    {
+        "name": "unSortIcon",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you want the unsorted icon to be shown when no sort is applied to this column."
+    },
+    {
+        "name": "colSpan",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "By default, each cell will take up the width of one column. You can change this behaviour to allow cells to span multiple columns.More details "
+    },
+    {
+        "name": "rowSpan",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "By default, each cell will take up the height of one row. You can change this behaviour to allow cells to span multiple rows.More details "
+    },
+    {
+        "name": "tooltipField",
+        "props": {
+            "Type": "ColDefField"
+        },
+        "description": "The field of the tooltip to apply to the cell."
+    },
+    {
+        "name": "tooltipValueGetter",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback that should return the string to use for a tooltip, tooltipField takes precedence if set.\nIf using a custom tooltipComponent you may return any custom value to be passed to your tooltip component.More details See: Tooltip Component"
+    },
+    {
+        "name": "tooltipComponent",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own tooltip component for the column.See: Tooltip Component"
+    },
+    {
+        "name": "tooltipComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The params used to configure tooltipComponent."
+    },
+    {
+        "name": "width",
+        "props": {
+            "Type": "number"
+        },
+        "description": "Initial width in pixels for the cell."
+    },
+    {
+        "name": "initialWidth",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Same as width, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "minWidth",
+        "props": {
+            "Type": "number"
+        },
+        "description": "Minimum width in pixels for the cell."
+    },
+    {
+        "name": "maxWidth",
+        "props": {
+            "Type": "number"
+        },
+        "description": "Maximum width in pixels for the cell."
+    },
+    {
+        "name": "flex",
+        "props": {
+            "Type": "number"
+        },
+        "description": "Used instead of width when the goal is to fill the remaining empty space of the grid.See: Column Flex"
+    },
+    {
+        "name": "initialFlex",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Same as flex, except only applied when creating a new column. Not applied when updating column definitions."
+    },
+    {
+        "name": "resizable",
+        "props": {
+            "Type": "boolean",
+            "Default": "true"
+        },
+        "description": "Set to false to disable resizing which is enabled by default."
+    },
+    {
+        "name": "suppressSizeToFit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you want this column's width to be fixed during 'size to fit' operations."
+    },
+    {
+        "name": "suppressAutoSize",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column to be auto-resizable by double clicking it's edge."
+    },
+    {
+        "name": "children\u00a0*",
+        "props": {
+            "Type": null
+        },
+        "description": "A list containing a mix of columns and column groups."
+    },
+    {
+        "name": "groupId",
+        "props": {
+            "Type": "string"
+        },
+        "description": "The unique ID to give the column. This is optional. If missing, a unique ID will be generated. This ID is used to identify the column group in the column API."
+    },
+    {
+        "name": "marryChildren",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to keep columns in this group beside each other in the grid. Moving the columns outside of the group (and hence breaking the group) is not allowed."
+    },
+    {
+        "name": "suppressStickyLabel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true the label of the Column Group will not scroll alongside the grid to always remain visible."
+    },
+    {
+        "name": "openByDefault",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if this group should be opened by default."
+    },
+    {
+        "name": "columnGroupShow",
+        "props": {
+            "Type": "ColumnGroupShowType"
+        },
+        "description": "Whether to only show the column when the group is open / closed. If not set the column is always displayed as part of the group.More details "
+    },
+    {
+        "name": "toolPanelClass",
+        "props": {
+            "Type": "ToolPanelClass"
+        },
+        "description": "CSS class to use for the tool panel cell. Can be a string, array of strings, or function.More details "
+    },
+    {
+        "name": "suppressColumnsToolPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column or group to appear in the Columns Tool Panel."
+    },
+    {
+        "name": "suppressFiltersToolPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you do not want this column (filter) or group (filter group) to appear in the Filters Tool Panel."
+    },
+    {
+        "name": "suppressSpanHeaderHeight",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true if you don't want the column header for this column to span the whole height of the header container."
+    },
+    {
+        "name": "tooltipComponent",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own tooltip component for the column group.See: Tooltip Component"
+    },
+    {
+        "name": "tooltipComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The params used to configure tooltipComponent."
+    },
+    {
+        "name": "headerName",
+        "props": {
+            "Type": "string"
+        },
+        "description": "The name to render in the column header. If not specified and field is specified, the field name will be used as the header name."
+    },
+    {
+        "name": "headerClass",
+        "props": {
+            "Type": "HeaderClass"
+        },
+        "description": "CSS class to use for the header cell. Can be a string, array of strings, or function.More details "
+    },
+    {
+        "name": "headerTooltip",
+        "props": {
+            "Type": "string"
+        },
+        "description": "Tooltip for the column header"
+    },
+    {
+        "name": "headerGroupComponent",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The custom header group component to be used for rendering the component header. If none specified the default AG Grid is used.See: Header Group Component"
+    },
+    {
+        "name": "headerGroupComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "The params used to configure the headerGroupComponent."
+    }
+]

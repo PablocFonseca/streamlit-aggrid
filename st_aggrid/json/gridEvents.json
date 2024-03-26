@@ -1,0 +1,611 @@
+[
+    {
+        "name": "toolPanelVisibleChanged",
+        "props": {
+            "Type": "ToolPanelVisibleChangedEvent"
+        },
+        "description": "The tool panel visibility has changed. Fires twice if switching between panels - once with the old panel and once with the new panel.More details See: Tool Panel Events"
+    },
+    {
+        "name": "toolPanelSizeChanged",
+        "props": {
+            "Type": "ToolPanelSizeChangedEvent"
+        },
+        "description": "The tool panel size has been changed.More details See: Tool Panel Events"
+    },
+    {
+        "name": "columnMenuVisibleChanged",
+        "props": {
+            "Type": "ColumnMenuVisibleChangedEvent"
+        },
+        "description": "The column menu visibility has changed. Fires twice if switching between tabs - once with the old tab and once with the new tab.More details See: Column Menu API / Events"
+    },
+    {
+        "name": "cutStart",
+        "props": {
+            "Type": "CutStartEvent"
+        },
+        "description": "Cut operation has started.More details See: Clipboard Events"
+    },
+    {
+        "name": "cutEnd",
+        "props": {
+            "Type": "CutEndEvent"
+        },
+        "description": "Cut operation has ended.More details See: Clipboard Events"
+    },
+    {
+        "name": "pasteStart",
+        "props": {
+            "Type": "PasteStartEvent"
+        },
+        "description": "Paste operation has started.More details See: Clipboard Events"
+    },
+    {
+        "name": "pasteEnd",
+        "props": {
+            "Type": "PasteEndEvent"
+        },
+        "description": "Paste operation has ended.More details See: Clipboard Events"
+    },
+    {
+        "name": "columnVisible",
+        "props": {
+            "Type": "ColumnVisibleEvent"
+        },
+        "description": "A column, or group of columns, was hidden / shown.More details "
+    },
+    {
+        "name": "columnPinned",
+        "props": {
+            "Type": "ColumnPinnedEvent"
+        },
+        "description": "A column, or group of columns, was pinned / unpinned.More details "
+    },
+    {
+        "name": "columnResized",
+        "props": {
+            "Type": "ColumnResizedEvent"
+        },
+        "description": "A column was resized.More details "
+    },
+    {
+        "name": "columnMoved",
+        "props": {
+            "Type": "ColumnMovedEvent"
+        },
+        "description": "A column was moved.More details "
+    },
+    {
+        "name": "columnValueChanged",
+        "props": {
+            "Type": "ColumnValueChangedEvent"
+        },
+        "description": "A value column was added or removed.More details "
+    },
+    {
+        "name": "columnPivotModeChanged",
+        "props": {
+            "Type": "ColumnPivotModeChangedEvent"
+        },
+        "description": "The pivot mode flag was changed.More details "
+    },
+    {
+        "name": "columnPivotChanged",
+        "props": {
+            "Type": "ColumnPivotChangedEvent"
+        },
+        "description": "A pivot column was added, removed or order changed.More details "
+    },
+    {
+        "name": "columnGroupOpened",
+        "props": {
+            "Type": "ColumnGroupOpenedEvent"
+        },
+        "description": "A column group was opened / closed.More details "
+    },
+    {
+        "name": "newColumnsLoaded",
+        "props": {
+            "Type": "NewColumnsLoadedEvent"
+        },
+        "description": "User set new columns.More details "
+    },
+    {
+        "name": "gridColumnsChanged",
+        "props": {
+            "Type": "GridColumnsChangedEvent"
+        },
+        "description": "The list of grid columns changed.More details "
+    },
+    {
+        "name": "displayedColumnsChanged",
+        "props": {
+            "Type": "DisplayedColumnsChangedEvent"
+        },
+        "description": "The list of displayed columns changed. This can result from columns open / close, column move, pivot, group, etc.More details "
+    },
+    {
+        "name": "virtualColumnsChanged",
+        "props": {
+            "Type": "VirtualColumnsChangedEvent"
+        },
+        "description": "The list of rendered columns changed (only columns in the visible scrolled viewport are rendered by default).More details "
+    },
+    {
+        "name": "columnEverythingChanged",
+        "props": {
+            "Type": "ColumnEverythingChangedEvent"
+        },
+        "description": "Shotgun - gets called when either a) new columns are set or b) api.applyColumnState() is used, so everything has changed.More details "
+    },
+    {
+        "name": "columnHeaderMouseOver",
+        "props": {
+            "Type": "ColumnHeaderMouseOverEvent"
+        },
+        "description": "A mouse cursor is initially moved over a column header.More details "
+    },
+    {
+        "name": "columnHeaderMouseLeave",
+        "props": {
+            "Type": "ColumnHeaderMouseLeaveEvent"
+        },
+        "description": "A mouse cursor is moved out of a column header.More details "
+    },
+    {
+        "name": "columnHeaderClicked",
+        "props": {
+            "Type": "ColumnHeaderClickedEvent"
+        },
+        "description": "A click is performed on a column header.More details "
+    },
+    {
+        "name": "columnHeaderContextMenu",
+        "props": {
+            "Type": "ColumnHeaderContextMenuEvent"
+        },
+        "description": "A context menu action, such as right-click or context menu key press, is performed on a column header.More details "
+    },
+    {
+        "name": "pivotMaxColumnsExceeded",
+        "props": {
+            "Type": "PivotMaxColumnsExceededEvent"
+        },
+        "description": "Exceeded the pivotMaxGeneratedColumns limit when generating columns.More details "
+    },
+    {
+        "name": "componentStateChanged",
+        "props": {
+            "Type": "ComponentStateChangedEvent"
+        },
+        "description": "Only used by Angular, React and VueJS AG Grid components (not used if doing plain JavaScript).\nIf the grid receives changes due to bound properties, this event fires after the grid has finished processing the change.More details "
+    },
+    {
+        "name": "cellValueChanged",
+        "props": {
+            "Type": "CellValueChangedEvent"
+        },
+        "description": "Value has changed after editing (this event will not fire if editing was cancelled, eg ESC was pressed) or\n if cell value has changed as a result of cut, paste, cell clear (pressing Delete key),\nfill handle, copy range down, undo and redo.More details See: Editing Events"
+    },
+    {
+        "name": "cellEditRequest",
+        "props": {
+            "Type": "CellEditRequestEvent"
+        },
+        "description": "Value has changed after editing. Only fires when readOnlyEdit=true.More details See: Read Only Edit"
+    },
+    {
+        "name": "rowValueChanged",
+        "props": {
+            "Type": "RowValueChangedEvent"
+        },
+        "description": "A cell's value within a row has changed. This event corresponds to Full Row Editing only.More details See: Full Row Editing"
+    },
+    {
+        "name": "cellEditingStarted",
+        "props": {
+            "Type": "CellEditingStartedEvent"
+        },
+        "description": "Editing a cell has started.More details See: Editing Events"
+    },
+    {
+        "name": "cellEditingStopped",
+        "props": {
+            "Type": "CellEditingStoppedEvent"
+        },
+        "description": "Editing a cell has stopped.More details See: Editing Events"
+    },
+    {
+        "name": "rowEditingStarted",
+        "props": {
+            "Type": "RowEditingStartedEvent"
+        },
+        "description": "Editing a row has started (when row editing is enabled). When row editing, this event will be fired once and cellEditingStarted will be fired for each individual cell. Only fires when doing Full Row Editing.More details See: Full Row Editing"
+    },
+    {
+        "name": "rowEditingStopped",
+        "props": {
+            "Type": "RowEditingStoppedEvent"
+        },
+        "description": "Editing a row has stopped (when row editing is enabled). When row editing, this event will be fired once and cellEditingStopped will be fired for each individual cell. Only fires when doing Full Row Editing.More details See: Full Row Editing"
+    },
+    {
+        "name": "undoStarted",
+        "props": {
+            "Type": "UndoStartedEvent"
+        },
+        "description": "Undo operation has started.More details See: Undo / Redo Events"
+    },
+    {
+        "name": "undoEnded",
+        "props": {
+            "Type": "UndoEndedEvent"
+        },
+        "description": "Undo operation has ended.More details See: Undo / Redo Events"
+    },
+    {
+        "name": "redoStarted",
+        "props": {
+            "Type": "RedoStartedEvent"
+        },
+        "description": "Redo operation has started.More details See: Undo / Redo Events"
+    },
+    {
+        "name": "redoEnded",
+        "props": {
+            "Type": "RedoEndedEvent"
+        },
+        "description": "Redo operation has ended.More details See: Undo / Redo Events"
+    },
+    {
+        "name": "rangeDeleteStart",
+        "props": {
+            "Type": "RangeDeleteStartEvent"
+        },
+        "description": "Range delete operation (cell clear) has started.More details See: Delete Range"
+    },
+    {
+        "name": "rangeDeleteEnd",
+        "props": {
+            "Type": "RangeDeleteEndEvent"
+        },
+        "description": "Range delete operation (cell clear) has ended.More details See: Delete Range"
+    },
+    {
+        "name": "filterOpened",
+        "props": {
+            "Type": "FilterOpenedEvent"
+        },
+        "description": "Filter has been opened.More details See: Filter Events"
+    },
+    {
+        "name": "filterChanged",
+        "props": {
+            "Type": "FilterChangedEvent"
+        },
+        "description": "Filter has been modified and applied.More details See: Filter Events"
+    },
+    {
+        "name": "filterModified",
+        "props": {
+            "Type": "FilterModifiedEvent"
+        },
+        "description": "Filter was modified but not applied. Used when filters have 'Apply' buttons.More details See: Filter Events"
+    },
+    {
+        "name": "advancedFilterBuilderVisibleChanged",
+        "props": {
+            "Type": "AdvancedFilterBuilderVisibleChangedEvent"
+        },
+        "description": "Advanced Filter Builder visibility has changed (opened or closed).More details See: Advanced Filter"
+    },
+    {
+        "name": "chartCreated",
+        "props": {
+            "Type": "ChartCreated"
+        },
+        "description": "A chart has been created.More details See: Chart Created"
+    },
+    {
+        "name": "chartRangeSelectionChanged",
+        "props": {
+            "Type": "ChartRangeSelectionChanged"
+        },
+        "description": "The data range for the chart has been changed.More details See: Chart Range Selection Changed"
+    },
+    {
+        "name": "chartOptionsChanged",
+        "props": {
+            "Type": "ChartOptionsChanged"
+        },
+        "description": "Formatting changes have been made by users through the Format Panel.More details See: Chart Options Changed"
+    },
+    {
+        "name": "chartDestroyed",
+        "props": {
+            "Type": "ChartDestroyed"
+        },
+        "description": "A chart has been destroyed.More details See: Chart Destroyed"
+    },
+    {
+        "name": "cellKeyDown",
+        "props": {
+            "Type": "CellKeyDownEvent | FullWidthCellKeyDownEvent"
+        },
+        "description": "DOM event keyDown happened on a cell.More details See: Keyboard Events"
+    },
+    {
+        "name": "gridReady",
+        "props": {
+            "Type": "GridReadyEvent"
+        },
+        "description": "The grid has initialised and is ready for most api calls, but may not be fully rendered yetMore details See: Grid Ready"
+    },
+    {
+        "name": "gridPreDestroyed",
+        "props": {
+            "Type": "GridPreDestroyedEvent"
+        },
+        "description": "Invoked immediately before the grid is destroyed. This is useful for cleanup logic that needs to run before the grid is torn down.More details See: Grid Pre-Destroyed"
+    },
+    {
+        "name": "firstDataRendered",
+        "props": {
+            "Type": "FirstDataRenderedEvent"
+        },
+        "description": "Fired the first time data is rendered into the grid. Use this event if you want to auto resize columns based on their contentsMore details See: First Data Rendered"
+    },
+    {
+        "name": "gridSizeChanged",
+        "props": {
+            "Type": "GridSizeChangedEvent"
+        },
+        "description": "The size of the grid div has changed. In other words, the grid was resized.More details See: Grid Size"
+    },
+    {
+        "name": "modelUpdated",
+        "props": {
+            "Type": "ModelUpdatedEvent"
+        },
+        "description": "Displayed rows have changed. Triggered after sort, filter or tree expand / collapse events.More details "
+    },
+    {
+        "name": "virtualRowRemoved",
+        "props": {
+            "Type": "VirtualRowRemovedEvent"
+        },
+        "description": "A row was removed from the DOM, for any reason. Use to clean up resources (if any) used by the row.More details "
+    },
+    {
+        "name": "viewportChanged",
+        "props": {
+            "Type": "ViewportChangedEvent"
+        },
+        "description": "Which rows are rendered in the DOM has changed.More details "
+    },
+    {
+        "name": "bodyScroll",
+        "props": {
+            "Type": "BodyScrollEvent"
+        },
+        "description": "The body was scrolled horizontally or vertically.More details "
+    },
+    {
+        "name": "bodyScrollEnd",
+        "props": {
+            "Type": "BodyScrollEndEvent"
+        },
+        "description": "Main body of the grid has stopped scrolling, either horizontally or vertically.More details "
+    },
+    {
+        "name": "dragStarted",
+        "props": {
+            "Type": "DragStartedEvent"
+        },
+        "description": "When dragging starts. This could be any action that uses the grid's Drag and Drop service, e.g. Column Moving, Column Resizing, Range Selection, Fill Handle, etc.More details "
+    },
+    {
+        "name": "dragStopped",
+        "props": {
+            "Type": "DragStoppedEvent"
+        },
+        "description": "When dragging stops. This could be any action that uses the grid's Drag and Drop service, e.g. Column Moving, Column Resizing, Range Selection, Fill Handle, etc.More details "
+    },
+    {
+        "name": "stateUpdated",
+        "props": {
+            "Type": "StateUpdatedEvent"
+        },
+        "description": "Grid state has been updated.More details See: Grid State"
+    },
+    {
+        "name": "paginationChanged",
+        "props": {
+            "Type": "PaginationChangedEvent"
+        },
+        "description": "Triggered every time the paging state changes. Some of the most common scenarios for this event to be triggered are:The page size changesThe current shown page is changedNew data is loaded onto the gridMore details "
+    },
+    {
+        "name": "rowDragEnter",
+        "props": {
+            "Type": "RowDragEvent"
+        },
+        "description": "A drag has started, or dragging was already started and the mouse has re-entered the grid having previously left the grid.More details See: Row Drag Events"
+    },
+    {
+        "name": "rowDragMove",
+        "props": {
+            "Type": "RowDragEvent"
+        },
+        "description": "The mouse has moved while dragging.More details See: Row Drag Events"
+    },
+    {
+        "name": "rowDragLeave",
+        "props": {
+            "Type": "RowDragEvent"
+        },
+        "description": "The mouse has left the grid while dragging.More details See: Row Drag Events"
+    },
+    {
+        "name": "rowDragEnd",
+        "props": {
+            "Type": "RowDragEvent"
+        },
+        "description": "The drag has finished over the grid.More details See: Row Drag Events"
+    },
+    {
+        "name": "columnRowGroupChanged",
+        "props": {
+            "Type": "ColumnRowGroupChangedEvent"
+        },
+        "description": "A row group column was added, removed or reordered.More details "
+    },
+    {
+        "name": "rowGroupOpened",
+        "props": {
+            "Type": "RowGroupOpenedEvent"
+        },
+        "description": "A row group was opened or closed.More details "
+    },
+    {
+        "name": "expandOrCollapseAll",
+        "props": {
+            "Type": "ExpandCollapseAllEvent"
+        },
+        "description": "Fired when calling either of the API methods expandAll() or collapseAll().More details "
+    },
+    {
+        "name": "pinnedRowDataChanged",
+        "props": {
+            "Type": "PinnedRowDataChangedEvent"
+        },
+        "description": "The client has set new pinned row data into the grid.More details "
+    },
+    {
+        "name": "rowDataUpdated",
+        "props": {
+            "Type": "RowDataUpdatedEvent"
+        },
+        "description": "Client-Side Row Model only. The client has updated data for the grid by either a) setting new Row Data or b) Applying a Row Transaction.More details See: Row Data Updated"
+    },
+    {
+        "name": "asyncTransactionsFlushed",
+        "props": {
+            "Type": "AsyncTransactionsFlushed"
+        },
+        "description": "Async transactions have been applied. Contains a list of all transaction results.More details See: Flush Async Transactions"
+    },
+    {
+        "name": "storeRefreshed",
+        "props": {
+            "Type": "StoreRefreshedEvent"
+        },
+        "description": "A server side store has finished refreshing.More details See: SSRM Refresh"
+    },
+    {
+        "name": "cellClicked",
+        "props": {
+            "Type": "CellClickedEvent"
+        },
+        "description": "Cell is clicked.More details "
+    },
+    {
+        "name": "cellDoubleClicked",
+        "props": {
+            "Type": "CellDoubleClickedEvent"
+        },
+        "description": "Cell is double clicked.More details "
+    },
+    {
+        "name": "cellFocused",
+        "props": {
+            "Type": "CellFocusedEvent"
+        },
+        "description": "Cell is focused.More details "
+    },
+    {
+        "name": "cellMouseOver",
+        "props": {
+            "Type": "CellMouseOverEvent"
+        },
+        "description": "Mouse entered cell.More details "
+    },
+    {
+        "name": "cellMouseOut",
+        "props": {
+            "Type": "CellMouseOutEvent"
+        },
+        "description": "Mouse left cell.More details "
+    },
+    {
+        "name": "cellMouseDown",
+        "props": {
+            "Type": "CellMouseDownEvent"
+        },
+        "description": "Mouse down on cell.More details "
+    },
+    {
+        "name": "rowClicked",
+        "props": {
+            "Type": "RowClickedEvent"
+        },
+        "description": "Row is clicked.More details "
+    },
+    {
+        "name": "rowDoubleClicked",
+        "props": {
+            "Type": "RowDoubleClickedEvent"
+        },
+        "description": "Row is double clicked.More details "
+    },
+    {
+        "name": "rowSelected",
+        "props": {
+            "Type": "RowSelectedEvent"
+        },
+        "description": "Row is selected or deselected. The event contains the node in question, so call the node's isSelected() method to see if it was just selected or deselected.More details See: Selection Events"
+    },
+    {
+        "name": "selectionChanged",
+        "props": {
+            "Type": "SelectionChangedEvent"
+        },
+        "description": "Row selection is changed. Use the grid API getSelectedNodes() or getSelectedRows() to get the new list of selected nodes / row data.More details See: Selection Events"
+    },
+    {
+        "name": "cellContextMenu",
+        "props": {
+            "Type": "CellContextMenuEvent"
+        },
+        "description": "Cell is right clicked.More details "
+    },
+    {
+        "name": "rangeSelectionChanged",
+        "props": {
+            "Type": "RangeSelectionChangedEvent"
+        },
+        "description": "A change to range selection has occurred.More details See: Range Selection Changed Event"
+    },
+    {
+        "name": "sortChanged",
+        "props": {
+            "Type": "SortChangedEvent"
+        },
+        "description": "Sort has changed. The grid also listens for this and updates the model.More details "
+    },
+    {
+        "name": "tooltipShow",
+        "props": {
+            "Type": "TooltipShowEvent"
+        },
+        "description": "A tooltip has been displayedMore details "
+    },
+    {
+        "name": "tooltipHide",
+        "props": {
+            "Type": "TooltipHideEvent"
+        },
+        "description": "A tooltip was hiddenMore details "
+    }
+]

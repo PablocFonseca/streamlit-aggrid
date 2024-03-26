@@ -1,5 +1,6 @@
 from enum import Enum, IntEnum, IntFlag, Flag, auto, EnumMeta
 import json
+import pathlib
 
 DEFAULT_COLUMN_PROPS = [
         "cellDataType",
@@ -35,8 +36,21 @@ DEFAULT_COLUMN_PROPS = [
         "openByDefault",
         "suppressColumnsToolPanel",
         "suppressFiltersToolPanel",
-        "suppressSpanHeaderHeight"
+        "suppressSpanHeaderHeight",
+        'filter'
     ]
+
+
+def getAllGridOptions():
+    jsonRoot = pathlib.Path(__file__).parent / "json" 
+    allOptions = json.load(open(jsonRoot / "gridOptions.json"))
+    return allOptions
+
+def getAllColumnProps():
+    jsonRoot = pathlib.Path(__file__).parent / "json" 
+    allProps = json.load(open(jsonRoot / "columnProps.json"))
+    return allProps
+
 
 class MetaEnum(EnumMeta):
     def __contains__(cls, item):
@@ -136,3 +150,35 @@ def walk_gridOptions(go, func):
                     walk_gridOptions(j, func)
             else:
                 go[k] = func(go[k])
+
+
+def fetch_grid_options_from_site():
+    import itertools
+    import requests
+    from bs4 import BeautifulSoup
+
+    # Fetch the URL text
+    url = "https://ag-grid.com/react-data-grid/grid-options/"
+    response = requests.get(url)
+
+    # Parse the HTML text
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    result = []
+
+    for r in soup.select('tr'):
+        c1, c2 = r.select('td')
+        element = c1.select_one("h6._name_1pw3t_115 > span").text
+        labels = [p.text for p in c1.select("span._metaLabel_1pw3t_162")]
+        values = [p.text for p in c1.select("span._metaValue_1pw3t_167")]
+        args = dict(itertools.zip_longest(labels, values))
+        description = c2.text
+        i = {}
+        i['name'] = element
+        i['props'] = args
+        i['description'] = description
+        result.append(i)
+
+
+    import json
+    return json.dumps(result, indent=4)

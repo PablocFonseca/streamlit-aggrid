@@ -87,7 +87,7 @@ function parseJsCodeFromPython(v: string) {
   let match = funcReg.exec(v)
 
   if (match) {
-    
+
     const funcStr = match[1]
     // eslint-disable-next-line
     return new Function("return " + funcStr)()
@@ -125,43 +125,40 @@ function numberFormatter(number: any, precision: number): String {
   }
 }
 
-// const columnFormaters = {
-//   columnTypes: {
-//     dateColumnFilter: {
-//       filter: "agDateColumnFilter",
-//       filterParams: {
-//         comparator: (filterValue: any, cellValue: string) =>
-//           compareAsc(parseISO(cellValue), filterValue),
-//       },
-//     },
-//     numberColumnFilter: {
-//       filter: "agNumberColumnFilter",
-//     },
-//     shortDateTimeFormat: {
-//       valueFormatter: (params: any) =>
-//         dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
-//     },
-//     customDateTimeFormat: {
-//       valueFormatter: (params: any) =>
-//         dateFormatter(params.value, params.column.colDef.custom_format_string),
-//     },
-//     customNumericFormat: {
-//       valueFormatter: (params: any) =>
-//         numberFormatter(params.value, params.column.colDef.precision ?? 2),
-//     },
-//     customCurrencyFormat: {
-//       valueFormatter: (params: any) =>
-//         currencyFormatter(
-//           params.value,
-//           params.column.colDef.custom_currency_symbol
-//         ),
-//     },
-//     timedeltaFormat: {
-//       valueFormatter: (params: any) => duration(params.value).humanize(true),
-//     },
-//   },
-// }
-
+const columnFormaters = {
+  dateColumnFilter: {
+    filter: "agDateColumnFilter",
+    filterParams: {
+      comparator: (filterValue: any, cellValue: string) =>
+        compareAsc(parseISO(cellValue), filterValue),
+    },
+  },
+  numberColumnFilter: {
+    filter: "agNumberColumnFilter",
+  },
+  shortDateTimeFormat: {
+    valueFormatter: (params: any) =>
+      dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
+  },
+  customDateTimeFormat: {
+    valueFormatter: (params: any) =>
+      dateFormatter(params.value, params.column.colDef.custom_format_string),
+  },
+  customNumericFormat: {
+    valueFormatter: (params: any) =>
+      numberFormatter(params.value, params.column.colDef.precision ?? 2),
+  },
+  customCurrencyFormat: {
+    valueFormatter: (params: any) =>
+      currencyFormatter(
+        params.value,
+        params.column.colDef.custom_currency_symbol
+      ),
+  },
+  timedeltaFormat: {
+    valueFormatter: (params: any) => duration(params.value).humanize(true),
+  },
+}
 
 function GridToolBar(props: any) {
   if (props.enabled) {
@@ -270,7 +267,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     var go = this.parseGridoptions()
     go.rowData = JSON.parse(this.props.args.row_data)
 
-    console.log('grid constuctor.')
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
@@ -281,25 +277,29 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
   private parseGridoptions() {
     let gridOptions: GridOptions = _.cloneDeep(this.props.args.gridOptions)
-    
+
     if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython)
     }
-      
-      //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
-      if(_.every(gridOptions.rowData, (o) => '__pandas_index' in o)){
-        if (!('getRowId' in gridOptions)){
-            gridOptions['getRowId'] = (params: GetRowIdParams) => params.data.__pandas_index
-            console.info("gridRowId() function set as underlying pandas dataframe index.")
-        }
-      }
 
-      if (!('getRowId' in gridOptions)){
-        console.warn("getRowId was not set. Grid may behave bad when updating.")
+    //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
+    if (_.every(gridOptions.rowData, (o) => '__pandas_index' in o)) {
+      if (!('getRowId' in gridOptions)) {
+        gridOptions['getRowId'] = (params: GetRowIdParams) => params.data.__pandas_index
+        console.info("gridRowId() function set as underlying pandas dataframe index.")
       }
-      console.log("GridOptions for", this.props.args.key, ":", gridOptions)
-      return gridOptions
+    }
+
+    if (!('getRowId' in gridOptions)) {
+      console.warn("getRowId was not set. Grid may behave bad when updating.")
+    }
+    
+    //console.log("GridOptions for", this.props.args.key, ":", gridOptions)
+
+    //adds custom columnFormatters
+    gridOptions.columnTypes = Object.assign(gridOptions.columnTypes || {}, columnFormaters)
+    return gridOptions
   }
 
   private attachStreamlitRerunToEvents(api: GridApi) {
@@ -307,6 +307,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     const doReturn = (e: any) => this.returnGridValue()
 
     updateEvents.forEach((element: any) => {
+      //if element is a tuple (eventName,timeout) apply debounce func for timeout seconds.
       if (Array.isArray(element)) {
         api.addEventListener(element[0], debounce(doReturn, element[1]))
       } else {
@@ -348,14 +349,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
     if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
       let blob = this.state.api?.getDataAsExcel() as Blob
       let buffer
-      ;(async () => {
-        await new Promise((resolve, reject) => {
-          blob.arrayBuffer().then((v) => {
-            buffer = encode(v)
-            resolve(buffer)
+        ; (async () => {
+          await new Promise((resolve, reject) => {
+            blob.arrayBuffer().then((v) => {
+              buffer = encode(v)
+              resolve(buffer)
+            })
           })
-        })
-      })()
+        })()
       return buffer
     }
 
@@ -378,61 +379,24 @@ class AgGrid extends React.Component<ComponentProps, State> {
     ) {
       this.renderedGridHeightPrevious = renderedGridHeight
       Streamlit.setFrameHeight(renderedGridHeight)
-      //this.fitColumns()
-      // Run fitColumns only once when the grid first becomes visible with height > 0
-      // This solves column_auto_size_mode issue with st.tabs causing all columns to render with ~0 width
-      if (!this.fitColumnsDone) {
-        //this.fitColumns()
-        //this.fitColumnsDone = true
-      }
-    }
-  }
-
-  private fitColumns() {
-
-    const columns_auto_size_mode = this.props.args.columns_auto_size_mode
-
-    switch (columns_auto_size_mode) {
-      case 1:
-      case "FIT_ALL_COLUMNS_TO_VIEW":
-        this.state.api?.sizeColumnsToFit()
-        break
-
-      case 2:
-      case "FIT_CONTENTS":
-        this.state.api?.autoSizeAllColumns()
-        break
-
-      default:
-        break
     }
   }
 
   private async getGridReturnValue() {
-    let returnData: any[] = []
-    let returnMode = this.props.args.data_return_mode
-
-    switch (returnMode) {
-      case 0: //ALL_DATA
-        this.state.api?.forEachLeafNode((row) => returnData.push(row.data))
-        break
-
-      case 1: //FILTERED_DATA
-        this.state.api?.forEachNodeAfterFilter((row) => {
-          if (!row.group) {
-            returnData.push(row.data)
-          }
-        })
-        break
-
-      case 2: //FILTERED_SORTED_DATA
-        this.state.api?.forEachNodeAfterFilterAndSort((row) => {
-          if (!row.group) {
-            returnData.push(row.data)
-          }
-        })
-        break
-    }
+  
+    let rowsAfterFilter: any[] = []
+    this.state.api?.forEachNodeAfterFilter((row) => {
+      if (!row.group) {
+        rowsAfterFilter.push(row.id)
+      }
+    })
+    
+    let rowsAfterSortAndFilter: any[] = []
+    this.state.api?.forEachNodeAfterFilterAndSort((row) => {
+      if (!row.group) {
+        rowsAfterSortAndFilter.push(row.id)
+      }
+    })
 
     let selected: any = {}
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
@@ -446,17 +410,21 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     let returnValue = {
       originalDtypes: this.props.args.frame_dtypes,
-      rowData: returnData,
-      selectedRows: this.state.api?.getSelectedRows(),
-      selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
-        _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
-        ...n.data,
-      })),
+      //rowData: returnData,
+      rowIdsAfterFilter : rowsAfterFilter,
+      rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
+      //selectedRowsId: selectedRows,
+      //selectedRows: this.state.api?.getSelectedRows(),
+      //selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
+      //  _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
+      //  ...n.data,
+      // })),
       gridState: this.state.api?.getState(),
-      columnsState: this.state.api?.getColumnState()
+      columnsState: this.state.api?.getColumnState(),
+      gridOptions: JSON.stringify(this.state.gridOptions)
       //ExcelBlob: this.handleExcelExport(),
     }
-    //console.dir(returnValue)
+
     return returnValue
   }
 
@@ -490,13 +458,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
 
-  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {   
+  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
     // If rowwData change is detected then update state
     const prevRowData = prevProps.args.row_data
     const currRowData = this.props.args.row_data
     const currRowDataArr = JSON.parse(currRowData)
 
-    if ((!_.isEqual(prevRowData,currRowData)) && !this.state.isRowDataEdited) {
+    if ((!_.isEqual(prevRowData, currRowData)) && !this.state.isRowDataEdited) {
       this.state.api?.updateGridOptions({ rowData: currRowDataArr })
     }
 
@@ -504,20 +472,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
     const currGridOptions = this.props.args.gridOptions
 
 
-    const objectDiff = (a: any, b: any)  => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
-    if(!_.isEqual(prevGridOptions, currGridOptions)){
-      console.dir(objectDiff(prevGridOptions, currGridOptions))
+    const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
+    if (!_.isEqual(prevGridOptions, currGridOptions)) {
+      //console.dir(objectDiff(prevGridOptions, currGridOptions))
       this.state.api?.updateGridOptions(this.parseGridoptions())
     }
 
-    if(!_.isEqual(prevProps.args.columns_state,this.props.args.columns_state)){
+    if (!_.isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
       this.loadColumnsState()
     }
   }
 
   private onGridReady(event: GridReadyEvent) {
-    this.setState({api: event.api})
-    
+    this.setState({ api: event.api })
+
     //Is it ugly? Yes. Does it work? Yes. 
     this.state.api = event.api
 
@@ -527,7 +495,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     this.state.api?.addEventListener("firstDataRendered", (e: any) => {
       this.resizeGridContainer()
-      //this.fitColumns()
     })
 
     this.attachStreamlitRerunToEvents(this.state.api)
@@ -535,17 +502,16 @@ class AgGrid extends React.Component<ComponentProps, State> {
       if (i.api !== undefined) {
         this.attachStreamlitRerunToEvents(i.api)
       }
-    }) 
-    //this.processPreselection()
+    })
   }
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {
     this.resizeGridContainer()
   }
 
-  private cellValueChanged(event: CellValueChangedEvent){
-    console.log("cellValueChanged")
-    this.setState({isRowDataEdited: true})
+  private cellValueChanged(event: CellValueChangedEvent) {
+    console.log("Data edited on Grid. Ignoring further changes from data paramener (AgGrid(data=dataframe))")
+    this.setState({ isRowDataEdited: true })
 
   }
 
@@ -556,13 +522,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     if (preSelectAllRows) {
       this.state.api?.selectAll()
-      
+
     } else {
       var preselectedRows = this.props.args.gridOptions["preSelectedRows"]
       if (preselectedRows || preselectedRows?.length() > 0) {
         for (var idx in preselectedRows) {
           this.state.api?.getRowNode(preselectedRows[idx])?.setSelected(true, false)
-          
+
         }
       }
     }
@@ -574,7 +540,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.props.args.manual_update ||
       this.props.args.excelExportMode === "MANUAL"
 
-    return (
+      return (
       <div
         id="gridContainer"
         className={this.getThemeClass()}

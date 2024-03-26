@@ -1,0 +1,2286 @@
+[
+    {
+        "name": "statusBar",
+        "props": {
+            "Type": "{ statusPanels: StatusPanelDef[]; }"
+        },
+        "description": "Specifies the status bar components to use in the status bar.More details See: Status Bar"
+    },
+    {
+        "name": "sideBar",
+        "props": {
+            "Type": "SideBarDef | string | string[] | boolean | null"
+        },
+        "description": "Specifies the side bar components.More details See: Side Bar"
+    },
+    {
+        "name": "getContextMenuItems",
+        "props": {
+            "Type": "GetContextMenuItems"
+        },
+        "description": "For customising the context menu.More details See: Context Menu"
+    },
+    {
+        "name": "suppressContextMenu",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to not show the context menu. Use if you don't want to use the default 'right click' context menu.See: Context Menu"
+    },
+    {
+        "name": "preventDefaultOnContextMenu",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When using suppressContextMenu, you can use the onCellContextMenu function to provide your own code to handle cell contextmenu events.\nThis flag is useful to prevent the browser from showing its default context menu."
+    },
+    {
+        "name": "allowContextMenuWithControlKey",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Allows context menu to show, even when ^ Ctrl key is held down. Default: falseSee: Context Menu"
+    },
+    {
+        "name": "getMainMenuItems",
+        "props": {
+            "Type": "GetMainMenuItems",
+            "Initial": null
+        },
+        "description": "For customising the main 'column header' menu.This property will only be read on initialisation.More details See: Column Menu"
+    },
+    {
+        "name": "columnMenu",
+        "props": {
+            "Type": "'legacy' | 'new'",
+            "Default": "'legacy'",
+            "Initial": null
+        },
+        "description": "Changes the display type of the column menu.\n'new' just displays the main list of menu items. 'legacy' displays a tabbed menu.This property will only be read on initialisation.See: Column Menu"
+    },
+    {
+        "name": "suppressMenuHide",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to always show the column menu button, rather than only showing when the mouse is over the column header.\nIf columnMenu = 'new', this will default to true instead of false.See: Column Menu"
+    },
+    {
+        "name": "popupParent",
+        "props": {
+            "Type": null
+        },
+        "description": "DOM element to use as the popup parent for grid popups (context menu, column menu etc).See: Popup Parent"
+    },
+    {
+        "name": "postProcessPopup",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows user to process popups after they are created. Applications can use this if they want to, for example, reposition the popup.More details See: Post-Process Popup"
+    },
+    {
+        "name": "copyHeadersToClipboard",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to also include headers when copying to clipboard using ^ Ctrl+C clipboard. Default: falseSee: Copying Cell Ranges"
+    },
+    {
+        "name": "copyGroupHeadersToClipboard",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to also include group headers when copying to clipboard using ^ Ctrl+C clipboard. Default: false"
+    },
+    {
+        "name": "clipboardDelimiter",
+        "props": {
+            "Type": "string",
+            "Default": "'\\t'"
+        },
+        "description": "Specify the delimiter to use when copying to clipboard.See: Changing the Delimiter for Copy & Paste"
+    },
+    {
+        "name": "suppressCutToClipboard",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to block cut operations within the grid.See: Disabling Cut"
+    },
+    {
+        "name": "suppressCopyRowsToClipboard",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to copy the cell range or focused cell to the clipboard and never the selected rows.See: Copying Rows"
+    },
+    {
+        "name": "suppressCopySingleCellRanges",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to copy rows instead of ranges when a range with only a single cell is selected.See: Mixed Copying Cell Ranges & Rows"
+    },
+    {
+        "name": "suppressLastEmptyLineOnPaste",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to work around a bug with Excel (Windows) that adds an extra empty line at the end of ranges copied to the clipboard."
+    },
+    {
+        "name": "suppressClipboardPaste",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to turn off paste operations within the grid.See: Disabling Paste"
+    },
+    {
+        "name": "suppressClipboardApi",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to stop the grid trying to use the Clipboard API, if it is blocked, and immediately fallback to the workaround."
+    },
+    {
+        "name": "processCellForClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to process cells for the clipboard. Handy if for example you have Date objects that need to have a particular format if importing into Excel.More details See: Processing Pasted Data"
+    },
+    {
+        "name": "processHeaderForClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to process header values for the clipboard.More details See: Processing Pasted Data"
+    },
+    {
+        "name": "processGroupHeaderForClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to process group header values for the clipboard.More details See: Processing Pasted Data"
+    },
+    {
+        "name": "processCellFromClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to process cells from the clipboard. Handy if for example you have number fields, and want to block non-numbers from getting into the grid.More details See: Processing Pasted Data"
+    },
+    {
+        "name": "sendToClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to get the data that would otherwise go to the clipboard. To be used when you want to control the 'copy to clipboard' operation yourself.More details See: Custom Clipboard Interaction"
+    },
+    {
+        "name": "processDataFromClipboard",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows complete control of the paste operation, including cancelling the operation (so nothing happens) or replacing the data with other data.More details See: Processing Data from Clipboard"
+    },
+    {
+        "name": "columnDefs",
+        "props": {
+            "Type": null
+        },
+        "description": "Array of Column / Column Group definitions.See: Column Definitions"
+    },
+    {
+        "name": "defaultColDef",
+        "props": {
+            "Type": null
+        },
+        "description": "A default column definition. Items defined in the actual column definitions get precedence.See: Default Column Definition"
+    },
+    {
+        "name": "defaultColGroupDef",
+        "props": {
+            "Type": "Partial<ColGroupDef>",
+            "Initial": null
+        },
+        "description": "A default column group definition. All column group definitions will use these properties. Items defined in the actual column group definition get precedence.This property will only be read on initialisation.See: Default Column Group Definition"
+    },
+    {
+        "name": "columnTypes",
+        "props": {
+            "Type": "{ [key: string]: ColTypeDef; }"
+        },
+        "description": "An object map of custom column types which contain groups of properties that column definitions can reuse by referencing in their type property.More details See: Custom Column Types"
+    },
+    {
+        "name": "dataTypeDefinitions",
+        "props": {
+            "Type": "{\n        [cellDataType: string]: DataTypeDefinition;\n    }"
+        },
+        "description": "An object map of cell data types to their definitions.\nCell data types can either override/update the pre-defined data types\n('text', 'number',  'boolean',  'date',  'dateString' or  'object'),\nor can be custom data types.More details See: Custom Cell Data Type Definitions"
+    },
+    {
+        "name": "maintainColumnOrder",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Keeps the order of Columns maintained after new Column Definitions are updated.See: Maintain Column Order"
+    },
+    {
+        "name": "suppressFieldDotNotation",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, then dots in field names (e.g. 'address.firstLine') are not treated as deep references. Allows you to use dots in your field name if you prefer.See: Accessing Row Data Values"
+    },
+    {
+        "name": "headerHeight",
+        "props": {
+            "Type": "number"
+        },
+        "description": "The height in pixels for the row containing the column label header. If not specified, it uses the theme value of header-height.See: Header Height"
+    },
+    {
+        "name": "groupHeaderHeight",
+        "props": {
+            "Type": "number"
+        },
+        "description": "The height in pixels for the rows containing header column groups. If not specified, it uses headerHeight.See: Header Height"
+    },
+    {
+        "name": "floatingFiltersHeight",
+        "props": {
+            "Type": "number"
+        },
+        "description": "The height in pixels for the row containing the floating filters. If not specified, it uses the theme value of header-height.See: Header Height"
+    },
+    {
+        "name": "pivotHeaderHeight",
+        "props": {
+            "Type": "number"
+        },
+        "description": "The height in pixels for the row containing the columns when in pivot mode. If not specified, it uses headerHeight.See: Header Height"
+    },
+    {
+        "name": "pivotGroupHeaderHeight",
+        "props": {
+            "Type": "number"
+        },
+        "description": "The height in pixels for the row containing header column groups when in pivot mode. If not specified, it uses groupHeaderHeight.See: Header Height"
+    },
+    {
+        "name": "allowDragFromColumnsToolPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Allow reordering and pinning columns by dragging columns from the Columns Tool Panel to the grid.See: Columns Tool Panel"
+    },
+    {
+        "name": "suppressMovableColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to suppress column moving, i.e. to make the columns fixed position."
+    },
+    {
+        "name": "suppressColumnMoveAnimation",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, the ag-column-moving class is not added to the grid while columns are moving. In the default themes, this results in no animation when moving columns. Default: false See: Moving Animation"
+    },
+    {
+        "name": "suppressDragLeaveHidesColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, when you drag a column out of the grid (e.g. to the group zone) the column is not hidden.See: Suppress Hide Leave"
+    },
+    {
+        "name": "suppressRowGroupHidesColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, when you drag a column into a row group panel the column is not hidden.See: Keeping Columns Visible"
+    },
+    {
+        "name": "processUnpinnedColumns",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Allows the user to process the columns being removed from the pinned section because the viewport is too small to accommodate them.\nReturns an array of columns to be removed from the pinned areas.This property will only be read on initialisation.More details See: Resizing Pinned Sections"
+    },
+    {
+        "name": "colResizeDefault",
+        "props": {
+            "Type": "'shift'"
+        },
+        "description": "Set to 'shift' to have shift-resize as the default resize operation (same as user holding down \u00e2\u0087\u00a7 Shift while resizing).See: Shift Resizing"
+    },
+    {
+        "name": "autoSizeStrategy",
+        "props": {
+            "Type": "SizeColumnsToFitGridStrategy | SizeColumnsToFitProvidedWidthStrategy | SizeColumnsToContentStrategy",
+            "Initial": null
+        },
+        "description": "Auto-size the columns when the grid is loaded. Can size to fit the grid width, fit a provided width, or fit the cell contents.This property will only be read on initialisation.More details See: Auto-Sizing Columns"
+    },
+    {
+        "name": "suppressAutoSize",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Suppresses auto-sizing columns for columns. In other words, double clicking a column's header's edge will not auto-size.This property will only be read on initialisation.See: Auto-Size Columns to Fit Cell Contents"
+    },
+    {
+        "name": "autoSizePadding",
+        "props": {
+            "Type": "number",
+            "Default": "20"
+        },
+        "description": "Number of pixels to add to a column width after the auto-sizing calculation.\nSet this if you want to add extra room to accommodate (for example) sort icons, or some other dynamic nature of the header.See: Auto-Size Columns to Fit Cell Contents"
+    },
+    {
+        "name": "skipHeaderOnAutoSize",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set this to true to skip the headerName when autoSize is called by default.This property will only be read on initialisation.See: Auto-Size Columns to Fit Cell Contents"
+    },
+    {
+        "name": "components",
+        "props": {
+            "Type": "{ [p: string]: any; }",
+            "Initial": null
+        },
+        "description": "A map of component names to components.This property will only be read on initialisation.See: Registering Custom Components"
+    },
+    {
+        "name": "editType",
+        "props": {
+            "Type": "'fullRow'"
+        },
+        "description": "Set to 'fullRow' to enable Full Row Editing. Otherwise leave blank to edit one cell at a time.See: Full Row Editing"
+    },
+    {
+        "name": "singleClickEdit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable Single Click Editing for cells, to start editing with a single click.See: Single Click Editing"
+    },
+    {
+        "name": "suppressClickEdit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true so that neither single nor double click starts editing.See: No Click Editing"
+    },
+    {
+        "name": "stopEditingWhenCellsLoseFocus",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set this to true to stop cell editing when grid loses focus.\nThe default is that the grid stays editing until focus goes onto another cell.This property will only be read on initialisation.See: Stop cell editing"
+    },
+    {
+        "name": "enterNavigatesVertically",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true along with enterNavigatesVerticallyAfterEdit to have Excel-style behaviour for the \u00e2\u0086\u00b5 Enter key, i.e. pressing the \u00e2\u0086\u00b5 Enter key will move down to the cell beneath. Default: false See: Enter Key Navigation"
+    },
+    {
+        "name": "enterNavigatesVerticallyAfterEdit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true along with enterNavigatesVertically to have Excel-style behaviour for the \u00e2\u0086\u00b5 Enter key, i.e. pressing the \u00e2\u0086\u00b5 Enter key will move down to the cell beneath. Default: false See: Enter Key Navigation"
+    },
+    {
+        "name": "enableCellEditingOnBackspace",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "Forces Cell Editing to start when backspace is pressed. This is only relevant for MacOS users.See: Start Editing"
+    },
+    {
+        "name": "undoRedoCellEditing",
+        "props": {
+            "Type": "boolean",
+            "Initial": null
+        },
+        "description": "Set to true to enable Undo / Redo while editing.This property will only be read on initialisation.See: Undo / Redo Edits"
+    },
+    {
+        "name": "undoRedoCellEditingLimit",
+        "props": {
+            "Type": "number",
+            "Default": "10",
+            "Initial": null
+        },
+        "description": "Set the size of the undo / redo stack.This property will only be read on initialisation.See: Enabling Undo / Redo"
+    },
+    {
+        "name": "readOnlyEdit",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to stop the grid updating data after Edit, Clipboard and Fill Handle operations. When this is set, it is intended the application will update the data, eg in an external immutable store, and then pass the new dataset to the grid. Note: rowNode.setDataValue() does not update the value of the cell when this is True, it fires onCellEditRequest instead.See: Read Only Edit"
+    },
+    {
+        "name": "defaultCsvExportParams",
+        "props": {
+            "Type": null
+        },
+        "description": "A default configuration object used to export to CSV.See: CSV Export"
+    },
+    {
+        "name": "suppressCsvExport",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Prevents the user from exporting the grid to CSV.See: What Gets Exported"
+    },
+    {
+        "name": "defaultExcelExportParams",
+        "props": {
+            "Type": null
+        },
+        "description": "A default configuration object used to export to Excel.See: Excel Export"
+    },
+    {
+        "name": "suppressExcelExport",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Prevents the user from exporting the grid to Excel.See: Excel Export"
+    },
+    {
+        "name": "excelStyles",
+        "props": {
+            "Type": null,
+            "Initial": null
+        },
+        "description": "A list (array) of Excel styles to be used when exporting to Excel with styles.This property will only be read on initialisation.More details See: Excel Export Styles"
+    },
+    {
+        "name": "quickFilterText",
+        "props": {
+            "Type": "string"
+        },
+        "description": "Rows are filtered using this text as a Quick Filter.See: Quick Filter"
+    },
+    {
+        "name": "cacheQuickFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to turn on the Quick Filter cache, used to improve performance when using the Quick Filter.This property will only be read on initialisation.See: Quick Filter Cache"
+    },
+    {
+        "name": "includeHiddenColumnsInQuickFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Hidden columns are excluded from the Quick Filter by default.\nTo include hidden columns, set to true.See: Include Hidden Columns"
+    },
+    {
+        "name": "quickFilterParser",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Changes how the Quick Filter splits the Quick Filter text into search terms.More details See: Quick Filter Parser"
+    },
+    {
+        "name": "quickFilterMatcher",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Changes the matching logic for whether a row passes the Quick Filter.More details See: Quick Filter Matcher"
+    },
+    {
+        "name": "isExternalFilterPresent",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Grid calls this method to know if an external filter is present.More details See: External Filter"
+    },
+    {
+        "name": "doesExternalFilterPass",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Should return true if external filter passes, otherwise false.More details See: External Filter"
+    },
+    {
+        "name": "excludeChildrenWhenTreeDataFiltering",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to override the default tree data filtering behaviour to instead exclude child nodes from filter results.See: Tree Data Filtering"
+    },
+    {
+        "name": "enableAdvancedFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable the Advanced Filter.See: Advanced Filter"
+    },
+    {
+        "name": "includeHiddenColumnsInAdvancedFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Hidden columns are excluded from the Advanced Filter by default.\nTo include hidden columns, set to true.See: Advanced Filter"
+    },
+    {
+        "name": "advancedFilterParent",
+        "props": {
+            "Type": null
+        },
+        "description": "DOM element to use as the parent for the Advanced Filter to allow it to appear outside of the grid.\nSet to null or undefined to appear inside the grid.See: Advanced Filter"
+    },
+    {
+        "name": "advancedFilterBuilderParams",
+        "props": {
+            "Type": "IAdvancedFilterBuilderParams"
+        },
+        "description": "Customise the parameters passed to the Advanced Filter Builder.More details See: Advanced Filter"
+    },
+    {
+        "name": "enableCharts",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to Enable Charts.See: Enabling User Created Charts"
+    },
+    {
+        "name": "suppressChartToolPanelsButton",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to show the 'hamburger' menu option from the Chart Toolbar and display the remaining toolbar buttons. Only applies when using AG Charts Community.This property will only be read on initialisation.See: Suppress Chart Tool Panels Button"
+    },
+    {
+        "name": "getChartToolbarItems",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Callback to be used to customise the chart toolbar items.This property will only be read on initialisation.More details "
+    },
+    {
+        "name": "createChartContainer",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Callback to enable displaying the chart in an alternative chart container.This property will only be read on initialisation.More details See: Specifying Chart Container"
+    },
+    {
+        "name": "chartThemes",
+        "props": {
+            "Type": "string[]",
+            "Default": "['ag-default', 'ag-material', 'ag-sheets', 'ag-polychroma', 'ag-vivid'];",
+            "Initial": null
+        },
+        "description": "The list of chart themes that a user can choose from in the chart panel.This property will only be read on initialisation.See: Provided Themes"
+    },
+    {
+        "name": "customChartThemes",
+        "props": {
+            "Type": "{ [name: string]: AgChartTheme }",
+            "Initial": null
+        },
+        "description": "A map containing custom chart themes.This property will only be read on initialisation.More details See: Custom Chart Themes"
+    },
+    {
+        "name": "chartThemeOverrides",
+        "props": {
+            "Type": null,
+            "Initial": null
+        },
+        "description": "Chart theme overrides applied to all themes.This property will only be read on initialisation.See: Chart Groups and Types Customisation"
+    },
+    {
+        "name": "chartToolPanelsDef",
+        "props": {
+            "Type": "ChartToolPanelsDef",
+            "Initial": null
+        },
+        "description": "Allows customisation of the Chart Tool Panels, such as changing the tool panels visibility and order, as well as choosing which charts should be displayed in the chart panel.This property will only be read on initialisation.More details See: Chart Tool Panel customisation"
+    },
+    {
+        "name": "chartMenuItems",
+        "props": {
+            "Type": "(string | MenuItemDef)[] | GetChartMenuItems"
+        },
+        "description": "Get chart menu items. Only applies when using AG Charts Enterprise.More details See: Customising the Chart Menu Items"
+    },
+    {
+        "name": "navigateToNextHeader",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows overriding the default behaviour for when user hits navigation (arrow) key when a header is focused. Return the next Header position to navigate to or null to stay on current header.More details See: Custom Navigation"
+    },
+    {
+        "name": "tabToNextHeader",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows overriding the default behaviour for when user hits \u00e2\u0087\u00a5 Tab key when a header is focused.More details See: Custom Navigation"
+    },
+    {
+        "name": "navigateToNextCell",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows overriding the default behaviour for when user hits navigation (arrow) key when a cell is focused. Return the next Cell position to navigate to or null to stay on current cell.More details See: Custom Navigation"
+    },
+    {
+        "name": "tabToNextCell",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows overriding the default behaviour for when user hits \u00e2\u0087\u00a5 Tab key when a cell is focused.More details See: Custom Navigation"
+    },
+    {
+        "name": "loadingCellRenderer",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own loading cell renderer to use when data is loading via a DataSource.See: Loading Cell Renderer"
+    },
+    {
+        "name": "loadingCellRendererParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Params to be passed to the loadingCellRenderer component.See: Loading Cell Renderer"
+    },
+    {
+        "name": "loadingCellRendererSelector",
+        "props": {
+            "Type": "LoadingCellRendererSelectorFunc",
+            "Initial": null
+        },
+        "description": "Callback to select which loading cell renderer to be used when data is loading via a DataSource.This property will only be read on initialisation.More details See: Loading Cell Renderer Selector"
+    },
+    {
+        "name": "localeText",
+        "props": {
+            "Type": "{ [key: string]: string }",
+            "Initial": null
+        },
+        "description": "A map of key->value pairs for localising text within the grid.This property will only be read on initialisation.See: Localisation"
+    },
+    {
+        "name": "getLocaleText",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "A callback for localising text within the grid.This property will only be read on initialisation.More details See: Localisation"
+    },
+    {
+        "name": "masterDetail",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable Master Detail.See: Master Detail"
+    },
+    {
+        "name": "isRowMaster",
+        "props": {
+            "Type": "IsRowMaster"
+        },
+        "description": "Callback to be used with Master Detail to determine if a row should be a master row. If false is returned no detail row will exist for this row.More details See: Dynamic Master Rows"
+    },
+    {
+        "name": "detailCellRenderer",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide a custom detailCellRenderer to use when a master row is expanded.See: Custom Detail"
+    },
+    {
+        "name": "detailCellRendererParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Specifies the params to be used by the Detail Cell Renderer. Can also be a function that provides the params to enable dynamic definitions of the params.See: Detail Grids"
+    },
+    {
+        "name": "detailRowHeight",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Set fixed height in pixels for each detail row.This property will only be read on initialisation.See: Fixed Height"
+    },
+    {
+        "name": "detailRowAutoHeight",
+        "props": {
+            "Type": "boolean",
+            "Initial": null
+        },
+        "description": "Set to true to have the detail grid dynamically change it's height to fit it's rows.This property will only be read on initialisation.See: Auto Height"
+    },
+    {
+        "name": "embedFullWidthRows",
+        "props": {
+            "Type": "boolean"
+        },
+        "description": "Set to true to have the Full Width Rows embedded in grid's main container so they can be scrolled horizontally.See: Syncing Detail Scrolling with Master"
+    },
+    {
+        "name": "keepDetailRows",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to keep detail rows for when they are displayed again.This property will only be read on initialisation.See: Detail Grid Lifecycle"
+    },
+    {
+        "name": "keepDetailRowsCount",
+        "props": {
+            "Type": "number",
+            "Default": "10",
+            "Initial": null
+        },
+        "description": "Sets the number of details rows to keep.This property will only be read on initialisation.See: Detail Grid Lifecycle"
+    },
+    {
+        "name": "initialState",
+        "props": {
+            "Type": "GridState",
+            "Initial": null
+        },
+        "description": "Initial state for the grid. Only read once on initialization. Can be used in conjunction with api.getState() to save and restore grid state.This property will only be read on initialisation.More details See: Grid State"
+    },
+    {
+        "name": "alignedGrids",
+        "props": {
+            "Type": "AlignedGrid[] | (() => AlignedGrid[])"
+        },
+        "description": "\nA list of grids to treat as Aligned Grids.\nProvide a list if the grids / apis already exist or return via a callback to allow the aligned grids to be retrieved asynchronously.\nIf grids are aligned then the columns and horizontal scrolling will be kept in sync.More details See: Aligned Grids"
+    },
+    {
+        "name": "context",
+        "props": {
+            "Type": "any",
+            "Initial": null
+        },
+        "description": "Provides a context object that is provided to different callbacks the grid uses. Used for passing additional information to the callbacks by your application.This property will only be read on initialisation.See: Context"
+    },
+    {
+        "name": "tabIndex",
+        "props": {
+            "Type": "number",
+            "Default": "0",
+            "Initial": null
+        },
+        "description": "Change this value to set the tabIndex order of the Grid within your application.This property will only be read on initialisation."
+    },
+    {
+        "name": "rowBuffer",
+        "props": {
+            "Type": "number",
+            "Default": "10"
+        },
+        "description": "The number of rows rendered outside the viewable area the grid renders.\nHaving a buffer means the grid will have rows ready to show as the user slowly scrolls vertically.See: Row Buffer"
+    },
+    {
+        "name": "valueCache",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to turn on the value cache.This property will only be read on initialisation.See: Value Cache"
+    },
+    {
+        "name": "valueCacheNeverExpires",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to configure the value cache to not expire after data updates.This property will only be read on initialisation.See: Value Cache"
+    },
+    {
+        "name": "enableCellExpressions",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to allow cell expressions.This property will only be read on initialisation.See: Cell Expressions"
+    },
+    {
+        "name": "getDocument",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows overriding what document is used. Currently used by Drag and Drop (may extend to other places in the future). Use this when you want the grid to use a different document than the one available on the global scope. This can happen if docking out components (something which Electron supports)More details "
+    },
+    {
+        "name": "suppressTouch",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Disables touch support (but does not remove the browser's efforts to simulate mouse events on touch).This property will only be read on initialisation.See: Touch Support"
+    },
+    {
+        "name": "suppressFocusAfterRefresh",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to not set focus back on the grid after a refresh. This can avoid issues where you want to keep the focus on another part of the browser."
+    },
+    {
+        "name": "suppressBrowserResizeObserver",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "The grid will check for ResizeObserver and use it if it exists in the browser, otherwise it will use the grid's alternative implementation. Some users reported issues with Chrome's ResizeObserver. Use this property to always use the grid's alternative implementation should such problems exist.This property will only be read on initialisation."
+    },
+    {
+        "name": "suppressPropertyNamesCheck",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Disables showing a warning message in the console if using a gridOptions or colDef property that doesn't exist.This property will only be read on initialisation."
+    },
+    {
+        "name": "suppressChangeDetection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Disables change detection.See: Triggering Value Change Detection"
+    },
+    {
+        "name": "debug",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set this to true to enable debug information from the grid and related components. Will result in additional logging being output, but very useful when investigating problems.This property will only be read on initialisation."
+    },
+    {
+        "name": "reactiveCustomComponents",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "React only.\n\nIf enabled, makes it easier to set up custom components.\nIf disabled, custom components will either need to have methods declared imperatively,\nor the component props will not update reactively. The behaviour with this disabled is deprecated,\nand in v32 this will default to true.This property will only be read on initialisation.See: Registering Custom Components"
+    },
+    {
+        "name": "overlayLoadingTemplate",
+        "props": {
+            "Type": "string"
+        },
+        "description": "Provide a template for 'loading' overlay.See: Custom Overlays"
+    },
+    {
+        "name": "loadingOverlayComponent",
+        "props": {
+            "Type": "any",
+            "Initial": null
+        },
+        "description": "Provide a custom loading overlay component.This property will only be read on initialisation.See: Loading Overlay Component"
+    },
+    {
+        "name": "loadingOverlayComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Customise the parameters provided to the loading overlay component.See: Overlay Component"
+    },
+    {
+        "name": "suppressLoadingOverlay",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Disables the 'loading' overlay.This property will only be read on initialisation."
+    },
+    {
+        "name": "overlayNoRowsTemplate",
+        "props": {
+            "Type": "string"
+        },
+        "description": "Provide a template for 'no rows' overlay.See: Custom Overlays"
+    },
+    {
+        "name": "noRowsOverlayComponent",
+        "props": {
+            "Type": "any",
+            "Initial": null
+        },
+        "description": "Provide a custom no rows overlay component.This property will only be read on initialisation.See: No Rows Overlay Component"
+    },
+    {
+        "name": "noRowsOverlayComponentParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Customise the parameters provided to the no rows overlay component.See: Overlay Component"
+    },
+    {
+        "name": "suppressNoRowsOverlay",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Disables the 'no rows' overlay."
+    },
+    {
+        "name": "pagination",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set whether pagination is enabled.See: Row Pagination"
+    },
+    {
+        "name": "paginationPageSize",
+        "props": {
+            "Type": "number",
+            "Default": "100"
+        },
+        "description": "How many rows to load per page. If paginationAutoPageSize is specified, this property is ignored.See: Customising Pagination"
+    },
+    {
+        "name": "paginationPageSizeSelector",
+        "props": {
+            "Type": "number[] | boolean",
+            "Default": "true",
+            "Initial": null
+        },
+        "description": "Determines if the page size selector is shown in the pagination panel or not.\nSet to an array of values to show the page size selector with custom list of possible page sizes.\nSet to true to show the page size selector with the default page sizes [20, 50, 100].\nSet to false to hide the page size selector.This property will only be read on initialisation.See: Customising Pagination"
+    },
+    {
+        "name": "paginationNumberFormatter",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Allows user to format the numbers in the pagination panel, i.e. 'row count' and 'page number' labels. This is for pagination panel only, to format numbers inside the grid's cells (i.e. your data), then use valueFormatter in the column definitions.This property will only be read on initialisation.More details See: Customising Pagination"
+    },
+    {
+        "name": "paginationAutoPageSize",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true so that the number of rows to load per page is automatically adjusted by the grid so each page shows enough rows to just fill the area designated for the grid. If false, paginationPageSize is used.See: Auto Page Size"
+    },
+    {
+        "name": "paginateChildRows",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to have pages split children of groups when using Row Grouping or detail rows with Master Detail.This property will only be read on initialisation.See: Pagination & Child Rows"
+    },
+    {
+        "name": "suppressPaginationPanel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, the default grid controls for navigation are hidden.\nThis is useful if pagination=true and you want to provide your own pagination controls.\nOtherwise, when pagination=true the grid automatically shows the necessary controls at the bottom so that the user can navigate through the different pages.See: Custom Pagination Controls"
+    },
+    {
+        "name": "pivotMode",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable pivot mode.See: Pivoting"
+    },
+    {
+        "name": "pivotPanelShow",
+        "props": {
+            "Type": "'always' | 'onlyWhenPivoting' | 'never'",
+            "Default": "'never'",
+            "Initial": null
+        },
+        "description": "When to show the 'pivot panel' (where you drag rows to pivot) at the top. Note that the pivot panel will never show if pivotMode is off.This property will only be read on initialisation.See: Enabling Pivot Panel"
+    },
+    {
+        "name": "pivotDefaultExpanded",
+        "props": {
+            "Type": "number",
+            "Default": "0"
+        },
+        "description": "If pivoting, set to the number of column group levels to expand by default, e.g. 0 for none, 1 for first level only, etc. Set to -1 to expand everything.See: Opening Pivot Group Levels by Default"
+    },
+    {
+        "name": "pivotColumnGroupTotals",
+        "props": {
+            "Type": "'before' | 'after'"
+        },
+        "description": "When set and the grid is in pivot mode, automatically calculated totals will appear within the Pivot Column Groups, in the position specified.See: Pivot Column Group Totals"
+    },
+    {
+        "name": "pivotRowTotals",
+        "props": {
+            "Type": "'before' | 'after'"
+        },
+        "description": "When set and the grid is in pivot mode, automatically calculated totals will appear for each value column in the position specified.See: Pivot Row Totals"
+    },
+    {
+        "name": "pivotSuppressAutoColumn",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "If true, the grid will not swap in the grouping column when pivoting. Useful if pivoting using Server Side Row Model or Viewport Row Model and you want full control of all columns including the group column.This property will only be read on initialisation."
+    },
+    {
+        "name": "pivotMaxGeneratedColumns",
+        "props": {
+            "Type": "number",
+            "Default": "-1"
+        },
+        "description": "The maximum number of generated columns before the grid halts execution. Upon reaching this number, the grid halts generation of columns\nand triggers a pivotMaxColumnsExceeded event. -1 for no limit.See: Pivot Max Generated Columns"
+    },
+    {
+        "name": "processPivotResultColDef",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback to be used with pivoting, to allow changing the second column definition.More details See: Pivot Result Column Definitions"
+    },
+    {
+        "name": "processPivotResultColGroupDef",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback to be used with pivoting, to allow changing the second column group definition.More details See: Pivot Result Column Definitions"
+    },
+    {
+        "name": "suppressExpandablePivotGroups",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "When enabled, pivot column groups will appear 'fixed', without the ability to expand and collapse the column groups.This property will only be read on initialisation.See: Fixed Pivot Column Groups"
+    },
+    {
+        "name": "functionsReadOnly",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, then row group, pivot and value aggregation will be read-only from the GUI. The grid will display what values are used for each, but will not allow the user to change the selection.See: Read Only Functions"
+    },
+    {
+        "name": "aggFuncs",
+        "props": {
+            "Type": "{ [key: string]: IAggFunc; }",
+            "Initial": null
+        },
+        "description": "A map of 'function name' to 'function' for custom aggregation functions.This property will only be read on initialisation.More details See: Custom Aggregation Functions"
+    },
+    {
+        "name": "getGroupRowAgg",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback to use when you need access to more then the current column for aggregation.More details See: Custom Full Row Aggregation"
+    },
+    {
+        "name": "suppressAggFuncInHeader",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "When true, column headers won't include the aggFunc name, e.g. 'sum(Bank Balance)' will just be 'Bank Balance'.This property will only be read on initialisation.See: Column Headers"
+    },
+    {
+        "name": "alwaysAggregateAtRootLevel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When using aggregations, the grid will always calculate the root level aggregation value.See: Enabling Top Level Aggregations"
+    },
+    {
+        "name": "aggregateOnlyChangedColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When using change detection, only the updated column will be re-aggregated.See: Change Detection"
+    },
+    {
+        "name": "suppressAggFilteredOnly",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true so that aggregations are not impacted by filtering.See: Custom Aggregation Functions"
+    },
+    {
+        "name": "groupAggFiltering",
+        "props": {
+            "Type": "boolean | IsRowFilterable",
+            "Default": "false"
+        },
+        "description": "Set to determine whether filters should be applied on aggregated group values.More details "
+    },
+    {
+        "name": "removePivotHeaderRowWhenSingleValueColumn",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to omit the value Column header when there is only a single value column.This property will only be read on initialisation.See: Hiding Repeated Value Column Labels"
+    },
+    {
+        "name": "animateRows",
+        "props": {
+            "Type": "boolean",
+            "Default": "true"
+        },
+        "description": "Set to false to disable Row Animation which is enabled by default.See: Row Animation"
+    },
+    {
+        "name": "cellFlashDuration",
+        "props": {
+            "Type": "number",
+            "Default": "500"
+        },
+        "description": "To be used when setting enableCellChangeFlash on column definitions. Sets the duration in milliseconds of how long a cell should remain in its \"flashed\" state.See: How Flashing Works"
+    },
+    {
+        "name": "cellFadeDuration",
+        "props": {
+            "Type": "number",
+            "Default": "1000"
+        },
+        "description": "To be used when setting enableCellChangeFlash on column definitions. Sets the duration in milliseconds of how long the \"flashed\" state animation takes to fade away after the timer set by cellFlashDuration has completed.See: How Flashing Works"
+    },
+    {
+        "name": "allowShowChangeAfterFilter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to have cells flash after data changes even when the change is due to filtering.This property will only be read on initialisation.See: Flashing Data Changes"
+    },
+    {
+        "name": "domLayout",
+        "props": {
+            "Type": "DomLayoutType",
+            "Default": "'normal'"
+        },
+        "description": "Switch between layout options. See Printing and Auto Height. Default: normalMore details See: DOM Layout"
+    },
+    {
+        "name": "ensureDomOrder",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "When true, the order of rows and columns in the DOM are consistent with what is on screen.\nDisables row animations.This property will only be read on initialisation.See: Accessibility - Row and Column Order"
+    },
+    {
+        "name": "getBusinessKeyForNode",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Return a business key for the node. If implemented, each row in the DOM will have an attribute row-business-key='abc' where abc is what you return as the business key.\nThis is useful for automated testing, as it provides a way for your tool to identify rows based on unique business keys.More details "
+    },
+    {
+        "name": "gridId",
+        "props": {
+            "Type": "string",
+            "Initial": null
+        },
+        "description": "Provide a custom gridId for this instance of the grid. Value will be set on the root DOM node using the attribute grid-id as well as being accessible via the gridApi.getGridId() method.This property will only be read on initialisation."
+    },
+    {
+        "name": "processRowPostCreate",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows you to process rows after they are created, so you can do final adding of custom attributes etc.More details "
+    },
+    {
+        "name": "enableRtl",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to operate the grid in RTL (Right to Left) mode.This property will only be read on initialisation.See: RTL (Right to Left)"
+    },
+    {
+        "name": "suppressColumnVirtualisation",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true so that the grid doesn't virtualise the columns. For example, if you have 100 columns, but only 10 visible due to scrolling, all 100 will always be rendered.This property will only be read on initialisation.See: Suppress Virtualisation"
+    },
+    {
+        "name": "suppressRowVirtualisation",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true so that the grid doesn't virtualise the rows. For example, if you have 100 rows, but only 10 visible due to scrolling, all 100 will always be rendered.This property will only be read on initialisation.See: Suppress Row Virtualisation"
+    },
+    {
+        "name": "suppressMaxRenderedRowRestriction",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "By default the grid has a limit of rendering a maximum of 500 rows at once (remember the grid only renders rows you can see, so unless your display shows more than 500 rows without vertically scrolling this will never be an issue).\nThis is only relevant if you are manually setting rowBuffer to a high value (rendering more rows than can be seen), or suppressRowVirtualisation is true, or if your grid height is able to display more than 500 rows at once.This property will only be read on initialisation.See: Max Rendered Rows"
+    },
+    {
+        "name": "rowDragManaged",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable Managed Row Dragging.See: Managed Row Dragging"
+    },
+    {
+        "name": "rowDragEntireRow",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable clicking and dragging anywhere on the row without the need for a drag handle.See: Entire Row Dragging"
+    },
+    {
+        "name": "rowDragMultiRow",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable dragging multiple rows at the same time.See: Mulit-Row Dragging"
+    },
+    {
+        "name": "suppressRowDrag",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to suppress row dragging.See: Suppress Row Drag"
+    },
+    {
+        "name": "suppressMoveWhenRowDragging",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to suppress moving rows while dragging the rowDrag waffle. This option highlights the position where the row will be placed and it will only move the row on mouse up.See: Suppress Move When Dragging"
+    },
+    {
+        "name": "rowDragText",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "A callback that should return a string to be displayed by the rowDragComp while dragging a row.\nIf this callback is not set, the current cell value will be used.\nIf the rowDragText callback is set in the ColDef it will take precedence over this, except when\nrowDragEntireRow=true.This property will only be read on initialisation.More details See: Custom Row Drag Text"
+    },
+    {
+        "name": "fullWidthCellRenderer",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide your own cell renderer component to use for full width rows.See: Full Width Cell Renderer"
+    },
+    {
+        "name": "fullWidthCellRendererParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Customise the parameters provided to the fullWidthCellRenderer component.See: Full Width Cell Renderer"
+    },
+    {
+        "name": "groupDisplayType",
+        "props": {
+            "Type": "RowGroupingDisplayType"
+        },
+        "description": "Specifies how the results of row grouping should be displayed.\n\n The options are: 'singleColumn': single group column automatically added by the grid.  'multipleColumns': a group column per row group is added automatically.  'groupRows': group rows are automatically added instead of group columns.  'custom': informs the grid that group columns will be provided. More details See: Row Grouping - Display Types"
+    },
+    {
+        "name": "groupDefaultExpanded",
+        "props": {
+            "Type": "number",
+            "Default": "0"
+        },
+        "description": "If grouping, set to the number of levels to expand by default, e.g. 0 for none, 1 for first level only, etc. Set to -1 to expand everything.See: Opening Group Levels by Default"
+    },
+    {
+        "name": "autoGroupColumnDef",
+        "props": {
+            "Type": null
+        },
+        "description": "Allows specifying the group 'auto column' if you are not happy with the default. If grouping, this column definition is included as the first column in the grid. If not grouping, this column is not included.See: Group Column Configuration"
+    },
+    {
+        "name": "groupMaintainOrder",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When true, preserves the current group order when sorting on non-group columns.See: Maintain Group Order"
+    },
+    {
+        "name": "groupSelectsChildren",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When true, if you select a group, the children of the group will also be selected.See: Group Selection"
+    },
+    {
+        "name": "groupLockGroupColumns",
+        "props": {
+            "Type": "number",
+            "Default": "0",
+            "Initial": null
+        },
+        "description": "If grouping, locks the group settings of a number of columns, e.g. 0 for no group locking. 1 for first group column locked, -1 for all group columns locked.This property will only be read on initialisation.See: Group Lock Group Columns"
+    },
+    {
+        "name": "groupIncludeFooter",
+        "props": {
+            "Type": "boolean | UseGroupFooter",
+            "Default": "false"
+        },
+        "description": "If grouping, this controls whether to show a group footer when the group is expanded.\nIf true, then by default, the footer will contain aggregate data (if any) when shown and the header will be blank.\nWhen closed, the header will contain the aggregate data regardless of this setting (as the footer is hidden anyway).\nThis is handy for 'total' rows, that are displayed below the data when the group is open, and alongside the group when it is closed.\nIf a callback function is provided, it can used to select which groups will have a footer added.More details See: Enabling Group Footers"
+    },
+    {
+        "name": "groupIncludeTotalFooter",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to show a 'grand total' group footer across all groups.See: Enabling Group Footers"
+    },
+    {
+        "name": "groupSuppressBlankHeader",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, and showing footer, aggregate data will always be displayed at both the header and footer levels. This stops the possibly undesirable behaviour of the header details 'jumping' to the footer on expand."
+    },
+    {
+        "name": "groupSelectsFiltered",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If using groupSelectsChildren, then only the children that pass the current filter will get selected.See: Group Selection"
+    },
+    {
+        "name": "showOpenedGroup",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Shows the open group in the group column for non-group rows.See: Showing Open Groups"
+    },
+    {
+        "name": "isGroupOpenByDefault",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "(Client-side Row Model only) Allows groups to be open by default.More details See: Open Groups by Default"
+    },
+    {
+        "name": "initialGroupOrderComparator",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows default sorting of groups.More details See: Initial Group Order"
+    },
+    {
+        "name": "groupRemoveSingleChildren",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to collapse groups that only have one child.See: Remove Single Children"
+    },
+    {
+        "name": "groupRemoveLowestSingleChildren",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to collapse lowest level groups that only have one child.See: Remove Single Children"
+    },
+    {
+        "name": "groupHideOpenParents",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to hide parents that are open. When used with multiple columns for showing groups, it can give a more pleasing user experience.See: Hide Open Parents"
+    },
+    {
+        "name": "groupAllowUnbalanced",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to prevent the grid from creating a '(Blanks)' group for nodes which do not belong to a group, and display the unbalanced nodes alongside group nodes.See: Enabling Unbalanced Groups"
+    },
+    {
+        "name": "rowGroupPanelShow",
+        "props": {
+            "Type": "'always' | 'onlyWhenGrouping' | 'never'",
+            "Default": "'never'"
+        },
+        "description": "When to show the 'row group panel' (where you drag rows to group) at the top.See: Enabling Row Group Panel"
+    },
+    {
+        "name": "rowGroupPanelSuppressSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to suppress sort indicators and actions from the row group panel.This property will only be read on initialisation.See: Suppress Sorting"
+    },
+    {
+        "name": "groupRowRenderer",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Provide the Cell Renderer to use when groupDisplayType = 'groupRows'.See: Group Row Cell Renderer"
+    },
+    {
+        "name": "groupRowRendererParams",
+        "props": {
+            "Type": "any"
+        },
+        "description": "Customise the parameters provided to the groupRowRenderer component.See: Providing Cell Renderer"
+    },
+    {
+        "name": "suppressDragLeaveHidesColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "By default, dragging a column out of the grid, i.e. to the Row Group Panel, it will be hidden in the grid. This property prevents the column becoming hidden in the grid. Default: falseSee: Keeping Columns Visible"
+    },
+    {
+        "name": "suppressGroupRowsSticky",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true prevent Group Rows from sticking to the top of the grid.This property will only be read on initialisation.See: Suppressing Sticky Groups"
+    },
+    {
+        "name": "suppressRowGroupHidesColumns",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, when you drag a column into a row group panel the column is not hidden.See: Keeping Columns Visible"
+    },
+    {
+        "name": "suppressMakeColumnVisibleAfterUnGroup",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "By default, when a column is un-grouped, i.e. using the Row Group Panel, it is made visible in the grid. This property stops the column becoming visible again when un-grouping. Default: falseSee: Keeping Columns Visible"
+    },
+    {
+        "name": "treeData",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable the Grid to work with Tree Data. You must also implement the getDataPath(data) callback.See: Tree Data"
+    },
+    {
+        "name": "getDataPath",
+        "props": {
+            "Type": "GetDataPath"
+        },
+        "description": "Callback to be used when working with Tree Data when treeData = true.More details See: Tree Data"
+    },
+    {
+        "name": "pinnedTopRowData",
+        "props": {
+            "Type": "any[]"
+        },
+        "description": "Data to be displayed as pinned top rows in the grid.See: Row Pinning"
+    },
+    {
+        "name": "pinnedBottomRowData",
+        "props": {
+            "Type": "any[]"
+        },
+        "description": "Data to be displayed as pinned bottom rows in the grid.See: Row Pinning"
+    },
+    {
+        "name": "rowModelType",
+        "props": {
+            "Type": "RowModelType",
+            "Default": "'clientSide'",
+            "Initial": null
+        },
+        "description": "Sets the row model type.This property will only be read on initialisation.More details See: Row Model"
+    },
+    {
+        "name": "getRowId",
+        "props": {
+            "Type": "GetRowIdFunc",
+            "Initial": null
+        },
+        "description": "Allows setting the ID for a particular row node based on the data.This property will only be read on initialisation.More details See: Row IDs"
+    },
+    {
+        "name": "rowData",
+        "props": {
+            "Type": "TData[] | null"
+        },
+        "description": "Set the data to be displayed as rows in the grid.See: Updating Row Data"
+    },
+    {
+        "name": "resetRowDataOnUpdate",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When enabled, getRowId() callback is implemented and new Row Data is set, the grid will disregard all previous rows and treat the new Row Data as new data. As a consequence, all Row State (eg selection, rendered rows) will be reset."
+    },
+    {
+        "name": "asyncTransactionWaitMillis",
+        "props": {
+            "Type": "number"
+        },
+        "description": "How many milliseconds to wait before executing a batch of async transactions.See: Async transactions"
+    },
+    {
+        "name": "suppressModelUpdateAfterUpdateTransaction",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Prevents Transactions changing sort, filter, group or pivot state when transaction only contains updates. Default: falseSee: Suppress Model Updates"
+    },
+    {
+        "name": "datasource",
+        "props": {
+            "Type": null
+        },
+        "description": "Provide the datasource for infinite scrolling.More details See: Datasource"
+    },
+    {
+        "name": "cacheOverflowSize",
+        "props": {
+            "Type": "number",
+            "Default": "1",
+            "Initial": null
+        },
+        "description": "How many extra blank rows to display to the user at the end of the dataset, which sets the vertical scroll and then allows the grid to request viewing more rows of data.This property will only be read on initialisation.See: More Control via Properties and API"
+    },
+    {
+        "name": "maxConcurrentDatasourceRequests",
+        "props": {
+            "Type": "number",
+            "Default": "2",
+            "Initial": null
+        },
+        "description": "How many requests to hit the server with concurrently. If the max is reached, requests are queued.\nSet to -1 for no maximum restriction on requests.This property will only be read on initialisation.See: More Control via Properties and API"
+    },
+    {
+        "name": "cacheBlockSize",
+        "props": {
+            "Type": "number",
+            "Default": "100"
+        },
+        "description": "How many rows for each block in the store, i.e. how many rows returned from the server at a time.See: More Control via Properties and API"
+    },
+    {
+        "name": "maxBlocksInCache",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "How many blocks to keep in the store. Default is no limit, so every requested block is kept. Use this if you have memory concerns, and blocks that were least recently viewed will be purged when the limit is hit. The grid will additionally make sure it has all the blocks needed to display what is currently visible, in case this property is set to a low value.This property will only be read on initialisation.See: More Control via Properties and API"
+    },
+    {
+        "name": "infiniteInitialRowCount",
+        "props": {
+            "Type": "number",
+            "Default": "1",
+            "Initial": null
+        },
+        "description": "How many extra blank rows to display to the user at the end of the dataset, which sets the vertical scroll and then allows the grid to request viewing more rows of data.This property will only be read on initialisation.See: More Control via Properties and API"
+    },
+    {
+        "name": "serverSideDatasource",
+        "props": {
+            "Type": null
+        },
+        "description": "Provide the serverSideDatasource for server side row model.More details See: Registering the Datasource"
+    },
+    {
+        "name": "cacheBlockSize",
+        "props": {
+            "Type": "number",
+            "Default": "100"
+        },
+        "description": "How many rows for each block in the cache, i.e. how many rows returned from the server at a time. Default: 100See: Server-Side Cache"
+    },
+    {
+        "name": "maxBlocksInCache",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "How many blocks to keep in the cache. Default is no limit, so every requested block is kept. Use this if you have memory concerns, and blocks that were least recently viewed will be purged when the limit is hit. The grid will additionally make sure it has all the blocks needed to display what is currently visible, in case this property is set to a low value.This property will only be read on initialisation.See: Server-Side Cache"
+    },
+    {
+        "name": "maxConcurrentDatasourceRequests",
+        "props": {
+            "Type": "number",
+            "Default": "2",
+            "Initial": null
+        },
+        "description": "How many requests to hit the server with concurrently. If the max is reached, requests are queued.\nSet to -1 for no maximum restriction on requests.This property will only be read on initialisation.See: Providing Additional Data"
+    },
+    {
+        "name": "blockLoadDebounceMillis",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "How many milliseconds to wait before loading a block. Useful when scrolling over many blocks, as it prevents blocks loading until scrolling has settled.This property will only be read on initialisation.See: Block Loading Debounce"
+    },
+    {
+        "name": "purgeClosedRowNodes",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When enabled, closing group rows will remove children of that row. Next time the row is opened, child rows will be read from the datasource again. This property only applies when there is Row Grouping. Default: false"
+    },
+    {
+        "name": "serverSidePivotResultFieldSeparator",
+        "props": {
+            "Type": "string",
+            "Default": "'_'",
+            "Initial": null
+        },
+        "description": "Used to split pivot field strings for generating pivot result columns when pivotResultFields is provided as part of a getRows success.This property will only be read on initialisation.See: Supplying Pivot Result Fields"
+    },
+    {
+        "name": "serverSideSortAllLevels",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When enabled, always refreshes top level groups regardless of which column was sorted. This property only applies when there is Row Grouping & sorting is handled on the server."
+    },
+    {
+        "name": "serverSideEnableClientSideSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When enabled, sorts fully loaded groups in the browser instead of requesting from the server."
+    },
+    {
+        "name": "serverSideOnlyRefreshFilteredGroups",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "When enabled, only refresh groups directly impacted by a filter. This property only applies when there is Row Grouping & filtering is handled on the server.This property will only be read on initialisation.See: Filters"
+    },
+    {
+        "name": "serverSideInitialRowCount",
+        "props": {
+            "Type": "number",
+            "Default": "1",
+            "Initial": null
+        },
+        "description": "Set how many loading rows to display to the user for the root level group.This property will only be read on initialisation.See: Initial Scroll Position"
+    },
+    {
+        "name": "getChildCount",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Allows setting the child count for a group row.This property will only be read on initialisation.More details See: Providing Child Counts"
+    },
+    {
+        "name": "getServerSideGroupLevelParams",
+        "props": {
+            "Type": "Function",
+            "Initial": null
+        },
+        "description": "Allows providing different params for different levels of grouping.This property will only be read on initialisation.More details "
+    },
+    {
+        "name": "isServerSideGroupOpenByDefault",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows groups to be open by default.More details See: Open by Default"
+    },
+    {
+        "name": "isApplyServerSideTransaction",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Allows cancelling transactions.More details "
+    },
+    {
+        "name": "isServerSideGroup",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "SSRM Tree Data: Allows specifying which rows are expandable.More details See: SSRM Tree Data"
+    },
+    {
+        "name": "getServerSideGroupKey",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "SSRM Tree Data: Allows specifying group keys.More details See: SSRM Tree Data"
+    },
+    {
+        "name": "viewportDatasource",
+        "props": {
+            "Type": null
+        },
+        "description": "To use the viewport row model you need to provide the grid with a viewportDatasource.More details See: Interface IViewportDatasource"
+    },
+    {
+        "name": "viewportRowModelPageSize",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "When using viewport row model, sets the page size for the viewport.This property will only be read on initialisation.See: viewportRowModelPageSize"
+    },
+    {
+        "name": "viewportRowModelBufferSize",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "When using viewport row model, sets the buffer size for the viewport.This property will only be read on initialisation.See: viewportRowModelBufferSize"
+    },
+    {
+        "name": "alwaysShowHorizontalScroll",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to always show the horizontal scrollbar.See: Make Scrollbars Always Visible"
+    },
+    {
+        "name": "alwaysShowVerticalScroll",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to always show the vertical scrollbar.See: Make Scrollbars Always Visible"
+    },
+    {
+        "name": "debounceVerticalScrollbar",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to debounce the vertical scrollbar. Can provide smoother scrolling on slow machines.This property will only be read on initialisation.See: Debounce Vertical Scroll"
+    },
+    {
+        "name": "suppressHorizontalScroll",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to never show the horizontal scroll. This is useful if the grid is aligned with another grid and will scroll when the other grid scrolls. (Should not be used in combination with alwaysShowHorizontalScroll.)See: Aligned Grid as Footer"
+    },
+    {
+        "name": "suppressScrollOnNewData",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When true, the grid will not scroll to the top when new row data is provided. Use this if you don't want the default behaviour of scrolling to the top every time you load new data."
+    },
+    {
+        "name": "suppressScrollWhenPopupsAreOpen",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When true, the grid will not allow mousewheel / touchpad scroll when popup elements are present."
+    },
+    {
+        "name": "suppressAnimationFrame",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "When true, the grid will not use animation frames when drawing rows while scrolling. Use this if the grid is working fast enough that you don't need animation frames and you don't want the grid to flicker.This property will only be read on initialisation."
+    },
+    {
+        "name": "suppressMiddleClickScrolls",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, middle clicks will result in click events for cells and rows. Otherwise the browser will use middle click to scroll the grid.Note: Not all browsers fire click events with the middle button. Most will fire only mousedown and mouseup events, which can be used to focus a cell, but will not work to call the onCellClicked function."
+    },
+    {
+        "name": "suppressPreventDefaultOnMouseWheel",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "If true, mouse wheel events will be passed to the browser. Useful if your grid has no vertical scrolls and you want the mouse to scroll the browser page.This property will only be read on initialisation."
+    },
+    {
+        "name": "scrollbarWidth",
+        "props": {
+            "Type": "number",
+            "Initial": null
+        },
+        "description": "Tell the grid how wide in pixels the scrollbar is, which is used in grid width calculations. Set only if using non-standard browser-provided scrollbars, so the grid can use the non-standard size in its calculations.This property will only be read on initialisation."
+    },
+    {
+        "name": "rowSelection",
+        "props": {
+            "Type": "'single' | 'multiple'"
+        },
+        "description": "Type of Row Selection.See: Row Selection"
+    },
+    {
+        "name": "rowMultiSelectWithClick",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to allow multiple rows to be selected using single click.See: Multi Select Single Click"
+    },
+    {
+        "name": "isRowSelectable",
+        "props": {
+            "Type": "IsRowSelectable"
+        },
+        "description": "Callback to be used to determine which rows are selectable. By default rows are selectable, so return false to make a row un-selectable.More details See: Specify Selectable Rows"
+    },
+    {
+        "name": "suppressRowDeselection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, rows will not be deselected if you hold down ^ Ctrl and click the row or press \u00e2\u0090\u00a3 Space. Default: falseSee: Row Selection"
+    },
+    {
+        "name": "suppressRowClickSelection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, row selection won't happen when rows are clicked. Use when you only want checkbox selection.See: Row Selection"
+    },
+    {
+        "name": "suppressCellFocus",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, cells won't be focusable. This means keyboard navigation will be disabled for grid cells, but remain enabled in other elements of the grid such as column headers, floating filters, tool panels.See: Suppress Cell Focus"
+    },
+    {
+        "name": "suppressHeaderFocus",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, header cells won't be focusable. This means keyboard navigation will be disabled for grid header cells, but remain enabled in other elements of the grid such as grid cells and tool panels.See: Suppress Header Focus"
+    },
+    {
+        "name": "suppressMultiRangeSelection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "If true, only a single range can be selected.See: Suppress Multi Range Selection"
+    },
+    {
+        "name": "enableCellTextSelection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to be able to select the text within cells.\n\nNote: When this is set to true, the clipboard service is disabled and only selected text is copied.See: Using Cell Text Selection"
+    },
+    {
+        "name": "enableRangeSelection",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable Range Selection.See: Range Selection"
+    },
+    {
+        "name": "enableRangeHandle",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable the Range Handle.See: Range Handle"
+    },
+    {
+        "name": "enableFillHandle",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to enable the Fill Handle.See: Fill Handle"
+    },
+    {
+        "name": "fillHandleDirection",
+        "props": {
+            "Type": "'x' | 'y' | 'xy'",
+            "Default": "'xy'"
+        },
+        "description": "Set to 'x' to force the fill handle direction to horizontal, or set to 'y' to force the fill handle direction to vertical.See: Fill Handle Axis"
+    },
+    {
+        "name": "fillOperation",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback to fill values instead of simply copying values or increasing number values using linear progression.More details See: Custom User Function"
+    },
+    {
+        "name": "suppressClearOnFillReduction",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set this to true to prevent cell values from being cleared when the Range Selection is reduced by the Fill Handle.See: Preventing Range Reduction"
+    },
+    {
+        "name": "sortingOrder",
+        "props": {
+            "Type": "(SortDirection)[]",
+            "Default": "[null, 'asc', 'desc']"
+        },
+        "description": "Array defining the order in which sorting occurs (if sorting is enabled). Values can be 'asc', 'desc' or null. For example: sortingOrder: ['asc', 'desc'].More details See: Example Sorting Order and Animation"
+    },
+    {
+        "name": "accentedSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to specify that the sort should take accented characters into account. If this feature is turned on the sort will be slower.See: Accented Sort"
+    },
+    {
+        "name": "unSortIcon",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to show the 'no sort' icon.See: Example Custom Sorting"
+    },
+    {
+        "name": "suppressMultiSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to suppress multi-sort when the user shift-clicks a column header.See: Multi Column Sorting"
+    },
+    {
+        "name": "alwaysMultiSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to always multi-sort when the user clicks a column header, regardless of key presses.See: Multi Column Sorting"
+    },
+    {
+        "name": "multiSortKey",
+        "props": {
+            "Type": "'ctrl'"
+        },
+        "description": "Set to 'ctrl' to have multi sorting work using the ^ Ctrl (or Command \u00e2\u008c\u0098 for Mac) key.See: Multi Column Sorting"
+    },
+    {
+        "name": "suppressMaintainUnsortedOrder",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to suppress sorting of un-sorted data to match original row data.See: Comparison to Transaction Updates"
+    },
+    {
+        "name": "postSortRows",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback to perform additional sorting after the grid has sorted the rows.More details See: Post Sort"
+    },
+    {
+        "name": "deltaSort",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "When enabled, sorts only the rows added/updated by a transaction.See: Delta sorting"
+    },
+    {
+        "name": "icons",
+        "props": {
+            "Type": "{ [key: string]: Function | string; }",
+            "Initial": null
+        },
+        "description": "Icons to use inside the grid instead of the grid's default icons.This property will only be read on initialisation.See: Custom Icons"
+    },
+    {
+        "name": "rowHeight",
+        "props": {
+            "Type": "number",
+            "Default": "25"
+        },
+        "description": "Default row height in pixels.See: Row Height"
+    },
+    {
+        "name": "getRowHeight",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback version of property rowHeight to set height for each row individually. Function should return a positive number of pixels, or return null/undefined to use the default row height.More details See: Row Height"
+    },
+    {
+        "name": "rowStyle",
+        "props": {
+            "Type": "RowStyle"
+        },
+        "description": "The style properties to apply to all rows. Set to an object of key (style names) and values (style values).More details See: Row Style"
+    },
+    {
+        "name": "getRowStyle",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback version of property rowStyle to set style for each row individually. Function should return an object of CSS values or undefined for no styles.More details See: Row Style"
+    },
+    {
+        "name": "rowClass",
+        "props": {
+            "Type": "string | string[]"
+        },
+        "description": "CSS class(es) for all rows. Provide either a string (class name) or array of strings (array of class names).See: Row Class"
+    },
+    {
+        "name": "getRowClass",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Callback version of property rowClass to set class(es) for each row individually. Function should return either a string (class name), array of strings (array of class names) or undefined for no class.More details See: Row Class"
+    },
+    {
+        "name": "rowClassRules",
+        "props": {
+            "Type": "RowClassRules"
+        },
+        "description": "Rules which can be applied to include certain CSS classes.More details See: Row Class Rules"
+    },
+    {
+        "name": "isFullWidthRow",
+        "props": {
+            "Type": "Function"
+        },
+        "description": "Tells the grid if this row should be rendered as full width.More details See: Full Width Rows"
+    },
+    {
+        "name": "suppressRowHoverHighlight",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to not highlight rows by adding the ag-row-hover CSS class.See: Highlighting Rows and Columns"
+    },
+    {
+        "name": "suppressRowTransform",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Uses CSS top instead of CSS transform for positioning rows. Useful if the transform function is causing issues such as used in row spanning. Default: falseThis property will only be read on initialisation.See: Configuring Row Spanning"
+    },
+    {
+        "name": "columnHoverHighlight",
+        "props": {
+            "Type": "boolean",
+            "Default": "false"
+        },
+        "description": "Set to true to highlight columns by adding the ag-column-hover CSS class.See: Highlighting Rows and Columns"
+    },
+    {
+        "name": "enableBrowserTooltips",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to use the browser's default tooltip instead of using the grid's Tooltip Component.This property will only be read on initialisation.See: Default Browser Tooltip"
+    },
+    {
+        "name": "tooltipShowDelay",
+        "props": {
+            "Type": "number",
+            "Default": "2000"
+        },
+        "description": "The delay in milliseconds that it takes for tooltips to show up once an element is hovered over.\nNote: This property does not work if enableBrowserTooltips is true.See: Tooltip Show and Hide Delay"
+    },
+    {
+        "name": "tooltipHideDelay",
+        "props": {
+            "Type": "number",
+            "Default": "10000"
+        },
+        "description": "The delay in milliseconds that it takes for tooltips to hide once they have been displayed.\nNote: This property does not work if enableBrowserTooltips is true and tooltipHideTriggers includes timeout.See: Tooltip Show and Hide Delay"
+    },
+    {
+        "name": "tooltipMouseTrack",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to have tooltips follow the cursor once they are displayed.This property will only be read on initialisation.See: Mouse Tracking"
+    },
+    {
+        "name": "tooltipShowMode",
+        "props": {
+            "Type": "'standard' | 'whenTruncated'",
+            "Default": "`standard`"
+        },
+        "description": "This defines when tooltip will show up for Cells, Headers and SetFilter Items. standard - The tooltip always shows up when the items configured with Tooltips are hovered.  whenTruncated - The tooltip will only be displayed when the items hovered have truncated (showing ellipsis) values. This property does not work when enableBrowserTooltips={true}. "
+    },
+    {
+        "name": "tooltipTrigger",
+        "props": {
+            "Type": "'hover' | 'focus'",
+            "Default": "'hover'",
+            "Initial": null
+        },
+        "description": "The trigger that will cause tooltips to show and hide. hover - The tooltip will show/hide when a cell/header is hovered.  focus - The tooltip will show/hide when a cell/header is focused. This property will only be read on initialisation."
+    },
+    {
+        "name": "tooltipInteraction",
+        "props": {
+            "Type": "boolean",
+            "Default": "false",
+            "Initial": null
+        },
+        "description": "Set to true to enable tooltip interaction. When this option is enabled, the tooltip will not hide while the\ntooltip itself it being hovered or has focus.This property will only be read on initialisation.See: Interactive Tooltips"
+    },
+    {
+        "name": "gridOptions",
+        "props": {
+            "Type": null,
+            "Initial": null
+        },
+        "description": "All the above properties can also be specified on a single gridOptions object. If an option is set via gridOptions, as well as directly on the component, then the component value will take precedence. gridOptions is only read during initialisation, if you change it afterwards it will not impact the grid.This property will only be read on initialisation."
+    }
+]

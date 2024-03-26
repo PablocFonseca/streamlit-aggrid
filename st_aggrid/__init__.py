@@ -1,5 +1,4 @@
 
-from decimal import InvalidOperation
 import os
 import streamlit.components.v1 as components
 import pandas as pd
@@ -8,40 +7,11 @@ import json
 import warnings
 import typing
 
-from dataclasses import dataclass, field
+
 from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
-
-@dataclass
-class AgGridReturn(Mapping):
-    """Class to hold AgGrid call return"""
-    data: Union[pd.DataFrame , str] = None
-    selected_rows: List[Mapping] = field(default_factory=list)
-    column_state = None
-    excel_blob = None
-    grid_response = {}
-
-    @property
-    def columns_state(self)-> List[Mapping]:
-        return self.grid_response.get("columnsState", {})
-
-    #Backwards compatibility with dict interface
-    def __getitem__(self, __k):
-        return self.__dict__.__getitem__(__k)
-
-    def __iter__(self):
-        return self.__dict__.__iter__()
-    
-    def __len__(self):
-        return self.__dict__.__len__()
-
-    def keys(self):
-        return self.__dict__.keys()
-    
-    def values(self):
-        return self.__dict__.values()
 
 #This function exists because pandas behaviour when converting tz aware datetime to iso format.
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
@@ -158,9 +128,6 @@ def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
     height: int = None,
-    width=None,
-    fit_columns_on_grid_load: bool=False,
-    columns_auto_size_mode: ColumnsAutoSizeMode = ColumnsAutoSizeMode.NO_AUTOSIZE,
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
     allow_unsafe_jscode: bool=False,
@@ -168,16 +135,11 @@ def AgGrid(
     license_key: str=None,
     try_to_convert_back_to_original_types: bool=True,
     conversion_errors: str='coerce',
-    reload_data:bool=False,
     columns_state = None,
     theme:str=AgGridTheme.STREAMLIT,
     custom_css=None,
-    use_legacy_selected_rows=False,
     key: typing.Any=None,
     update_on = [],
-    enable_quicksearch=False,
-    excel_export_mode: ExcelExportMode = ExcelExportMode.NONE,
-    excel_export_multiple_sheet_params: Mapping = None,
     **default_column_parameters) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
 
@@ -200,20 +162,15 @@ def AgGrid(
         Deprecated.
     
     fit_columns_on_grid_load : bool, optional
-        Deprecated, use columns_auto_size_mode
-        Will adjust columns to fit grid width on grid load.
-        Default False
+        DEPRECATED, use columns_auto_size_mode
+        Use gidOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
 
     columns_auto_size_mode: ColumnsAutoSizeMode, optional
-        Sets columns auto size behavior on grid load event.
-        More info: https://www.ag-grid.com/react-data-grid/column-sizing/#auto-size-columns
-            ColumnsAutoSizeMode.NO_AUTOSIZE             -> No column resizing. Width defined at gridOptins is used.
-            ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW -> Make the currently visible columns fit the screen. The columns will scale (growing or shrinking) to fit the available width.
-            ColumnsAutoSizeMode.FIT_CONTENTS    -> Grid will work out the best width to fit the contents of the cells in the column.
-        Default: ColumnsAutoSizeMode.NO_AUTOSIZE    
+        DEPRECATED.
+        Use gidOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
 
     update_mode : GridUpdateMode, optional
-        UPDATE_MODE IS DEPRECATED. USE update_on instead.
+        DEPRECATED. USE update_on instead.
 
         Defines how the grid will send results back to streamlit.
         either a string, one or a combination of:
@@ -270,15 +227,17 @@ def AgGrid(
         Defaults to 'coerce'.
     
     reload_data : bool, optional
-        DEPRECATED
-        Force AgGrid to reload data using api calls. Should be false on most use cases
-        Default False
+        DEPRECATED.
+        Grid Behaviour changed on V 1.0. Grid will update when data or gridOptions changes.
+        If data is edited on grid UI, it will stop refreshing on data parameter changes..
 
     enable_quicksearch: bool, optional
+        DEPRECATED
         Adds a quicksearch text field on top of grid.
         Defaults to False
     
     excel_export_mode: ExcelExportMode, optional
+        DEPRECATED
         Defines how Excel Export integration behaves:
             NONE -> Nothing Changes. Default grid behaviour.
             MANUAL -> Adds a download button on grid's top that triggers download.
@@ -315,13 +274,6 @@ def AgGrid(
         Other keys may be present depending on gridOptions parameters
     """
 
-    if width:
-        warnings.warn(DeprecationWarning("Width parameter is deprecated and will be removed on next version."))
-
-    if fit_columns_on_grid_load:
-        warnings.warn(DeprecationWarning("fit_columns_on_grid_load is deprecated and will be removed on next version."))
-        columns_auto_size_mode = ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW
-
     if  not (isinstance(theme, (str, AgGridTheme)) and (theme in AgGridTheme)):
         raise ValueError(f"{theme} is not valid. Available options: {AgGridTheme.__members__}")
     else:
@@ -344,12 +296,6 @@ def AgGrid(
         except:
             raise ValueError(f"{update_mode} is not valid.")
 
-    if  not (isinstance(excel_export_mode, (str, ExcelExportMode)) and (excel_export_mode in ExcelExportMode)):
-        raise ValueError(f"{excel_export_mode} is not valid. Available options: {ExcelExportMode.__members__}")
-    else:
-        if isinstance(excel_export_mode, ExcelExportMode):
-            excel_export_mode = excel_export_mode.value
-
     if update_mode:
         update_on = list(update_on)
         if update_mode == GridUpdateMode.MANUAL:
@@ -370,9 +316,6 @@ def AgGrid(
     row_data = __parse_row_data(data)
     custom_css = custom_css or dict()
 
-    response = AgGridReturn()
-    response.data = data
-
     if height == None:
         gridOptions['domLayout'] ='autoHeight'
 
@@ -381,8 +324,6 @@ def AgGrid(
             gridOptions=gridOptions,
             row_data=row_data,
             height=height, 
-            width=width,
-            columns_auto_size_mode=columns_auto_size_mode, 
             data_return_mode=data_return_mode, 
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
@@ -394,9 +335,6 @@ def AgGrid(
             custom_css=custom_css,
             update_on=update_on,
             manual_update=manual_update,
-            enable_quicksearch=enable_quicksearch,
-            excel_export_mode=excel_export_mode,
-            ExcelExportMultipleSheetParams=excel_export_multiple_sheet_params,
             key=key
             )
 
@@ -406,46 +344,15 @@ def AgGrid(
         args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
         ex = components.components.MarshallComponentException(*args)
         raise(ex)
-
-    if component_value:
-        response.grid_response = component_value
-        
-        if isinstance(component_value, str):
-            component_value = json.loads(component_value)
-        frame = pd.DataFrame(component_value["rowData"])
-        original_types = component_value["originalDtypes"]
-
-        if not frame.empty:
-            if try_to_convert_back_to_original_types:
-                numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
-                if numeric_columns:
-                    frame.loc[:,numeric_columns] = frame.loc[:,numeric_columns] .apply(pd.to_numeric, errors=conversion_errors)
-
-                text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
-                if text_columns:
-                    frame.loc[:,text_columns]  = frame.loc[:,text_columns].applymap(lambda x: np.nan if x is None else str(x))
-
-                date_columns = [k for k,v in original_types.items() if v == "M"]
-                if date_columns:
-                    frame.loc[:,date_columns] = frame.loc[:,date_columns].apply(pd.to_datetime, errors=conversion_errors)
-
-                timedelta_columns = [k for k,v in original_types.items() if v == "m"]
-                if timedelta_columns:
-                    def cast_to_timedelta(s):
-                        try:
-                            return pd.Timedelta(s)
-                        except:
-                            return s
-
-                    frame.loc[:,timedelta_columns] = frame.loc[:,timedelta_columns].apply(cast_to_timedelta)
-
-        response.data = frame
-        
-        if use_legacy_selected_rows:
-            response.selected_rows = component_value["selectedRows"]
-        else:
-            response.selected_rows = component_value["selectedItems"]
-
-
     
+    response = AgGridReturn(data, component_value, data_return_mode,try_to_convert_back_to_original_types, conversion_errors)
+
+    #if component_value:
+        #response.grid_response = component_value
+        
+        # if isinstance(component_value, str):
+        #     component_value = json.loads(component_value)
+        # frame = pd.DataFrame(component_value["rowData"])
+        # original_types = component_value["originalDtypes"]
+
     return response

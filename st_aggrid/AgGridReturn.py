@@ -17,19 +17,25 @@ class AgGridReturn(Mapping):
 
     def __init__(self, originalData, component_value=None, data_return_mode=DataReturnMode.AS_INPUT, try_to_convert_back_to_original_types=True, conversion_errors='corce') -> None:
         super().__init__()
+        def ddict():
+            return defaultdict(ddict)
+
+        self.__dict__= ddict()
 
         self.__original_data = originalData
         self.__try_to_convert_back_to_original_types = try_to_convert_back_to_original_types
         self.__conversion_errors = conversion_errors
         self.__data_return_mode = data_return_mode
+
+
         
         if component_value:
-            self.__grid_response = component_value
-            self.__grid_response['gridOptions'] = json.loads(self.__grid_response['gridOptions'])
+            self.__dict__['grid_response'] = component_value
+            self.__dict__['grid_response']['gridOptions'] = json.loads(self.__dict__['grid_response']['gridOptions'])
 
     @property
     def grid_response(self):
-         return self.__grid_response
+         return self.__dict__['grid_response']
     
     @property
     def rows_id_after_sort_and_filter(self):
@@ -63,13 +69,16 @@ class AgGridReturn(Mapping):
             data = pd.DataFrame(self.grid_options.get("rowData"))
             
             if "__pandas_index" in data.columns:
-                index = pd.Index(data["__pandas_index"].map(str), dtype='str')
+                index = pd.Index(data["__pandas_index"].map(str), dtype='str', name='index')
                 data.index = index
                 del data["__pandas_index"]
 
             if self.__try_to_convert_back_to_original_types:
                 original_types = self.grid_response['originalDtypes']
-                original_types.pop("__pandas_index")
+                try:
+                    original_types.pop("__pandas_index")
+                except:
+                    pass
 
                 numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
                 if numeric_columns:
@@ -121,6 +130,10 @@ class AgGridReturn(Mapping):
 
     #Backwards compatibility with dict interface
     def __getitem__(self, __k):
+        
+        if __k == "data":
+            return self.data
+        
         return self.__dict__.__getitem__(__k)
 
     def __iter__(self):

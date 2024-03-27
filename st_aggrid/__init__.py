@@ -12,6 +12,7 @@ from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
+from st_aggrid.AgGridReturn import AgGridReturn
 
 #This function exists because pandas behaviour when converting tz aware datetime to iso format.
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
@@ -34,6 +35,7 @@ def __parse_row_data(data_parameter):
         else:
             data_parameter['__pandas_index'] = range(data_parameter.shape[0])       
         row_data = data_parameter.to_json(orient='records', date_format='iso')
+        del data_parameter['__pandas_index']
         return row_data
 
     elif isinstance(data_parameter, str):
@@ -83,7 +85,7 @@ def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parame
     return gridOptions
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
-
+print(_RELEASE)
 if not _RELEASE:
     warnings.warn("WARNING: ST_AGGRID is in development mode.")
     _component_func = components.declare_component(
@@ -128,6 +130,7 @@ def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
     height: int = None,
+    fit_columns_on_grid_load=False,
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
     allow_unsafe_jscode: bool=False,
@@ -304,6 +307,7 @@ def AgGrid(
             manual_update=False
             update_on.extend(__parse_update_mode(update_mode))
 
+
     frame_dtypes = []
     if try_to_convert_back_to_original_types:
         if not isinstance(data, pd.DataFrame):
@@ -318,6 +322,9 @@ def AgGrid(
 
     if height == None:
         gridOptions['domLayout'] ='autoHeight'
+
+    if fit_columns_on_grid_load:
+        gridOptions['autoSizeStrategy'] = {'type':'fitGridWidth'}
 
     try:
         component_value = _component_func(

@@ -305,6 +305,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private attachStreamlitRerunToEvents(api: GridApi) {
     const updateEvents = this.props.args.update_on
     const doReturn = (e: any) => this.returnGridValue()
+   
+    api.addEventListener("onGridSizeChanged", (e:GridSizeChangedEvent) => this.onGridSizeChanged(e))
+    api.addEventListener("onCellValueChanged", (e:CellValueChangedEvent) => this.cellValueChanged(e))
 
     updateEvents.forEach((element: any) => {
       //if element is a tuple (eventName,timeout) apply debounce func for timeout seconds.
@@ -568,9 +571,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
           />
         </GridToolBar>
         <AgGridReact
-          onGridReady={(e) => this.onGridReady(e)}
-          onGridSizeChanged={(e) => this.onGridSizeChanged(e)}
-          onCellValueChanged={(e) => this.cellValueChanged(e)}
+            onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}
         ></AgGridReact>
       </div>

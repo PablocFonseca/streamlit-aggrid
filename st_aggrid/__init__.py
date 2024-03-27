@@ -74,7 +74,7 @@ def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parame
             gridOptions = json.load(open(os.path.abspath(gridOptions_parameter)))
         else:
             gridOptions = json.loads(gridOptions_parameter)
-    
+  
     else:
         raise ValueError("gridOptions is invalid.")
 
@@ -85,7 +85,7 @@ def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parame
     return gridOptions
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
-print(_RELEASE)
+
 if not _RELEASE:
     warnings.warn("WARNING: ST_AGGRID is in development mode.")
     _component_func = components.declare_component(
@@ -314,16 +314,23 @@ def AgGrid(
             try_to_convert_back_to_original_types = False
             #raise InvalidOperation(f"If try_to_convert_back_to_original_types is True, data must be a DataFrame.")
 
-        frame_dtypes = dict(zip(data.columns, (t.kind for t in data.dtypes)))
-
+            frame_dtypes = dict(zip(data.columns, (t.kind for t in data.dtypes)))
+            
     gridOptions = __parse_grid_options(gridOptions, data, default_column_parameters, allow_unsafe_jscode)
-    row_data = __parse_row_data(data)
+
+    #data supplied in gridOptions row_data has precedence.
+    row_data =  gridOptions.get("row_data", __parse_row_data(data))
+    
+    if not row_data:
+        raise("No data supplied. Use data parameter or set row_data in gridOptions.")
+
     custom_css = custom_css or dict()
 
     if height == None:
         gridOptions['domLayout'] ='autoHeight'
 
     if fit_columns_on_grid_load:
+        warnings.warn(DeprecationWarning("fit_columns_on_grid_load is deprecated and will be removed on next version."))
         gridOptions['autoSizeStrategy'] = {'type':'fitGridWidth'}
 
     try:

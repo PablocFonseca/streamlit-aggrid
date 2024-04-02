@@ -2,17 +2,15 @@
 import os
 import streamlit.components.v1 as components
 import pandas as pd
-import numpy as np
-import json
 import warnings
 import typing
-
 
 from decouple import config
 from typing import Any, List, Mapping, Union, Any
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode, DataReturnMode, JsCode, walk_gridOptions, ColumnsAutoSizeMode, AgGridTheme, ExcelExportMode
 from st_aggrid.AgGridReturn import AgGridReturn
+from streamlit import session_state
 
 #This function exists because pandas behaviour when converting tz aware datetime to iso format.
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
@@ -29,14 +27,11 @@ def __parse_row_data(data_parameter):
     if isinstance(data_parameter, pd.DataFrame):
         __cast_date_columns_to_iso8601(data_parameter) 
         #creates an index column that uniquely identify the rows, this index will be used in AgGrid getRowId call on the Javascript side.
-        #if dataframe index is unique use it, else use a range
-        if data_parameter.index.is_unique:
-            data_parameter['__pandas_index'] = data_parameter.index
-        else:
-            data_parameter['__pandas_index'] = range(data_parameter.shape[0])       
+        data_parameter['__pandas_index'] = [str(i) for i in range(data_parameter.shape[0])]
         row_data = data_parameter.to_json(orient='records', date_format='iso')
+        frame_dtypes = dict(zip(data_parameter.columns, (t.kind for t in data_parameter.dtypes)))
         del data_parameter['__pandas_index']
-        return row_data
+        return row_data, frame_dtypes
 
     elif isinstance(data_parameter, str):
         import os
@@ -308,18 +303,17 @@ def AgGrid(
             update_on.extend(__parse_update_mode(update_mode))
 
 
-    frame_dtypes = []
-    if try_to_convert_back_to_original_types:
-        if not isinstance(data, pd.DataFrame):
-            try_to_convert_back_to_original_types = False
-            #raise InvalidOperation(f"If try_to_convert_back_to_original_types is True, data must be a DataFrame.")
-
-            frame_dtypes = dict(zip(data.columns, (t.kind for t in data.dtypes)))
-            
     gridOptions = __parse_grid_options(gridOptions, data, default_column_parameters, allow_unsafe_jscode)
 
+    frame_dtypes = []
+    row_data =  gridOptions.get("row_data", None)
+    
     #data supplied in gridOptions row_data has precedence.
-    row_data =  gridOptions.get("row_data", __parse_row_data(data))
+    if not row_data:
+        if try_to_convert_back_to_original_types:
+            if not isinstance(data, pd.DataFrame):
+                try_to_convert_back_to_original_types = False
+        row_data, frame_dtypes = __parse_row_data(data)
     
     if not row_data:
         raise("No data supplied. Use data parameter or set row_data in gridOptions.")

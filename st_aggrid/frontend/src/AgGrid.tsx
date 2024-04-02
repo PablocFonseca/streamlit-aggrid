@@ -16,6 +16,8 @@ import {
   GetRowIdParams,
   GridSizeChangedEvent,
   CellValueChangedEvent,
+  RowNode,
+  IRowNode,
 } from "@ag-grid-community/core"
 
 import { CsvExportModule } from "@ag-grid-community/csv-export"
@@ -50,6 +52,7 @@ import { Buffer } from "buffer"
 
 import "./agGridStyle.scss"
 import "@fontsource/source-sans-pro"
+import { timeStamp } from "console"
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
@@ -284,13 +287,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
+    //console.log("all rows have __pandas_index:", (_.every(gridOptions.rowData, (o) => '__pandas_index' in o)))
     if (_.every(gridOptions.rowData, (o) => '__pandas_index' in o)) {
       if (!('getRowId' in gridOptions)) {
-        gridOptions['getRowId'] = (params: GetRowIdParams) => params.data.__pandas_index
-        console.info("gridRowId() function set as underlying pandas dataframe index.")
+        gridOptions['getRowId'] = (params: GetRowIdParams) => params.data.__pandas_index as string
+        //console.info("gridRowId() function set as underlying pandas dataframe index.", gridOptions['getRowId'])
       }
     }
-
     if (!('getRowId' in gridOptions)) {
       console.warn("getRowId was not set. Grid may behave bad when updating.")
     }
@@ -386,6 +389,53 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private async getGridReturnValue() {
+
+    function fetch_node_props(n: IRowNode | null): any{
+      if (n == null) {return null}
+      return {
+        id: n.id,
+        data: n.data,
+        rowIndex: n.rowIndex,
+        rowTop: n.rowTop,
+        displayed: n.displayed,
+        isHovered: n.isHovered(),
+        isFullWidthCell: n.isFullWidthCell(),
+        expanded: n.expanded,
+        isExpandable: n.expanded,
+        group: n.group,
+        groupData: n.groupData,
+        aggData: n.aggData,
+        key: n.key,
+        field: n.field,
+        rowGroupColumn: n.rowGroupColumn?.getColId(),
+        rowGroupIndex: n.rowIndex,
+        footer: n.footer,
+        parent: fetch_node_props(n.parent),
+        firstChild: n.firstChild,
+        lastChild: n.lastChild,
+        childIndex: n.childIndex,
+        level: n.level,
+        uiLevel: n.uiLevel,
+        //allLeafChildren: n.allLeafChildren.map(v=> fetch_node_props(v)),
+        //childrenAfterGroup: n.childrenAfterGroup?.map(v => fetch_node_props(v)),
+        //childrenAfterFilter: n.childrenAfterFilter?.map(v => fetch_node_props(v)),
+        //childrenAfterSort: n.childrenAfterSort?.map(v => fetch_node_props(v)),
+        allChildrenCount: n.allChildrenCount,
+        leafGroup: n.leafGroup,
+        sibling: fetch_node_props(n.sibling),
+        rowHeight: n.rowHeight,
+        master: n.master,
+        detail: n.detail,
+        rowPinned: n.rowPinned,
+        isRowPinned: n.isRowPinned(),
+        selectable: n.selectable,
+        isSelected: n.isSelected()
+      }
+    }
+    let nodes: any[] = [];
+    this.state.api?.forEachNode((n,i) => {
+      nodes.push(fetch_node_props(n));
+    })
   
     let rowsAfterFilter: any[] = []
     this.state.api?.forEachNodeAfterFilter((row) => {
@@ -401,31 +451,26 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     })
 
-    let selected: any = {}
+    let selected: any = []
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
-      selected[d.id] = []
+      //console.log(d);
       d.api?.forEachNode((n) => {
         if (n.isSelected()) {
-          selected[d.id].push(n)
+          selected.push(n.id)
         }
       })
     })
 
     let returnValue = {
       originalDtypes: this.props.args.frame_dtypes,
-      //rowData: returnData,
-      rowIdsAfterFilter : rowsAfterFilter,
-      rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
-      //selectedRowsId: selectedRows,
-      //selectedRows: this.state.api?.getSelectedRows(),
-      //selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
-      //  _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
-      //  ...n.data,
-      // })),
+      nodes: nodes, 
+      selectedItems: this.state.api?.getSelectedRows(),
       gridState: this.state.api?.getState(),
       columnsState: this.state.api?.getColumnState(),
-      gridOptions: JSON.stringify(this.state.gridOptions)
+      gridOptions: JSON.stringify(this.state.gridOptions),
       //ExcelBlob: this.handleExcelExport(),
+      rowIdsAfterFilter: rowsAfterFilter,
+      rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
     }
 
     return returnValue

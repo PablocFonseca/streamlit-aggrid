@@ -124,10 +124,10 @@ def __parse_update_mode(update_mode: GridUpdateMode):
 def AgGrid(
     data: Union[pd.DataFrame,  str],
     gridOptions: typing.Dict=None ,
-    height: int = None,
+    height: int = 400,
     fit_columns_on_grid_load=False,
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
-    data_return_mode: DataReturnMode= DataReturnMode.AS_INPUT,
+    data_return_mode: DataReturnMode= DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool=False,
     enable_enterprise_modules: bool=True,
     license_key: str=None,
@@ -327,6 +327,8 @@ def AgGrid(
         warnings.warn(DeprecationWarning("fit_columns_on_grid_load is deprecated and will be removed on next version."))
         gridOptions['autoSizeStrategy'] = {'type':'fitGridWidth'}
 
+    response = AgGridReturn(data,gridOptions, data_return_mode,try_to_convert_back_to_original_types, conversion_errors, )
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -337,7 +339,7 @@ def AgGrid(
             allow_unsafe_jscode=allow_unsafe_jscode,
             enable_enterprise_modules=enable_enterprise_modules,
             license_key=license_key,
-            default=None,
+            default= None,
             columns_state=columns_state,
             theme=theme,
             custom_css=custom_css,
@@ -353,7 +355,8 @@ def AgGrid(
         ex = components.components.MarshallComponentException(*args)
         raise(ex)
     
-    response = AgGridReturn(data, component_value, data_return_mode,try_to_convert_back_to_original_types, conversion_errors)
+    if component_value:
+        response._set_component_value(component_value)
 
     #if component_value:
         #response.grid_response = component_value

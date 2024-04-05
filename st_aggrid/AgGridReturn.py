@@ -7,171 +7,230 @@ import json
 import pandas as pd
 import numpy as np
 
+
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
+
     # selected_rows: List[Mapping] = field(default_factory=list)
     # column_state = None
     # excel_blob = None
 
-    def __init__(self, originalData, component_value=None, data_return_mode=DataReturnMode.AS_INPUT, try_to_convert_back_to_original_types=True, conversion_errors='corce') -> None:
+    def __init__(
+        self,
+        originalData,
+        gridOptions=None,
+        data_return_mode=DataReturnMode.AS_INPUT,
+        try_to_convert_back_to_original_types=True,
+        conversion_errors="corce"
+    ) -> None:
         super().__init__()
+
         def ddict():
             return defaultdict(ddict)
 
-        self.__dict__= ddict()
+        self.__dict__ = ddict()
+
+        self.__component_value_set = False
 
         self.__original_data = originalData
-        self.__try_to_convert_back_to_original_types = try_to_convert_back_to_original_types
+        self.__try_to_convert_back_to_original_types = (
+            try_to_convert_back_to_original_types
+        )
         self.__conversion_errors = conversion_errors
         self.__data_return_mode = data_return_mode
-        
-        if component_value:
-            self.__dict__['grid_response'] = component_value
-            self.__dict__['grid_response']['gridOptions'] = json.loads(self.__dict__['grid_response']['gridOptions'])
+
+        self.__dict__["grid_response"]["gridOptions"] = gridOptions
+    
+
+    def _set_component_value(self, component_value):
+        self.__component_value_set = True
+
+        self.__dict__["grid_response"] = component_value
+        self.__dict__["grid_response"]["gridOptions"] = json.loads(
+        self.__dict__["grid_response"]["gridOptions"]
+            )
 
     @property
     def grid_response(self):
-         return self.__dict__['grid_response']
-    
+        """Raw response from component."""
+        return self.__dict__["grid_response"]
+
     @property
     def rows_id_after_sort_and_filter(self):
+        """The row indexes after sort and filter is applied"""
         return self.grid_response.get("rowIdsAfterSortAndFilter")
-    
+
     @property
     def rows_id_after_filter(self):
+        """The filtered row indexes"""
         return self.grid_response.get("rowIdsAfterFilter")
-    
+
     @property
     def grid_options(self):
-        return self.grid_response.get("gridOptions",{})
-    
+        """GridOptions as applied on the grid."""
+        return self.grid_response.get("gridOptions", {})
+
     @property
     def columns_state(self):
+        """Gets the state of the columns. Typically used when saving column state."""
         return self.grid_response.get("columnsState")
-    
+
     @property
     def grid_state(self):
+        """Gets the grid state. Tipically used on initialState option. (https://ag-grid.com/javascript-data-grid//grid-options/#reference-miscellaneous-initialState)"""
         return self.grid_response.get("gridState")
-    
+
     @property
     def selected_rows_id(self):
+        """Ids of selected rows"""
         return self.grid_state.get("rowSelection")
-    
-    def __process_vanilla_df_response(self, nodes, __try_to_convert_back_to_original_types, __data_return_mode):
-        data = pd.DataFrame([n.get('data',{}) for n in nodes])
-       
+
+    def __process_vanilla_df_response(
+        self, nodes, __try_to_convert_back_to_original_types, __data_return_mode
+    ):
+        data = pd.DataFrame([n.get("data", {}) for n in nodes])
+
         if "__pandas_index" in data.columns:
-            data.index = pd.Index(data['__pandas_index'], name='index')
+            data.index = pd.Index(data["__pandas_index"], name="index")
             del data["__pandas_index"]
 
         if __try_to_convert_back_to_original_types:
-            original_types = self.grid_response['originalDtypes']
+            original_types = self.grid_response["originalDtypes"]
             try:
                 original_types.pop("__pandas_index")
             except:
                 pass
 
-            numeric_columns = [k for k,v in original_types.items() if v in ['i','u','f']]
+            numeric_columns = [
+                k for k, v in original_types.items() if v in ["i", "u", "f"]
+            ]
             if numeric_columns:
-                data.loc[:,numeric_columns] = data.loc[:,numeric_columns] .apply(pd.to_numeric, errors=self.__conversion_errors )
+                data.loc[:, numeric_columns] = data.loc[:, numeric_columns].apply(
+                    pd.to_numeric, errors=self.__conversion_errors
+                )
 
-            text_columns = [k for k,v in original_types.items() if v in ['O','S','U']]
+            text_columns = [
+                k for k, v in original_types.items() if v in ["O", "S", "U"]
+            ]
 
             if text_columns:
-                data.loc[:,text_columns]  = data.loc[:,text_columns].applymap(lambda x: np.nan if x is None else str(x))
+                data.loc[:, text_columns] = data.loc[:, text_columns].applymap(
+                    lambda x: np.nan if x is None else str(x)
+                )
 
-            date_columns = [k for k,v in original_types.items() if v == "M"]
+            date_columns = [k for k, v in original_types.items() if v == "M"]
             if date_columns:
-                data.loc[:,date_columns] = data.loc[:,date_columns].apply(pd.to_datetime, errors=self.__conversion_errors)
+                data.loc[:, date_columns] = data.loc[:, date_columns].apply(
+                    pd.to_datetime, errors=self.__conversion_errors
+                )
 
-            timedelta_columns = [k for k,v in original_types.items() if v == "m"]
+            timedelta_columns = [k for k, v in original_types.items() if v == "m"]
             if timedelta_columns:
+
                 def cast_to_timedelta(s):
                     try:
                         return pd.Timedelta(s)
                     except:
                         return s
 
-                data.loc[:,timedelta_columns] = data.loc[:,timedelta_columns].apply(cast_to_timedelta)
+                data.loc[:, timedelta_columns] = data.loc[:, timedelta_columns].apply(
+                    cast_to_timedelta
+                )
 
         if __data_return_mode == DataReturnMode.FILTERED:
             data = data.reindex(index=self.rows_id_after_filter)
         elif self.__data_return_mode == DataReturnMode.FILTERED_AND_SORTED:
-            data = data.reindex(index=self.rows_id_after_sort_and_filter)      
-    
+            data = data.reindex(index=self.rows_id_after_sort_and_filter)
+
         return data
 
-    def __process_grouped_response(self, nodes, __try_to_convert_back_to_original_types, __data_return_mode):
-     def travel_parent(o):
+    def __process_grouped_response(
+        self, nodes, __try_to_convert_back_to_original_types, __data_return_mode
+    ):
+        def travel_parent(o):
 
-         if o.get("parent", None) == None:
-             return ''
-         
-         return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get('rowGroupColumn')}:{o.get("parent").get('key')}""".lstrip(".")
-     
-     
-     data = [{**i.get("data"), **{'parent':travel_parent(i)}} for i in nodes if i.get("group", False) == False]
-     data = pd.DataFrame(data).set_index("__pandas_index")
-     groups = [(v1.split('.')[1:],v2) for v1,v2 in (data.groupby('parent'))]
-     return groups
-    
+            if o.get("parent", None) == None:
+                return ""
+
+            return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get('rowGroupColumn')}:{o.get("parent").get('key')}""".lstrip(
+                "."
+            )
+
+        data = [
+            {**i.get("data"), **{"parent": travel_parent(i)}}
+            for i in nodes
+            if i.get("group", False) == False
+        ]
+        data = pd.DataFrame(data).set_index("__pandas_index")
+        groups = [(v1.split(".")[1:], v2) for v1, v2 in (data.groupby("parent"))]
+        return groups
+
     @property
     def data(self):
+        "Data from the grid."
         data = self.__original_data
 
-        if  self.grid_response :
-            nodes = self.grid_response.get("nodes")
+        if self.__component_value_set:
+            nodes = self.grid_response.get("nodes",[])
 
-            response_has_groups = any((n.get("group",False) for n in nodes))
-        
+            response_has_groups = any((n.get("group", False) for n in nodes))
+
             if not response_has_groups:
-                data = self.__process_vanilla_df_response(nodes, self.__try_to_convert_back_to_original_types, self.__data_return_mode)
+                data = self.__process_vanilla_df_response(
+                    nodes,
+                    self.__try_to_convert_back_to_original_types,
+                    self.__data_return_mode,
+                )
             else:
-                data = self.__process_grouped_response(nodes, self.__try_to_convert_back_to_original_types, self.__data_return_mode)
-        
+                data = self.__process_grouped_response(
+                    nodes,
+                    self.__try_to_convert_back_to_original_types,
+                    self.__data_return_mode,
+                )
+
         return data
-    
-    
-    #Needs Backwards compatibility 
+
+    # Needs Backwards compatibility
     #    //selectedRows: this.state.api?.getSelectedRows(),
     # //selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
     #  //  _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
     #  //  ...n.data,
     #  // })),
-    
+
     @property
     def selected_rows(self):
-        selected_items = pd.DataFrame(self.grid_response.get("selectedItems",{}))
+        """Returns with selected rows. If there are grouped rows return a dict of {key:pd.DataFrame}"""
+        selected_items = pd.DataFrame(self.grid_response.get("selectedItems", {}))
         if "__pandas_index" in selected_items.columns:
             selected_items.set_index("__pandas_index", inplace=True)
-            selected_items.index.name = 'index'
+            selected_items.index.name = "index"
         return selected_items
 
-    #Backwards compatibility with dict interface
+    # Backwards compatibility with dict interface
     def __getitem__(self, __k):
-        
+
         if __k == "data":
             return self.data
-        
+
         if __k == "selected_rows":
             return self.selected_rows
-        
+
         if __k == "column_state":
             return self.columns_state
-        
+
         if __k == "grid_response":
             return self.grid_response
-        
+
         return self.__dict__.__getitem__(__k)
 
     def __iter__(self):
         return self.__dict__.__iter__()
-    
+
     def __len__(self):
         return self.__dict__.__len__()
 
     def keys(self):
         return self.__dict__.keys()
-    
+
     def values(self):
         return self.__dict__.values()

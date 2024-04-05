@@ -63,6 +63,8 @@ class GridOptionsBuilder:
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
+        gb.configure_grid_options(autoSizeStrategy={'type':'fitCellContents', 'skipHeader':False})
+
         return gb
 
     def configure_default_column(

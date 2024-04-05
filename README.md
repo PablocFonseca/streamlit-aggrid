@@ -1,19 +1,14 @@
 # streamlit-aggrid
 
-[![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link]
+[![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] [![Downloads][downloads_badge]][downloads_link]
 
 ---
-
-**Note** (feb 2024 update)
-
-(feb 2024 update)
-I had to stop the development during last year, bc my main job took a lot of my time in 2023... Many people had 
-reached me stating how Streamlit AgGrid devlivered value to them. I'll dedicate some more time over the next months
-with focus on (on this priority):
-- Stability and dependency updates.
-- Compatibility with late streamlit versions
-- PR review and merges to main trunk.
-- More examples (if you write a PR, please include a simple Streamlit app demonstrating how it works, if possible)
+> [!WARNING] 
+> v1.0.0 breaks compatibility with previous versions and many people reached me to say that it is unstable.  
+> Main changes are on gridReturn object as I'm moving heavy processment to python side.  
+> I'm working to stabilize it, if you find any issues, please open a topic on the issue tracker  
+> with a reproductile example, if possible.  
+> Meanwhile use the last v.0.3.4 if things are not working for you! I hope to have everything fixed soon.  
 
 
 If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
@@ -26,7 +21,6 @@ if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
 
-<\br>
 Live examples [on Streamlit Cloud](https://staggrid-examples.streamlit.app/) Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 # Install
@@ -158,8 +152,10 @@ Version 0.1.0:
 - Lacks performance for production. JS Client code is slow...
 
 [share_badge]: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
-[share_link]: https://share.streamlit.io/pablocfonseca/streamlit-aggrid/main/examples/example.py
+[share_link]: https://staggrid-examples.streamlit.app/
 [github_badge]: https://badgen.net/badge/icon/GitHub?icon=github&color=black&label
 [github_link]: https://github.com/PablocFonseca/streamlit-aggrid
 [pypi_badge]: https://badgen.net/pypi/v/streamlit-aggrid?icon=pypi&color=black&label?
 [pypi_link]: https://www.pypi.org/project/streamlit-aggrid/
+[downloads_badge]: https://img.shields.io/pypi/dm/streamlit-aggrid
+[downloads_link]: https://pypi.org/project/streamlit-aggrid/#files

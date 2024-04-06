@@ -1,5 +1,6 @@
 
 import os
+import json
 import streamlit.components.v1 as components
 import pandas as pd
 import warnings
@@ -16,26 +17,25 @@ from streamlit import session_state
 def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
     """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
     for c, d in dataframe.dtypes.items():
-        if not d.kind == 'M':
-            continue
-        else:
+        if d.kind == 'M':
             dataframe[c] = dataframe[c].apply(lambda s: s.isoformat()) 
 
-def __parse_row_data(data_parameter):
+def __parse_row_data(data):
     """Internal method to process data from data_parameter"""
+    if data is None:
+        return None
 
-    if isinstance(data_parameter, pd.DataFrame):
+    if isinstance(data, pd.DataFrame):
+        data_parameter = data.copy()
         __cast_date_columns_to_iso8601(data_parameter) 
         #creates an index column that uniquely identify the rows, this index will be used in AgGrid getRowId call on the Javascript side.
         data_parameter['__pandas_index'] = [str(i) for i in range(data_parameter.shape[0])]
         row_data = data_parameter.to_json(orient='records', date_format='iso')
         frame_dtypes = dict(zip(data_parameter.columns, (t.kind for t in data_parameter.dtypes)))
         del data_parameter['__pandas_index']
-        return row_data, frame_dtypes
+        return json.loads(row_data), frame_dtypes
 
     elif isinstance(data_parameter, str):
-        import os
-        import json
         is_path = data_parameter.endswith('.json') and os.path.exists(data_parameter)
         
         if is_path:
@@ -43,16 +43,15 @@ def __parse_row_data(data_parameter):
         else:
             row_data = json.dumps(json.loads(data_parameter))
         
-        return row_data
+        return json.loads(row_data), None
     else:
         raise ValueError("Invalid data")
-    
 
-def __parse_grid_options(gridOptions_parameter, dataframe, default_column_parameters, unsafe_allow_jscode):
+def __parse_grid_options(gridOptions_parameter, data, default_column_parameters, unsafe_allow_jscode):
     """Internal method to cast gridOptions parameter to a valid gridoptions"""
     # if no gridOptions is passed, builds a default one.
-    if gridOptions_parameter == None:
-        gb = GridOptionsBuilder.from_dataframe(dataframe,**default_column_parameters)
+    if (gridOptions_parameter == None) and not(data is None):
+        gb = GridOptionsBuilder.from_dataframe(data,**default_column_parameters)
         gridOptions = gb.build()
 
     #if it is a dict-like object, assumes is valid and use it.
@@ -122,7 +121,7 @@ def __parse_update_mode(update_mode: GridUpdateMode):
     return update_on
 
 def AgGrid(
-    data: Union[pd.DataFrame,  str],
+    data: Union[pd.DataFrame,  str]=None,
     gridOptions: typing.Dict=None ,
     height: int = 400,
     fit_columns_on_grid_load=False,
@@ -306,17 +305,17 @@ def AgGrid(
     gridOptions = __parse_grid_options(gridOptions, data, default_column_parameters, allow_unsafe_jscode)
 
     frame_dtypes = []
-    row_data =  gridOptions.get("row_data", None)
-    
-    #data supplied in gridOptions row_data has precedence.
-    if not row_data:
-        if try_to_convert_back_to_original_types:
-            if not isinstance(data, pd.DataFrame):
-                try_to_convert_back_to_original_types = False
-        row_data, frame_dtypes = __parse_row_data(data)
-    
-    if not row_data:
-        raise("No data supplied. Use data parameter or set row_data in gridOptions.")
+
+    if not "rowData" in gridOptions:
+        if not data is None:
+            row_data, frame_dtypes = __parse_row_data(data)
+        else:
+            raise Exception("No data provided. Use data parameter to supply a pandas dataframe or valid json. Or set gridOptions.rowData")
+
+        gridOptions['rowData'] = row_data
+
+    if not isinstance(data, pd.DataFrame):
+        try_to_convert_back_to_original_types = False
 
     custom_css = custom_css or dict()
 
@@ -328,11 +327,9 @@ def AgGrid(
         gridOptions['autoSizeStrategy'] = {'type':'fitGridWidth'}
 
     response = AgGridReturn(data,gridOptions, data_return_mode,try_to_convert_back_to_original_types, conversion_errors, )
-
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
-            row_data=row_data,
             height=height, 
             data_return_mode=data_return_mode, 
             frame_dtypes=frame_dtypes,

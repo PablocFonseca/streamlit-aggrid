@@ -268,8 +268,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
     var go = this.parseGridoptions()
-    go.rowData = JSON.parse(this.props.args.row_data)
-
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
@@ -283,7 +281,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
-      gridOptions = deepMap(gridOptions, parseJsCodeFromPython)
+      gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ['rowData'])
     }
 
     //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
@@ -504,23 +502,22 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
 
   public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
-    // If rowwData change is detected then update state
-    const prevRowData = prevProps.args.row_data
-    const currRowData = this.props.args.row_data
-    const currRowDataArr = JSON.parse(currRowData)
-
-    if ((!_.isEqual(prevRowData, currRowData)) && !this.state.isRowDataEdited) {
-      this.state.api?.updateGridOptions({ rowData: currRowDataArr })
-    }
 
     const prevGridOptions = prevProps.args.gridOptions
     const currGridOptions = this.props.args.gridOptions
 
-
-    const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
+    //const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
     if (!_.isEqual(prevGridOptions, currGridOptions)) {
       //console.dir(objectDiff(prevGridOptions, currGridOptions))
-      this.state.api?.updateGridOptions(this.parseGridoptions())
+      let go = this.parseGridoptions()
+      let row_data = go.rowData
+
+      if (!this.state.isRowDataEdited){
+        this.state.api?.updateGridOptions({ rowData: row_data })
+      }
+
+      delete go.rowData;
+      this.state.api?.updateGridOptions(go)
     }
 
     if (!_.isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
@@ -552,7 +549,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
         this.attachStreamlitRerunToEvents(i.api)
       }
     })
-
   }
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {
@@ -562,7 +558,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private cellValueChanged(event: CellValueChangedEvent) {
     console.log("Data edited on Grid. Ignoring further changes from data paramener (AgGrid(data=dataframe))")
     this.setState({ isRowDataEdited: true })
-
   }
 
   private processPreselection() {
@@ -578,7 +573,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
       if (preselectedRows || preselectedRows?.length() > 0) {
         for (var idx in preselectedRows) {
           this.state.api?.getRowNode(preselectedRows[idx])?.setSelected(true, false)
-
         }
       }
     }

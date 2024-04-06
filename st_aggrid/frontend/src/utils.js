@@ -1,19 +1,25 @@
 // stole from https://github.com/andfanilo/streamlit-echarts/blob/master/streamlit_echarts/frontend/src/utils.js Thanks andfanilo
-function mapObject(obj, fn) {
-    return Object.keys(obj).reduce((res, key) => {
-        res[key] = fn(obj[key])
+function mapObject(obj, fn, keysToIgnore) {
+    let keysToMap = Object.keys(obj)
+    return keysToMap.reduce((res, key) => {
+        if (!keysToIgnore.includes(key)) {
+            res[key] = fn(obj[key]);
+            return res
+        }
+        res[key] = obj[key];
         return res
+
     }, {})
 }
 
-function deepMap(obj, fn) {
+function deepMap(obj, fn, keysToIgnore=[]) {
     const deepMapper = (val) =>
         val !== null && typeof val === "object" ? deepMap(val, fn) : fn(val)
     if (Array.isArray(obj)) {
         return obj.map(deepMapper)
     }
     if (typeof obj === "object") {
-        return mapObject(obj, deepMapper)
+        return mapObject(obj, deepMapper, keysToIgnore)
     }
     return obj
 }

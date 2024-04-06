@@ -12,16 +12,13 @@
 
 
 If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
+You may want to [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) or [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
 
-
-if you like the project, you can [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) or  if you prefer send it through [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
+Live examples and documentation [on Streamlit Cloud](https://staggrid-examples.streamlit.app/)
 
 ---
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
-
-
-Live examples [on Streamlit Cloud](https://staggrid-examples.streamlit.app/) Some basic documentation is available: https://streamlit-aggrid.readthedocs.io
 
 # Install
 
@@ -55,6 +52,11 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 1.0.2
+ - Moved a lot of the processment to python side.
+ - Changed grid return object.
+ - Fix bugs and code cleanup.
+
 Version 0.3.5
  - Merged many PR, thanks everybody.
  - Grid State can be saved and retrieved. Many people requested this one. Live Example [Here](https://staggrid-examples.streamlit.app/?example=%27Grid%20State%27) 

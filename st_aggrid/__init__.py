@@ -198,7 +198,7 @@ def AgGrid(
             DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
             DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
             DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
-        Defaults to DataReturnMode.AS_INPUT.
+        Defaults to DataReturnMode.FILTERED_AND_SORTED.
         
     allow_unsafe_jscode : bool, optional
         Allows jsCode to be injected in gridOptions.

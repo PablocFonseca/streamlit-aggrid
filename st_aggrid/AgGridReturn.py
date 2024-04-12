@@ -213,7 +213,8 @@ class AgGridReturn(Mapping):
             nodes = self.grid_response.get("nodes",[])
 
             if onlySelected:
-                nodes = list(filter(lambda n: n.get('isSelected', False) == True, nodes))
+                #n.get('isSelected', True). Default is true bc agGrid sets undefined for half selected groups   
+                nodes = list(filter(lambda n: n.get('isSelected', True) == True, nodes))
                 
                 if not nodes:
                     return [{(''):self.__get_data(onlySelected)}]

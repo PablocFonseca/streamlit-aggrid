@@ -256,10 +256,11 @@ class AgGridReturn(Mapping):
         
         return selected_items
     
-    @property
-    def event_data(self):
-        """Returns information about the event that triggered AgGrid Response"""
-        return self.grid_response.get("eventData",None)
+    #TODO: implement event returns
+    # @property
+    # def event_data(self):
+    #     """Returns information about the event that triggered AgGrid Response"""
+    #     return self.grid_response.get("eventData",None)
 
     # Backwards compatibility with dict interface
     def __getitem__(self, __k):

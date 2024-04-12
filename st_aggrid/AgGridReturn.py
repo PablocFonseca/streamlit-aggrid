@@ -86,9 +86,9 @@ class AgGridReturn(Mapping):
         return self.grid_state.get("rowSelection")
 
     def __process_vanilla_df_response(
-        self, nodes, __try_to_convert_back_to_original_types, __data_return_mode
+        self, nodes, __try_to_convert_back_to_original_types
     ):
-        data = pd.DataFrame([n.get("data", {}) for n in nodes])
+        data = pd.DataFrame([n.get("data", {}) for n in nodes if not n.get("group", False) == True])
 
         if "__pandas_index" in data.columns:
             data.index = pd.Index(data["__pandas_index"], name="index")
@@ -136,12 +136,7 @@ class AgGridReturn(Mapping):
                 data.loc[:, timedelta_columns] = data.loc[:, timedelta_columns].apply(
                     cast_to_timedelta
                 )
-
-        if __data_return_mode == DataReturnMode.FILTERED:
-            data = data.reindex(index=self.rows_id_after_filter)
-        elif self.__data_return_mode == DataReturnMode.FILTERED_AND_SORTED:
-            data = data.reindex(index=self.rows_id_after_sort_and_filter)
-
+  
         return data
 
     def __process_grouped_response(
@@ -152,7 +147,7 @@ class AgGridReturn(Mapping):
             if o.get("parent", None) == None:
                 return ""
 
-            return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get('rowGroupColumn')}:{o.get("parent").get('key')}""".lstrip(
+            return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get('key')}""".lstrip(
                 "."
             )
 
@@ -162,49 +157,109 @@ class AgGridReturn(Mapping):
             if i.get("group", False) == False
         ]
         data = pd.DataFrame(data).set_index("__pandas_index")
-        groups = [(v1.split(".")[1:], v2) for v1, v2 in (data.groupby("parent"))]
+        data.index.name = ''
+        groups = [{tuple(v1.split(".")[1:]): v2.drop('parent', axis=1)} for v1, v2 in data.groupby("parent")]
         return groups
 
-    @property
-    def data(self):
-        "Data from the grid."
-        data = self.__original_data
+    def __get_data(self, onlySelected):
+        data = self.__original_data if not onlySelected else None
 
         if self.__component_value_set:
             nodes = self.grid_response.get("nodes",[])
 
+            if onlySelected:
+                nodes = list(filter(lambda n: n.get('isSelected', False) == True, nodes))
+
+                if not nodes:
+                    return None
+
+            data = self.__process_vanilla_df_response(
+                    nodes,
+                    self.__try_to_convert_back_to_original_types and onlySelected
+                )
+            
+
+            reindex_ids_map = {
+                DataReturnMode.FILTERED: self.rows_id_after_filter,
+                DataReturnMode.FILTERED_AND_SORTED:self.rows_id_after_sort_and_filter
+            }
+
+            reindex_ids = reindex_ids_map.get(self.__data_return_mode, None)
+
+            if reindex_ids:
+                reindex_ids = pd.Index(reindex_ids)
+                
+                if onlySelected:
+                    reindex_ids = reindex_ids.intersection(data.index)
+
+                data = data.reindex(index=reindex_ids)   
+
+        return data
+    
+    @property
+    def data(self):
+        "Data from the grid. If rows are grouped, return only the leaf rows"
+
+        return self.__get_data(onlySelected=False)
+    
+    @property
+    def selected_data(self):
+        "Selected Data from the grid."
+        
+        return self.__get_data(onlySelected=True)
+        
+    def __get_dataGroups(self, onlySelected):
+        if self.__component_value_set:
+            nodes = self.grid_response.get("nodes",[])
+
+            if onlySelected:
+                nodes = list(filter(lambda n: n.get('isSelected', False) == True, nodes))
+                
+                if not nodes:
+                    return [{(''):self.__get_data(onlySelected)}]
+
             response_has_groups = any((n.get("group", False) for n in nodes))
 
-            if not response_has_groups:
-                data = self.__process_vanilla_df_response(
-                    nodes,
-                    self.__try_to_convert_back_to_original_types,
-                    self.__data_return_mode,
-                )
-            else:
+            if response_has_groups:
                 data = self.__process_grouped_response(
                     nodes,
                     self.__try_to_convert_back_to_original_types,
                     self.__data_return_mode,
                 )
+                return data
+        
+        return [{(''):self.__get_data(onlySelected)}]
+    
+    @property
+    def dataGroups(self):
+        "returns grouped rows as a dictionary where keys are tuples of groupby strings and values are pandas.DataFrame"
 
-        return data
+        return self.__get_dataGroups(onlySelected=False)
+    
+    @property
+    def selected_dataGroups(self):
+        "returns selected rows as a dictionary where keys are tuples of grouped column names and values are pandas.DataFrame"
 
-    # Needs Backwards compatibility
-    #    //selectedRows: this.state.api?.getSelectedRows(),
-    # //selectedItems: this.state.api?.getSelectedNodes()?.map((n, i) => ({
-    #  //  _selectedRowNodeInfo: { nodeRowIndex: n.rowIndex, nodeId: n.id },
-    #  //  ...n.data,
-    #  // })),
+        return self.__get_dataGroups(onlySelected=True)
 
     @property
     def selected_rows(self):
         """Returns with selected rows. If there are grouped rows return a dict of {key:pd.DataFrame}"""
         selected_items = pd.DataFrame(self.grid_response.get("selectedItems", {}))
+        
+        if selected_items.empty:
+            return None
+        
         if "__pandas_index" in selected_items.columns:
             selected_items.set_index("__pandas_index", inplace=True)
             selected_items.index.name = "index"
+        
         return selected_items
+    
+    @property
+    def event_data(self):
+        """Returns information about the event that triggered AgGrid Response"""
+        return self.grid_response.get("eventData",None)
 
     # Backwards compatibility with dict interface
     def __getitem__(self, __k):

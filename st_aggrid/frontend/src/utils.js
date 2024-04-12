@@ -12,7 +12,7 @@ function mapObject(obj, fn, keysToIgnore) {
     }, {})
 }
 
-function deepMap(obj, fn, keysToIgnore=[]) {
+function deepMap(obj, fn, keysToIgnore = []) {
     const deepMapper = (val) =>
         val !== null && typeof val === "object" ? deepMap(val, fn) : fn(val)
     if (Array.isArray(obj)) {
@@ -24,4 +24,4 @@ function deepMap(obj, fn, keysToIgnore=[]) {
     return obj
 }
 
-export default deepMap
+export { deepMap }

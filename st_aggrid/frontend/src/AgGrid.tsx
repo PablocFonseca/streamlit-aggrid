@@ -42,7 +42,7 @@ import { StatusBarModule } from "@ag-grid-enterprise/status-bar"
 
 import { parseISO, compareAsc, format } from "date-fns"
 
-import deepMap from "./utils"
+import {deepMap} from "./utils"
 import { duration } from "moment"
 
 import _, { debounce, throttle } from "lodash"

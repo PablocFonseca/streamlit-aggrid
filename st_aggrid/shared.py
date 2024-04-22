@@ -51,6 +51,11 @@ def getAllColumnProps():
     allProps = json.load(open(jsonRoot / "columnProps.json"))
     return allProps
 
+def getAllGridEvents():
+    jsonRoot = pathlib.Path(__file__).parent / "json" 
+    allGridEvents = json.load(open(jsonRoot / "gridEvents.json"))
+    return allGridEvents
+
 
 class MetaEnum(EnumMeta):
     def __contains__(cls, item):

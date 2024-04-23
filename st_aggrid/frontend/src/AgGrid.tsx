@@ -472,6 +472,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       } else if (typeof obj === "object") {
         Object.keys(obj).forEach(function (key) {
           if (level > 3) return
+          if (key === "data") return 
           let fullKey = [root, key].filter((v) => v !== "").join(".")
 
           if (!eventDataWhiteList.includes(fullKey)) {
@@ -483,7 +484,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
       return obj
     }
-
+    
     let cleanEventData = cleanEventKeys(_.cloneDeep(e))
     cleanEventData["streamlitRerunEventTriggerName"] =
       streamlitRerunEventTriggerName

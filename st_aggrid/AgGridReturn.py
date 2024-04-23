@@ -6,6 +6,7 @@ from st_aggrid.shared import DataReturnMode
 import json
 import pandas as pd
 import numpy as np
+import inspect
 
 
 class AgGridReturn(Mapping):
@@ -25,10 +26,10 @@ class AgGridReturn(Mapping):
     ) -> None:
         super().__init__()
 
-        def ddict():
-            return defaultdict(ddict)
+        # def ddict():
+        #     return defaultdict(ddict)
 
-        self.__dict__ = ddict()
+        # self.__dict__ = ddict()
 
         self.__component_value_set = False
 
@@ -39,7 +40,7 @@ class AgGridReturn(Mapping):
         self.__conversion_errors = conversion_errors
         self.__data_return_mode = data_return_mode
 
-        self.__dict__["grid_response"]["gridOptions"] = gridOptions
+        self.__dict__["grid_response"] = {"gridOptions": gridOptions}
     
 
     def _set_component_value(self, component_value):
@@ -266,28 +267,21 @@ class AgGridReturn(Mapping):
     # Backwards compatibility with dict interface
     def __getitem__(self, __k):
 
-        if __k == "data":
-            return self.data
-
-        if __k == "selected_rows":
-            return self.selected_rows
-
-        if __k == "column_state":
-            return self.columns_state
-
-        if __k == "grid_response":
-            return self.grid_response
-
-        return self.__dict__.__getitem__(__k)
+        try:
+            return getattr(self, __k)
+        except AttributeError:
+             return self.__dict__.__getitem__(__k)
 
     def __iter__(self):
-        return self.__dict__.__iter__()
+        attrs = (x for x in inspect.getmembers(self) if not x[0].startswith('_'))
+        return attrs.__iter__()
 
     def __len__(self):
-        return self.__dict__.__len__()
+        attrs = [x for x in inspect.getmembers(self) if not x[0].startswith('_')]
+        return attrs.__len__()
 
     def keys(self):
-        return self.__dict__.keys()
+        return [x[0] for x in inspect.getmembers(self) if not x[0].startswith('_')]
 
     def values(self):
-        return self.__dict__.values()
+        return [x[1] for x in inspect.getmembers(self) if not x[0].startswith('_')]

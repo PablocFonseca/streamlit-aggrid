@@ -52,8 +52,12 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 1.0.4
+ - Added information on the event that triggered app rerun
+
+
 Version 1.0.2
- - Moved a lot of the processment to python side.
+ - Moved a lot of response processment to python side.
  - Changed grid return object.
  - Fix bugs and code cleanup.
 

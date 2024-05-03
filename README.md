@@ -20,6 +20,8 @@ Live examples and documentation [on Streamlit Cloud](https://staggrid-examples.s
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
+This package currenlty uses Ag-Grid version 31.2.0.  Which may be behind the current version.  Please reference the documentation here: https://www.ag-grid.com/archive/31.2.0/
+
 # Install
 
 ```
@@ -50,6 +52,7 @@ streamlit run example.py
 Grid data is sent back to streamlit and can be reused in other components. In the example below a chart is updated on grid edition.
 
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
+
 
 # Development Notes
 Version 1.0.4

@@ -20,6 +20,8 @@ Live examples and documentation [on Streamlit Cloud](https://staggrid-examples.s
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
+Current AgGrid version is [31.3.0](https://www.ag-grid.com/archive/31.3.0/)
+
 # Install
 
 ```
@@ -52,6 +54,9 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+Version 1.0.5
+- Updated AgGrid to version 31.3
+
 Version 1.0.4
  - Added information on the event that triggered app rerun
 

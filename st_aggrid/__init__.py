@@ -345,11 +345,11 @@ def AgGrid(
             key=key
             )
 
-    except components.components.MarshallComponentException as ex:
+    except components.custom_component.MarshallComponentException as ex:
         #uses a more complete error message.
         args = list(ex.args)
         args[0] += ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
-        ex = components.components.MarshallComponentException(*args)
+        ex = components.custom_component.MarshallComponentException(*args)
         raise(ex)
     
     if component_value:

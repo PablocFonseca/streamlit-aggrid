@@ -41,6 +41,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ag-grid-community/core@npm:31.3.2":
+  version: 31.3.2
+  resolution: "@ag-grid-community/core@npm:31.3.2"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10/1293814e121c08527ca07f544d9c58e7e35db08f42111363f714f38c56db943273942f00cc42714c462f8091e1c987c8d492232e82c91da731dfb280219d031a
+  languageName: node
+  linkType: hard
+
 "@ag-grid-community/csv-export@npm:31.3.1, @ag-grid-community/csv-export@npm:^31.3.1":
   version: 31.3.1
   resolution: "@ag-grid-community/csv-export@npm:31.3.1"
@@ -68,6 +77,16 @@ __metadata:
   version: 31.3.1
   resolution: "@ag-grid-community/styles@npm:31.3.1"
   checksum: 10/34c4e80f62891fe1d8881e233df38ace6ba03eb2934b3015bb8537937164dc2c261479d8d15d5c06e36f2bb84c3b27c7b65aaab773236190729bdfe32ec2c225
+  languageName: node
+  linkType: hard
+
+"@ag-grid-enterprise/advanced-filter@npm:^31.3.1":
+  version: 31.3.2
+  resolution: "@ag-grid-enterprise/advanced-filter@npm:31.3.2"
+  dependencies:
+    "@ag-grid-community/core": "npm:31.3.2"
+    "@ag-grid-enterprise/core": "npm:31.3.2"
+  checksum: 10/85b67710bc81377771393005804bb417dbddc530ef5a35f5de8f3a44deb26e05bc9a0192878f976664d112cc9056d9ae2c6aaa997952aa80d0ef67c95012ec16
   languageName: node
   linkType: hard
 
@@ -112,6 +131,15 @@ __metadata:
   dependencies:
     "@ag-grid-community/core": "npm:31.3.1"
   checksum: 10/2eb127a9bb7fc620d3611f450f7939bda096422362e6ebdce04f3eb6de6bf5f727fbcb79bbc78066a26fecc1e98ad1b4bfe8b508582dacf2c64adb775cb428d8
+  languageName: node
+  linkType: hard
+
+"@ag-grid-enterprise/core@npm:31.3.2":
+  version: 31.3.2
+  resolution: "@ag-grid-enterprise/core@npm:31.3.2"
+  dependencies:
+    "@ag-grid-community/core": "npm:31.3.2"
+  checksum: 10/791158b3b05e98ec6557dcae9abfc1a4b16266bea5815f0ce90a90b196623cc8bb22882d7c8f1b1dbfeabb4fccbae2423fd3a020a9164fabd93054cd714bfd14
   languageName: node
   linkType: hard
 
@@ -7236,6 +7264,7 @@ __metadata:
     "@ag-grid-community/csv-export": "npm:^31.3.1"
     "@ag-grid-community/react": "npm:^31.3.1"
     "@ag-grid-community/styles": "npm:^31.3.1"
+    "@ag-grid-enterprise/advanced-filter": "npm:^31.3.1"
     "@ag-grid-enterprise/charts": "npm:^31.3.1"
     "@ag-grid-enterprise/clipboard": "npm:^31.3.1"
     "@ag-grid-enterprise/column-tool-panel": "npm:^31.3.1"

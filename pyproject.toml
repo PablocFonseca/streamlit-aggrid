@@ -15,13 +15,11 @@ python = ">=3.8, !=3.9.7"
 streamlit = ">=0.87.0"
 pandas = ">=1.2"
 python-decouple = "^3.6"
-altair = "<5"
 
 [tool.poetry.dev-dependencies]
 black = "*"
 watchdog = "^2.1.9"
 
-[build-system]  
+[build-system]
 requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api" 
-
+build-backend = "poetry.core.masonry.api"

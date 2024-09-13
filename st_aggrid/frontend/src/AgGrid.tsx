@@ -38,7 +38,7 @@ import { SetFilterModule } from "@ag-grid-enterprise/set-filter"
 import { MultiFilterModule } from "@ag-grid-enterprise/multi-filter"
 import { SideBarModule } from "@ag-grid-enterprise/side-bar"
 import { StatusBarModule } from "@ag-grid-enterprise/status-bar"
-
+import { AdvancedFilterModule } from "@ag-grid-enterprise/advanced-filter"
 import { parseISO, compareAsc, format } from "date-fns"
 
 import {deepMap} from "./utils"
@@ -255,6 +255,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         SideBarModule,
         StatusBarModule,
         ClipboardModule,
+        AdvancedFilterModule,
       ])
 
       if ("license_key" in props.args) {

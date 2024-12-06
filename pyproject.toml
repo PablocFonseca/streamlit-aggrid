@@ -11,15 +11,13 @@ include = ["**/frontend/build/**/*"]
 packages = [{include="st_aggrid"}]
 
 [tool.poetry.dependencies]
-python = ">=3.8, !=3.9.7"
-streamlit = ">=0.87.0"
-pandas = ">=1.2"
-python-decouple = "^3.6"
-altair = "<5"
+python = ">=3.10"
+streamlit = ">=1.2"
+pandas = ">=1.4.0"
+python-decouple = "*"
 
 [tool.poetry.dev-dependencies]
-black = "*"
-watchdog = "^2.1.9"
+ruff= "*"
 
 [build-system]  
 requires = ["poetry-core>=1.0.0"]

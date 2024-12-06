@@ -350,30 +350,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
-  private handleExcelExport() {
-    if (this.props.args.excel_export_mode === "FILE_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.state.api?.getDataAsExcel() as Blob
-      let buffer
-      ;(async () => {
-        await new Promise((resolve, reject) => {
-          blob.arrayBuffer().then((v) => {
-            buffer = encode(v)
-            resolve(buffer)
-          })
-        })
-      })()
-      return buffer
-    }
-
-    if (this.props.args.excel_export_mode === "SHEET_BLOB_IN_GRID_RESPONSE") {
-      let blob = this.state.api?.getSheetDataForExcel({
-        sheetName: Math.round(Date.now() / 1000).toString(),
-      })
-      if (blob) return encode(Buffer.from(blob, "latin1")) ///Buffer.from(blob).toString('base64')
-    }
-    return null
-  }
-
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
     if (
@@ -576,7 +552,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     })
 
     this.state.api.addEventListener(
-      "GridSizeChanged",
+      "gridSizeChanged",
       (e: GridSizeChangedEvent) => this.onGridSizeChanged(e)
     )
     this.state.api.addEventListener(
@@ -654,7 +630,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
               }
             )}
             onChange={debounce((e) => {
-              this.state.api?.setQuickFilter(e.target.value)
+              this.state.api?.setGridOption('quickFilterText', e.target.value)
               this.state.api?.hideOverlay()
             }, 1000)}
           />

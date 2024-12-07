@@ -20,8 +20,8 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**live code***
-Please include a functional example. You may use the excelent [py.cafe](https://py.cafe/) to share your code.
+**live code**
+Please include a functional example. You may use the excellent [py.cafe](https://py.cafe/) to share your code.
 
 **Additional context**
 Add any other context about the problem here.

@@ -53,10 +53,14 @@ import "./agGridStyle.scss"
 import "@fontsource/source-sans-pro"
 import { eventDataWhiteList } from "./constants"
 
+import {FullScreenMaximize} from "@emotion-icons/fluentui-system-filled/"
+
+
+
 type CSSDict = { [key: string]: { [key: string]: string } }
 
 function getCSS(styles: CSSDict): string {
-  var css = []
+  var css  : string[]= []
   for (let selector in styles) {
     let style = selector + " {"
 
@@ -219,6 +223,7 @@ interface State {
   gridHeight: number
   gridOptions: GridOptions
   isRowDataEdited: Boolean
+  isFullScreen: Boolean
   api?: GridApi
 }
 class AgGrid extends React.Component<ComponentProps, State> {
@@ -270,6 +275,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       gridHeight: this.props.args.height,
       gridOptions: go,
       isRowDataEdited: false,
+      isFullScreen: false,
       api: undefined,
     } as State
   }
@@ -359,6 +365,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     ) {
       this.renderedGridHeightPrevious = renderedGridHeight
       Streamlit.setFrameHeight(renderedGridHeight)
+      console.log('setFrameHeight', renderedGridHeight)
     }
   }
 
@@ -494,8 +501,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     } else {
       return {
-        width: this.props.width,
-        height: this.props.args.height,
+        //width: this.props.width,
+        //height: this.props.args.height,
+        height: '100vh',
+        marginTop: '10px'
       }
     }
   }
@@ -598,12 +607,26 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
+  public fullScreenHandler(e: any){
+    if (!document.fullscreenElement){
+      document.documentElement.requestFullscreen().then(v => console.log('p', document.fullscreenElement))
+      this.setState({isFullScreen: true})
+      
+    } else {
+      document.exitFullscreen()
+    }
+
+
+  }
+
+
   public render = (): ReactNode => {
     let shouldRenderGridToolbar =
       this.props.args.enable_quicksearch === true ||
       this.props.args.manual_update ||
       this.props.args.excelExportMode === "MANUAL"
 
+    console.log(FullScreenMaximize)
     return (
       <div
         id="gridContainer"
@@ -611,6 +634,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
+         <div style={{position: 'relative', top: '8px',zIndex:99, float:"right"}} onClick={e => this.fullScreenHandler(e)}>{<FullScreenMaximize size={16}/> }</div>
         <GridToolBar enabled={shouldRenderGridToolbar}>
           <ManualUpdateButton
             manualUpdate={this.props.args.manual_update}

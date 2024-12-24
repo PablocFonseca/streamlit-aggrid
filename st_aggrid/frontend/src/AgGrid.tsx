@@ -1,57 +1,38 @@
+import { AgGridReact } from "ag-grid-react"
+import React, { ReactNode } from "react"
+
 import {
-  Streamlit,
   ComponentProps,
+  Streamlit,
   withStreamlitConnection,
 } from "streamlit-component-lib"
 
-import React, { ReactNode } from "react"
-import { AgGridReact } from "@ag-grid-community/react"
-
 import {
-  ModuleRegistry,
-  GridApi,
-  DetailGridInfo,
-  GridReadyEvent,
-  GridOptions,
-  GetRowIdParams,
-  GridSizeChangedEvent,
+  AllCommunityModule,
   CellValueChangedEvent,
+  DetailGridInfo,
+  GetRowIdParams,
+  GridApi,
+  GridOptions,
+  GridReadyEvent,
+  GridSizeChangedEvent,
   IRowNode,
-} from "@ag-grid-community/core"
+  ModuleRegistry
+} from "ag-grid-community"
 
-import { CsvExportModule } from "@ag-grid-community/csv-export"
-import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model"
-import { LicenseManager } from "@ag-grid-enterprise/core"
-
-import { GridChartsModule } from "@ag-grid-enterprise/charts"
-import { SparklinesModule } from "@ag-grid-enterprise/sparklines"
-import { ClipboardModule } from "@ag-grid-enterprise/clipboard"
-import { ColumnsToolPanelModule } from "@ag-grid-enterprise/column-tool-panel"
-import { ExcelExportModule } from "@ag-grid-enterprise/excel-export"
-import { FiltersToolPanelModule } from "@ag-grid-enterprise/filter-tool-panel"
-import { MasterDetailModule } from "@ag-grid-enterprise/master-detail"
-import { MenuModule } from "@ag-grid-enterprise/menu"
-import { RangeSelectionModule } from "@ag-grid-enterprise/range-selection"
-import { RichSelectModule } from "@ag-grid-enterprise/rich-select"
-import { RowGroupingModule } from "@ag-grid-enterprise/row-grouping"
-import { SetFilterModule } from "@ag-grid-enterprise/set-filter"
-import { MultiFilterModule } from "@ag-grid-enterprise/multi-filter"
-import { SideBarModule } from "@ag-grid-enterprise/side-bar"
-import { StatusBarModule } from "@ag-grid-enterprise/status-bar"
-
-import { parseISO, compareAsc, format } from "date-fns"
-
-import {deepMap} from "./utils"
-import { duration } from "moment"
+import { AgChartsEnterpriseModule } from 'ag-charts-enterprise'
+import { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise'
 
 import _, { debounce, throttle } from "lodash"
 
-import { encode, decode } from "base64-arraybuffer"
-import { Buffer } from "buffer"
-
-import "./agGridStyle.scss"
-import "@fontsource/source-sans-pro"
 import { eventDataWhiteList } from "./constants"
+import { columnFormaters } from "./customColumns"
+import { deepMap } from "./utils"
+
+import "@fontsource/source-sans-pro"
+//import "./agGridStyle.scss"
+
+import { themeBalham } from 'ag-grid-community'
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
@@ -96,70 +77,6 @@ function parseJsCodeFromPython(v: string) {
   } else {
     return v
   }
-}
-
-//TODO: mover formaters to gridOptionsBuilder options
-function dateFormatter(isoString: string, formaterString: string): String {
-  try {
-    let date = parseISO(isoString)
-    return format(date, formaterString)
-  } catch {
-    return isoString
-  } finally {
-  }
-}
-
-function currencyFormatter(number: any, currencySymbol: string): String {
-  let n = Number.parseFloat(number)
-  if (!Number.isNaN(n)) {
-    return currencySymbol + n.toFixed(2)
-  } else {
-    return number
-  }
-}
-
-function numberFormatter(number: any, precision: number): String {
-  let n = Number.parseFloat(number)
-  if (!Number.isNaN(n)) {
-    return n.toFixed(precision)
-  } else {
-    return number
-  }
-}
-
-const columnFormaters = {
-  dateColumnFilter: {
-    filter: "agDateColumnFilter",
-    filterParams: {
-      comparator: (filterValue: any, cellValue: string) =>
-        compareAsc(parseISO(cellValue), filterValue),
-    },
-  },
-  numberColumnFilter: {
-    filter: "agNumberColumnFilter",
-  },
-  shortDateTimeFormat: {
-    valueFormatter: (params: any) =>
-      dateFormatter(params.value, "dd/MM/yyyy HH:mm"),
-  },
-  customDateTimeFormat: {
-    valueFormatter: (params: any) =>
-      dateFormatter(params.value, params.column.colDef.custom_format_string),
-  },
-  customNumericFormat: {
-    valueFormatter: (params: any) =>
-      numberFormatter(params.value, params.column.colDef.precision ?? 2),
-  },
-  customCurrencyFormat: {
-    valueFormatter: (params: any) =>
-      currencyFormatter(
-        params.value,
-        params.column.colDef.custom_currency_symbol
-      ),
-  },
-  timedeltaFormat: {
-    valueFormatter: (params: any) => duration(params.value).humanize(true),
-  },
 }
 
 function GridToolBar(props: any) {
@@ -235,31 +152,41 @@ class AgGrid extends React.Component<ComponentProps, State> {
       addCustomCSS(props.args.custom_css)
     }
 
-    ModuleRegistry.register(ClientSideRowModelModule)
-    ModuleRegistry.register(CsvExportModule)
-
-    if (props.args.enable_enterprise_modules) {
-      ModuleRegistry.registerModules([
-        ExcelExportModule,
-        GridChartsModule,
-        SparklinesModule,
-        ColumnsToolPanelModule,
-        FiltersToolPanelModule,
-        MasterDetailModule,
-        MenuModule,
-        RangeSelectionModule,
-        RichSelectModule,
-        RowGroupingModule,
-        SetFilterModule,
-        MultiFilterModule,
-        SideBarModule,
-        StatusBarModule,
-        ClipboardModule,
-      ])
+    if (!props.args.enable_enterprise_modules) {
+      ModuleRegistry.registerModules([AllCommunityModule])
+    } else {
+      ModuleRegistry.registerModules([AllEnterpriseModule.with(AgChartsEnterpriseModule)])
 
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])
       }
+
+    }
+    
+
+    // ModuleRegistry.register(ClientSideRowModelModule)
+    // ModuleRegistry.register(CsvExportModule)
+
+    if (props.args.enable_enterprise_modules) {
+      // ModuleRegistry.registerModules([
+      //   ExcelExportModule,
+      //   GridChartsModule,
+      //   SparklinesModule,
+      //   ColumnsToolPanelModule,
+      //   FiltersToolPanelModule,
+      //   MasterDetailModule,
+      //   MenuModule,
+      //   RangeSelectionModule,
+      //   RichSelectModule,
+      //   RowGroupingModule,
+      //   SetFilterModule,
+      //   MultiFilterModule,
+      //   SideBarModule,
+      //   StatusBarModule,
+      //   ClipboardModule,
+      // ])
+
+
     }
 
     this.isGridAutoHeightOn =
@@ -329,27 +256,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
-  private DownloadAsExcelIfRequested() {
-    if (this.state.api) {
-      if (
-        this.props.args.excel_export_mode === "MULTIPLE_SHEETS" &&
-        this.props.args.ExcelExportMultipleSheetParams
-      ) {
-        let params = this.props.args.ExcelExportMultipleSheetParams
-
-        let data = params.data.map((v: string) =>
-          Buffer.from(decode(v)).toString("latin1")
-        )
-        params.data = data
-
-        this.state.api?.exportMultipleSheetsAsExcel(params)
-      }
-      if (this.props.args.excel_export_mode === "TRIGGER_DOWNLOAD") {
-        this.state.api?.exportDataAsExcel()
-      }
-    }
-  }
-
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
     if (
@@ -411,19 +317,19 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     }
     let nodes: any[] = []
-    this.state.api?.forEachNode((n, i) => {
+    this.state.api?.forEachNode((n: any, i: any) => {
       nodes.push(fetch_node_props(n))
     })
 
     let rowsAfterFilter: any[] = []
-    this.state.api?.forEachNodeAfterFilter((row) => {
+    this.state.api?.forEachNodeAfterFilter((row: { group: any; id: any }) => {
       if (!row.group) {
         rowsAfterFilter.push(row.id)
       }
     })
 
     let rowsAfterSortAndFilter: any[] = []
-    this.state.api?.forEachNodeAfterFilterAndSort((row) => {
+    this.state.api?.forEachNodeAfterFilterAndSort((row: { group: any; id: any }) => {
       if (!row.group) {
         rowsAfterSortAndFilter.push(row.id)
       }
@@ -432,7 +338,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     let selected: any = []
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
       //console.log(d);
-      d.api?.forEachNode((n) => {
+      d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
         if (n.isSelected()) {
           selected.push(n.id)
         }
@@ -509,6 +415,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     if (themeBase === "dark" && themeName !== "material") {
       themeClass = themeClass + "-dark"
     }
+    return 'alpine'
     return themeClass
   }
 
@@ -540,7 +447,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private onGridReady(event: GridReadyEvent) {
     this.setState({ api: event.api })
 
-    //Is it ugly? Yes. Does it work? Yes.
+    //Is it ugly? Yes. Does it work? Yes. Why? IDK
     this.state.api = event.api
 
     this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
@@ -607,7 +514,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     return (
       <div
         id="gridContainer"
-        className={this.getThemeClass()}
+        //className={this.getThemeClass()}
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
@@ -638,6 +545,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         <AgGridReact
           onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}
+          theme={themeBalham}
         ></AgGridReact>
       </div>
     )

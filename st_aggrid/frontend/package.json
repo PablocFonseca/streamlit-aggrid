@@ -78,6 +78,7 @@
   },
   "homepage": ".",
   "devDependencies": {
+    "prettier": "3.4.2",
     "source-map-explorer": "^2.5.3"
   },
   "jest": {

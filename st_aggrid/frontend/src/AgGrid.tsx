@@ -28,6 +28,7 @@ import _, { debounce, throttle } from "lodash"
 import { eventDataWhiteList } from "./constants"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
+import { ThemeParser} from "./ThemeParser"
 
 import "@fontsource/source-sans-pro"
 //import "./agGridStyle.scss"
@@ -140,9 +141,11 @@ interface State {
 }
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
+
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
   private renderedGridHeightPrevious: number = 0
+  private themeParser : ThemeParser | undefined=  undefined
 
   constructor(props: ComponentProps) {
     super(props)
@@ -163,32 +166,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     }
     
-
-    // ModuleRegistry.register(ClientSideRowModelModule)
-    // ModuleRegistry.register(CsvExportModule)
-
-    if (props.args.enable_enterprise_modules) {
-      // ModuleRegistry.registerModules([
-      //   ExcelExportModule,
-      //   GridChartsModule,
-      //   SparklinesModule,
-      //   ColumnsToolPanelModule,
-      //   FiltersToolPanelModule,
-      //   MasterDetailModule,
-      //   MenuModule,
-      //   RangeSelectionModule,
-      //   RichSelectModule,
-      //   RowGroupingModule,
-      //   SetFilterModule,
-      //   MultiFilterModule,
-      //   SideBarModule,
-      //   StatusBarModule,
-      //   ClipboardModule,
-      // ])
-
-
-    }
-
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
@@ -210,25 +187,30 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
-    //console.log("all rows have __pandas_index:", (_.every(gridOptions.rowData, (o) => '__pandas_index' in o)))
     if (_.every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
       if (!("getRowId" in gridOptions)) {
         gridOptions["getRowId"] = (params: GetRowIdParams) =>
           params.data.__pandas_index as string
-        //console.info("gridRowId() function set as underlying pandas dataframe index.", gridOptions['getRowId'])
       }
     }
+
     if (!("getRowId" in gridOptions)) {
       console.warn("getRowId was not set. Grid may behave bad when updating.")
     }
-
-    //console.log("GridOptions for", this.props.args.key, ":", gridOptions)
 
     //adds custom columnFormatters
     gridOptions.columnTypes = Object.assign(
       gridOptions.columnTypes || {},
       columnFormaters
     )
+    
+    //processTheming
+    this.themeParser = new ThemeParser()
+    let streamlitTheme = this.props.theme
+    let agGridTheme = this.props.args.theme
+
+    gridOptions.theme = this.themeParser.parse(agGridTheme,streamlitTheme)
+
     return gridOptions
   }
 
@@ -337,7 +319,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     let selected: any = []
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
-      //console.log(d);
+      
       d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
         if (n.isSelected()) {
           selected.push(n.id)
@@ -406,26 +388,21 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
-  private getThemeClass() {
-    const themeName = this.props.args.theme
-    const themeBase = this.props.theme?.base
-
-    var themeClass = "ag-theme-" + themeName
-
-    if (themeBase === "dark" && themeName !== "material") {
-      themeClass = themeClass + "-dark"
-    }
-    return 'alpine'
-    return themeClass
-  }
-
   public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
     const prevGridOptions = prevProps.args.gridOptions
     const currGridOptions = this.props.args.gridOptions
 
+    //Theme object Changes here
+    if (!_.isEqual(prevProps.theme , this.props.theme)) {
+      let streamlitTheme = this.props.theme
+      let agGridTheme = this.props.args.theme
+
+      this.state.api?.updateGridOptions({theme: this.themeParser?.parse(agGridTheme,streamlitTheme)});
+    }
+
     //const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
     if (!_.isEqual(prevGridOptions, currGridOptions)) {
-      //console.dir(objectDiff(prevGridOptions, currGridOptions))
+
       let go = this.parseGridoptions()
       let row_data = go.rowData
 
@@ -514,7 +491,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     return (
       <div
         id="gridContainer"
-        //className={this.getThemeClass()}
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
@@ -545,7 +521,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
         <AgGridReact
           onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}
-          theme={themeBalham}
         ></AgGridReact>
       </div>
     )

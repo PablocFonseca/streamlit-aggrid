@@ -12,7 +12,7 @@ from st_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
     JsCode,
-    stAggridThemeOptions,
+    StAggridTheme,
     walk_gridOptions,
     AgGridTheme,
 )
@@ -155,7 +155,7 @@ def AgGrid(
     try_to_convert_back_to_original_types: bool = True,
     conversion_errors: str = "coerce",
     columns_state=None,
-    theme: str | stAggridThemeOptions = AgGridTheme.STREAMLIT,
+    theme: str | StAggridTheme = "streamlit",
     custom_css=None,
     key: typing.Any = None,
     update_on=[],
@@ -303,16 +303,20 @@ def AgGrid(
     #         theme = theme.value
 
     ##Parses Themes
-    if not (isinstance(theme, (str, AgGridTheme, stAggridThemeOptions))):
+    if isinstance(theme, (str, AgGridTheme)):
+        # Legacy compatibility
+        themeObj: StAggridTheme = StAggridTheme(None)
+        themeObj["themeName"] = theme if isinstance(theme, str) else theme.value
+
+    elif isinstance(theme, StAggridTheme):
+        themeObj = theme
+
+    elif theme is None:
+        themeObj = "streamlit"
+    else:
         raise ValueError(
             f"{theme} is not valid. Available options: {AgGridTheme.__members__}"
         )
-
-    if isinstance(theme, str):
-        themeObj: stAggridThemeOptions = {}
-        themeObj["themeName"] = theme
-    elif isinstance(theme, AgGridTheme):
-        themeObj = theme
 
     if not isinstance(data_return_mode, (str, DataReturnMode)):
         raise ValueError(
@@ -399,13 +403,13 @@ def AgGrid(
             key=key,
         )
 
-    except components.components.MarshallComponentException as ex:
+    except Exception as ex:  # components.components.MarshallComponentException as ex:
         # uses a more complete error message.
         args = list(ex.args)
         args[0] += (
             ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
         )
-        ex = components.components.MarshallComponentException(*args)
+        # ex = components.components.MarshallComponentException(*args)
         raise (ex)
 
     if component_value:

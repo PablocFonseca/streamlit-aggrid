@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum, IntEnum, IntFlag, Flag, auto, EnumMeta
 import json
 import pathlib
@@ -207,8 +208,31 @@ class AgGridTheme(BaseEnum):
     MATERIAL = "material"
 
 
-class stAggridThemeOptions(TypedDict):
+class StAggridThemeType(TypedDict):
     themeName: str
-    themeBase: Literal["alpine", "balham", "quartz"]
-    withParams: Optional[Mapping[str, str | int]]
-    withParts: Optional[List[str]]
+    base: Literal["alpine", "balham", "quartz"]
+    params: Optional[Mapping[str, str | int]] = {}
+    parts: Optional[List[str]]
+
+
+# suclassing a dict because it is JSON serializable.
+class StAggridTheme(dict):
+    def __init__(self, base: Optional[Literal["alpine", "balham", "quartz"]] = None):
+        super()
+
+        self["params"] = {}
+        self["parts"] = list()
+        if base:
+            self["themeName"] = "custom"
+            self.base(base)
+
+    def base(self, base: Literal["alpine", "balham", "quartz"]):
+        self["base"] = base
+
+    def withParams(self, **params: Mapping[str, str | int]):
+        self["params"].update(params)
+        return self
+
+    def withParts(self, *parts: List[str]):
+        self["parts"] = list(set(self["parts"]).union(set(parts)))
+        return self

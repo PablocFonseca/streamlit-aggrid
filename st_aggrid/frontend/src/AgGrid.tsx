@@ -393,12 +393,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
     const currGridOptions = this.props.args.gridOptions
 
     //Theme object Changes here
-    if (!_.isEqual(prevProps.theme , this.props.theme)) {
+    if ((!_.isEqual(prevProps.theme , this.props.theme)) || (! _.isEqual(this.props.args.theme, prevProps.args.theme))) {
       let streamlitTheme = this.props.theme
       let agGridTheme = this.props.args.theme
 
       this.state.api?.updateGridOptions({theme: this.themeParser?.parse(agGridTheme,streamlitTheme)});
     }
+
 
     //const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
     if (!_.isEqual(prevGridOptions, currGridOptions)) {

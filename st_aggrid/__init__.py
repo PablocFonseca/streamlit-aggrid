@@ -8,6 +8,7 @@ from st_aggrid.shared import (
     ColumnsAutoSizeMode,
     AgGridTheme,
     ExcelExportMode,
+    StAggridTheme,
 )
 from st_aggrid.AgGridReturn import AgGridReturn
 
@@ -22,4 +23,5 @@ __all__ = [
     "ColumnsAutoSizeMode",
     "AgGridTheme",
     "ExcelExportMode",
+    "StAggridTheme",
 ]

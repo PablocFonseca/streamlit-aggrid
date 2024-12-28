@@ -1,17 +1,16 @@
 from collections import defaultdict
-import pandas as pd
 from st_aggrid.shared import getAllColumnProps, getAllGridOptions
+from st_aggrid.types import GridOptions, ColDef
 
 
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""
 
     def __init__(self):
-        
         def ddict():
             return defaultdict(ddict)
 
-        self.__grid_options = ddict()
+        self.__grid_options: GridOptions = ddict()
         self.sideBar: dict = dict()
 
     @staticmethod
@@ -42,18 +41,17 @@ class GridOptionsBuilder:
             "V": [],
         }
 
-        COLUMN_PROPS = [i['name'] for i in getAllColumnProps()]
-        GRID_OPTIONS = [i['name'] for i in getAllGridOptions()]
+        COLUMN_PROPS = [i["name"] for i in getAllColumnProps()]
+        GRID_OPTIONS = [i["name"] for i in getAllGridOptions()]
 
         gb = GridOptionsBuilder()
 
         # fetch extra args that should go to DefaultColumns
-        for k,v in default_column_parameters.items():
-            
+        for k, v in default_column_parameters.items():
             if k in COLUMN_PROPS:
-               gb.configure_default_column(**{k:v})
+                gb.configure_default_column(**{k: v})
             elif k in GRID_OPTIONS:
-                gb.configure_grid_options(**{k:v})
+                gb.configure_grid_options(**{k: v})
             else:
                 print(f"{k} is not a valid gridOption or columnDef.")
 
@@ -63,7 +61,9 @@ class GridOptionsBuilder:
         for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
-        gb.configure_grid_options(autoSizeStrategy={'type':'fitCellContents', 'skipHeader':False})
+        gb.configure_grid_options(
+            autoSizeStrategy={"type": "fitCellContents", "skipHeader": False}
+        )
 
         return gb
 
@@ -76,7 +76,7 @@ class GridOptionsBuilder:
         # editable=False,
         # groupable=False,
         # sorteable=None,
-        **other_default_column_properties
+        **other_default_column_properties: ColDef,
     ):
         """Configure default column.
 
@@ -125,7 +125,10 @@ class GridOptionsBuilder:
         if other_default_column_properties:
             defaultColDef = {**defaultColDef, **other_default_column_properties}
 
-        self.__grid_options["defaultColDef"] = {**self.__grid_options["defaultColDef"], **other_default_column_properties}
+        self.__grid_options["defaultColDef"] = {
+            **self.__grid_options["defaultColDef"],
+            **other_default_column_properties,
+        }
 
     def configure_auto_height(self, autoHeight=True):
         """
@@ -302,8 +305,8 @@ class GridOptionsBuilder:
                     ] = True
 
         if pre_selected_rows:
-            #self.__grid_options["preSelectedRows"] = pre_selected_rows
-            self.__grid_options['initialState']['rowSelection'] = pre_selected_rows
+            # self.__grid_options["preSelectedRows"] = pre_selected_rows
+            self.__grid_options["initialState"]["rowSelection"] = pre_selected_rows
 
         self.__grid_options["rowSelection"] = selection_mode
         self.__grid_options["rowMultiSelectWithClick"] = rowMultiSelectWithClick
@@ -313,7 +316,7 @@ class GridOptionsBuilder:
             groupSelectsChildren and selection_mode == "multiple"
         )
         self.__grid_options["groupSelectsFiltered"] = groupSelectsFiltered
-        #self.__grid_options["preSelectAllRows"] = pre_select_all_rows
+        # self.__grid_options["preSelectAllRows"] = pre_select_all_rows
 
     def configure_pagination(
         self, enabled=True, paginationAutoPageSize=True, paginationPageSize=10
@@ -374,7 +377,7 @@ class GridOptionsBuilder:
 
         self.configure_column(first_col_def, headerText, **index_options)
 
-    def build(self):
+    def build(self) -> GridOptions:
         """Builds the gridOptions dictionary
 
         Returns:

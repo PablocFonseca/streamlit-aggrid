@@ -2,25 +2,18 @@
 
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] [![Downloads][downloads_badge]][downloads_link]
 
----
-> [!WARNING] 
-> v1.0.0 breaks compatibility with previous versions and many people reached me to say that it is unstable.  
-> Main changes are on gridReturn object as I'm moving heavy processment to python side.  
-> I'm working to stabilize it, if you find any issues, please open a topic on the issue tracker  
-> with a reproductile example, if possible.  
-> Meanwhile use the last v.0.3.4 if things are not working for you! I hope to have everything fixed soon.  
+> [!IMPORTANT]
+> 💰 If you want to support this lonely python coder you can [Wise](https://wise.com/pay/r/nZDsjl5fZgPxYt0) or [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ) me. (Any help is much appreciated).
 
+> For sponsoring, development support, features prioritization you can [email me](mailto:pablo.fonseca+staggrid@gmail.com).
 
-If you want to sponsor or support this project you can [mail me](mailto:pablo.fonseca+staggrid@gmail.com).   
-You may want to [Buy me a coffee](https://www.buymeacoffee.com/pablofonseca) or [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ)
-
-Live examples and documentation [on Streamlit Cloud](https://staggrid-examples.streamlit.app/)
+[Live examples](https://staggrid-examples.streamlit.app/) and documentation on Streamlit Cloud.
 
 ---
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
-Current AgGrid version is [31.3.0](https://www.ag-grid.com/archive/31.3.0/)
+Current AgGrid version is [32.3.0](https://www.ag-grid.com/archive/32.3.0/)
 
 # Install
 
@@ -54,22 +47,38 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+
+Version 1.1.0
+
+- Updated AgGrid to version 32.3
+- Added partial support for the aggrid [Theming](https://www.ag-grid.com/javascript-data-grid/theming/) - Check [example](https://staggrid-examples.streamlit.app/Themes)
+- Cleaned project dependencies (Altair < 5)
+
 Version 1.0.5
+
 - Updated AgGrid to version 31.3
 
 Version 1.0.4
- - Added information on the event that triggered app rerun
 
+- Added information on the event that triggered app rerun
 
 Version 1.0.2
- - Moved a lot of response processment to python side.
- - Changed grid return object.
- - Fix bugs and code cleanup.
+
+- Moved a lot of response processment to python side.
+- Changed grid return object.
+- Fix bugs and code cleanup.
+
+> [!WARNING]
+> v1.0.0 breaks compatibility with previous versions and many people reached me to say that it is unstable.  
+> Main changes are on gridReturn object as I'm moving heavy processment to python side.  
+> I'm working to stabilize it, if you find any issues, please open a topic on the issue tracker  
+> with a reproductile example, if possible.  
+> Meanwhile use the last v.0.3.4 if things are not working for you! I hope to have everything fixed soon.
 
 Version 0.3.5
- - Merged many PR, thanks everybody.
- - Grid State can be saved and retrieved. Many people requested this one. Live Example [Here](https://staggrid-examples.streamlit.app/?example=%27Grid%20State%27) 
 
+- Merged many PR, thanks everybody.
+- Grid State can be saved and retrieved. Many people requested this one. Live Example [Here](https://staggrid-examples.streamlit.app/?example=%27Grid%20State%27)
 
 Version 0.3.4
 

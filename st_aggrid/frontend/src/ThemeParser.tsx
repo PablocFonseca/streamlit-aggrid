@@ -52,7 +52,7 @@ class ThemeParser {
     }
 
     streamlitRecipe(streamlitTheme: StreamlitTheme): Theme{
-        let theme : Theme = this.baseMapper['alpine']
+        let theme : Theme = this.baseMapper['balham']
         const font = streamlitTheme?.font.split(",").at(1)?.trim() || "Source Sans Pro"
         const fontFamily = [font, {googleFont: font}]
 
@@ -61,7 +61,7 @@ class ThemeParser {
             fontFamily: fontFamily,
             foregroundColor: streamlitTheme.textColor,
             backgroundColor: streamlitTheme.backgroundColor
-        }).withPart(iconSetQuartzRegular)
+        }).withPart(iconSetQuartzLight)
         .withPart(this.partsMapper.iconSetQuartzRegular)
         if (streamlitTheme?.base === 'dark'){
             theme = theme.withPart(colorSchemeDark)

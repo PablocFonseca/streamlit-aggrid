@@ -1,14 +1,18 @@
 [tool.poetry]
 name = "streamlit-aggrid"
-version = "1.0.5"
+version = "1.1.0"
 description = "Streamlit component implementation of ag-grid"
-classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
 authors = ["Pablo Fonseca <pablo.fonseca+pip@gmail.com>"]
 readme = "README.md"
 exclude = ["**/node_modules/**/*", "**/frontend/src/**/*", "**/.yarn/**/*"]
 include = ["**/frontend/build/**/*"]
-packages = [{include="st_aggrid"}]
+packages = [{ include = "st_aggrid" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10"
@@ -17,9 +21,8 @@ pandas = ">=1.4.0"
 python-decouple = "*"
 
 [tool.poetry.dev-dependencies]
-ruff= "*"
+ruff = "*"
 
-[build-system]  
+[build-system]
 requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api" 
-
+build-backend = "poetry.core.masonry.api"

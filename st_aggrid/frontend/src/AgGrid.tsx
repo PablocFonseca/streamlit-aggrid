@@ -353,19 +353,18 @@ class AgGrid extends React.Component<ComponentProps, State> {
     cleanEventData["streamlitRerunEventTriggerName"] =
       streamlitRerunEventTriggerName
 
+    
     let returnValue = {
       originalDtypes: this.props.args.frame_dtypes,
       nodes: nodes,
       selectedItems: this.state.api?.getSelectedRows(),
       gridState: this.state.api?.getState(),
       columnsState: this.state.api?.getColumnState(),
-      gridOptions: JSON.stringify(this.state.gridOptions),
-      //ExcelBlob: this.handleExcelExport(),
+      gridOptions: JSON.stringify(this.state.gridOptions), //performance bottleneck
       rowIdsAfterFilter: rowsAfterFilter,
       rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
       eventData: cleanEventData,
     }
-
     return returnValue
   }
 

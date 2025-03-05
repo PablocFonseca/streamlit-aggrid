@@ -48,6 +48,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.1.1
+
+- Solves [#306](https://github.com/PablocFonseca/streamlit-aggrid/issues/306) and [#305](https://github.com/PablocFonseca/streamlit-aggrid/issues/305)
+
 Version 1.1.0
 
 - Updated AgGrid to version 32.3

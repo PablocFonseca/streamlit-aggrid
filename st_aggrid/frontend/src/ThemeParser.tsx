@@ -53,7 +53,7 @@ class ThemeParser {
 
     streamlitRecipe(streamlitTheme: StreamlitTheme): Theme{
         let theme : Theme = this.baseMapper['balham']
-        const font = streamlitTheme?.font.split(",").at(1)?.trim() || "Source Sans Pro"
+        const font = streamlitTheme?.font?.split(",").at(1)?.trim() || "Source Sans Pro"
         const fontFamily = [font, {googleFont: font}]
 
         theme = theme.withParams({

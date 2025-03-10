@@ -1,5 +1,6 @@
 import os
 import json
+import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import warnings
@@ -159,6 +160,7 @@ def AgGrid(
     custom_css=None,
     key: typing.Any = None,
     update_on=[],
+    callback = None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
@@ -215,6 +217,11 @@ def AgGrid(
             Grid will return when cell values are changed AND when columns are resized, however the later will
             be debounced by 500 ms. More information about debounced functions
             here: https://www.freecodecamp.org/news/javascript-debounce-example/
+
+    callback: callable, option
+        defines a function that will be called on change. One argument will be passed to the function
+        which will be an AgGridReturn object in the same fashion as what is returned by this class.
+        Requires key to be set.
 
     data_return_mode : DataReturnMode, optional
         Defines how the data will be retrieved from components client side. One of:
@@ -378,6 +385,33 @@ def AgGrid(
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
+
+    if callback and not key:
+        raise ValueError("Component key must be set to use a callback.")
+    elif key and not callback:
+        # This allows the table to keep its state up to date (eg #176)
+        def _inner_callback():
+            inner_response = AgGridReturn(
+                data,
+                gridOptions,
+                data_return_mode,
+                try_to_convert_back_to_original_types,
+                conversion_errors,
+            )
+            inner_response._set_component_value(st.session_state[key])
+    elif callback and key:
+        # User defined callback
+        def _inner_callback():
+            inner_response = AgGridReturn(
+                data,
+                gridOptions,
+                data_return_mode,
+                try_to_convert_back_to_original_types,
+                conversion_errors,
+            )
+            inner_response._set_component_value(st.session_state[key])
+            return callback(inner_response)
+
     response = AgGridReturn(
         data,
         gridOptions,
@@ -401,6 +435,7 @@ def AgGrid(
             update_on=update_on,
             manual_update=manual_update,
             key=key,
+            on_change=_inner_callback
         )
 
     except Exception as ex:  # components.components.MarshallComponentException as ex:

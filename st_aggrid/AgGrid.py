@@ -385,35 +385,6 @@ def AgGrid(
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
-
-    if callback and not key:
-        raise ValueError("Component key must be set to use a callback.")
-    elif key and not callback:
-        # This allows the table to keep its state up to date (eg #176)
-        def _inner_callback():
-            inner_response = AgGridReturn(
-                data,
-                gridOptions,
-                data_return_mode,
-                try_to_convert_back_to_original_types,
-                conversion_errors,
-            )
-            inner_response._set_component_value(st.session_state[key])
-    elif callback and key:
-        # User defined callback
-        def _inner_callback():
-            inner_response = AgGridReturn(
-                data,
-                gridOptions,
-                data_return_mode,
-                try_to_convert_back_to_original_types,
-                conversion_errors,
-            )
-            inner_response._set_component_value(st.session_state[key])
-            return callback(inner_response)
-    else:
-        _inner_callback = None
-
     response = AgGridReturn(
         data,
         gridOptions,
@@ -421,6 +392,23 @@ def AgGrid(
         try_to_convert_back_to_original_types,
         conversion_errors,
     )
+
+    if callback and not key:
+        raise ValueError("Component key must be set to use a callback.")
+    elif key and not callback:
+        # This allows the table to keep its state up to date (eg #176)
+        def _inner_callback():
+            response._set_component_value(st.session_state[key])
+    elif callback and key:
+        # User defined callback
+        def _inner_callback():
+            response._set_component_value(st.session_state[key])
+            return callback(response)
+    else:
+        _inner_callback = None
+
+
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,

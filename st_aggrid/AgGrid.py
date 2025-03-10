@@ -411,6 +411,8 @@ def AgGrid(
             )
             inner_response._set_component_value(st.session_state[key])
             return callback(inner_response)
+    else:
+        _inner_callback = None
 
     response = AgGridReturn(
         data,

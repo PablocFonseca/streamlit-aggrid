@@ -41,15 +41,18 @@ class AgGridReturn(Mapping):
         self.__data_return_mode = data_return_mode
 
         self.__dict__["grid_response"] = {"gridOptions": gridOptions}
-    
+
 
     def _set_component_value(self, component_value):
         self.__component_value_set = True
 
         self.__dict__["grid_response"] = component_value
-        self.__dict__["grid_response"]["gridOptions"] = json.loads(
-        self.__dict__["grid_response"]["gridOptions"]
-            )
+        if isinstance(self.__dict__["grid_response"]["gridOptions"], dict):
+            pass # Callback is already a dict
+        else:
+            self.__dict__["grid_response"]["gridOptions"] = json.loads(
+            self.__dict__["grid_response"]["gridOptions"]
+                )
 
     @property
     def grid_response(self):
@@ -137,7 +140,7 @@ class AgGridReturn(Mapping):
                 data.loc[:, timedelta_columns] = data.loc[:, timedelta_columns].apply(
                     cast_to_timedelta
                 )
-  
+
         return data
 
     def __process_grouped_response(
@@ -178,7 +181,7 @@ class AgGridReturn(Mapping):
                     nodes,
                     self.__try_to_convert_back_to_original_types and onlySelected
                 )
-            
+
 
             reindex_ids_map = {
                 DataReturnMode.FILTERED: self.rows_id_after_filter,
@@ -189,34 +192,34 @@ class AgGridReturn(Mapping):
 
             if reindex_ids:
                 reindex_ids = pd.Index(reindex_ids)
-                
+
                 if onlySelected:
                     reindex_ids = reindex_ids.intersection(data.index)
 
-                data = data.reindex(index=reindex_ids)   
+                data = data.reindex(index=reindex_ids)
 
         return data
-    
+
     @property
     def data(self):
         "Data from the grid. If rows are grouped, return only the leaf rows"
 
         return self.__get_data(onlySelected=False)
-    
+
     @property
     def selected_data(self):
         "Selected Data from the grid."
-        
+
         return self.__get_data(onlySelected=True)
-        
+
     def __get_dataGroups(self, onlySelected):
         if self.__component_value_set:
             nodes = self.grid_response.get("nodes",[])
 
             if onlySelected:
-                #n.get('isSelected', True). Default is true bc agGrid sets undefined for half selected groups   
+                #n.get('isSelected', True). Default is true bc agGrid sets undefined for half selected groups
                 nodes = list(filter(lambda n: n.get('isSelected', True) == True, nodes))
-                
+
                 if not nodes:
                     return [{(''):self.__get_data(onlySelected)}]
 
@@ -229,15 +232,15 @@ class AgGridReturn(Mapping):
                     self.__data_return_mode,
                 )
                 return data
-        
+
         return [{(''):self.__get_data(onlySelected)}]
-    
+
     @property
     def dataGroups(self):
         "returns grouped rows as a dictionary where keys are tuples of groupby strings and values are pandas.DataFrame"
 
         return self.__get_dataGroups(onlySelected=False)
-    
+
     @property
     def selected_dataGroups(self):
         "returns selected rows as a dictionary where keys are tuples of grouped column names and values are pandas.DataFrame"
@@ -248,16 +251,16 @@ class AgGridReturn(Mapping):
     def selected_rows(self):
         """Returns with selected rows. If there are grouped rows return a dict of {key:pd.DataFrame}"""
         selected_items = pd.DataFrame(self.grid_response.get("selectedItems", {}))
-        
+
         if selected_items.empty:
             return None
-        
+
         if "__pandas_index" in selected_items.columns:
             selected_items.set_index("__pandas_index", inplace=True)
             selected_items.index.name = "index"
-        
+
         return selected_items
-    
+
     #TODO: implement event returns
     @property
     def event_data(self):

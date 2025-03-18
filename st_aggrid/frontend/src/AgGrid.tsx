@@ -37,6 +37,23 @@ import { themeBalham } from 'ag-grid-community'
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
+interface CustomStylesheetProps {
+  url: string;
+}
+ 
+function CustomStylesheet({ url }: CustomStylesheetProps) {
+  React.useEffect(() => {
+    const link = document.createElement('link');
+    link.href = url;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [url]);
+  return null;
+}
+
 function getCSS(styles: CSSDict): string {
   var css = []
   for (let selector in styles) {
@@ -494,6 +511,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
+        {this.props.args.links?.map((url: string) => (
+          <CustomStylesheet key={url} url={url} />
+        ))}
         <GridToolBar enabled={shouldRenderGridToolbar}>
           <ManualUpdateButton
             manualUpdate={this.props.args.manual_update}

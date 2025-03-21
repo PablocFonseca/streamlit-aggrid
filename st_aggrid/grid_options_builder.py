@@ -57,10 +57,10 @@ class GridOptionsBuilder:
             else:
                 print(f"{k} is not a valid gridOption or columnDef.")
 
-        if any("." in col for col in dataframe.columns):
+        if any("." in col for col in dataframe.columns.map(str)):
             gb.configure_grid_options(suppressFieldDotNotation=True)
 
-        for col_name, col_type in zip(dataframe.columns, dataframe.dtypes):
+        for col_name, col_type in zip(dataframe.columns.map(str), dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
         gb.configure_grid_options(autoSizeStrategy={'type':'fitCellContents', 'skipHeader':False})

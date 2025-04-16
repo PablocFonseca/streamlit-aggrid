@@ -7,7 +7,7 @@ import warnings
 import typing
 
 from decouple import config
-from typing import Mapping, Union
+from typing import Any, Mapping, Tuple, Union
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import (
     GridUpdateMode,
@@ -28,10 +28,11 @@ def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
             dataframe[c] = dataframe[c].apply(lambda s: s.isoformat())
 
 
-def __parse_row_data(data):
+def __parse_row_data(data) -> Tuple[Any, Any]:
     """Internal method to process data from data_parameter"""
+    # no data received, render an empty grid if gridOptions is present
     if data is None:
-        return None
+        return [], None
 
     if isinstance(data, pd.DataFrame):
         data_parameter = data.copy()
@@ -47,17 +48,22 @@ def __parse_row_data(data):
         del data_parameter["__pandas_index"]
         return json.loads(row_data), frame_dtypes
 
-    elif isinstance(data_parameter, str):
-        is_path = data_parameter.endswith(".json") and os.path.exists(data_parameter)
+    if isinstance(data, str):
+        # is data the path to a local json file?
+        if data.endswith(".json") and os.path.exists(data):
+            try:
+                with open(os.path.abspath(data)) as f:
+                    return json.loads(json.dumps(json.load(f))), None
+            except Exception as ex:
+                raise Exception(f"Error reading {data}. {ex}")
 
-        if is_path:
-            row_data = json.dumps(json.load(open(os.path.abspath(data_parameter))))
-        else:
-            row_data = json.dumps(json.loads(data_parameter))
+        # is data raw valid json?
+        try:
+            return json.loads(data), None
+        except Exception:
+            raise Exception("Error parsing data parameter as raw json.")
 
-        return json.loads(row_data), None
-    else:
-        raise ValueError("Invalid data")
+    raise ValueError("Invalid data")
 
 
 def __parse_grid_options(
@@ -160,7 +166,7 @@ def AgGrid(
     custom_css=None,
     key: typing.Any = None,
     update_on=[],
-    callback = None,
+    callback=None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Reders a DataFrame using AgGrid.
@@ -325,6 +331,7 @@ def AgGrid(
             f"{theme} is not valid. Available options: {AgGridTheme.__members__}"
         )
 
+    # Parse return Mode
     if not isinstance(data_return_mode, (str, DataReturnMode)):
         raise ValueError(
             "DataReturnMode should be either a DataReturnMode enum value or a string."
@@ -335,6 +342,7 @@ def AgGrid(
         except:
             raise ValueError(f"{data_return_mode} is not valid.")
 
+    # Parse update Mode
     if not isinstance(update_mode, (str, GridUpdateMode)):
         raise ValueError(
             "GridUpdateMode should be either a valid GridUpdateMode enum value or string"
@@ -353,20 +361,16 @@ def AgGrid(
             manual_update = False
             update_on.extend(__parse_update_mode(update_mode))
 
+    # Parse gridOptions
     gridOptions = __parse_grid_options(
         gridOptions, data, default_column_parameters, allow_unsafe_jscode
     )
 
     frame_dtypes = []
 
+    # rowData in grid options have precedence and are assumed to be correct json.
     if "rowData" not in gridOptions:
-        if data is not None:
-            row_data, frame_dtypes = __parse_row_data(data)
-        else:
-            raise Exception(
-                "No data provided. Use data parameter to supply a pandas dataframe or valid json. Or set gridOptions.rowData"
-            )
-
+        row_data, frame_dtypes = __parse_row_data(data)
         gridOptions["rowData"] = row_data
 
     if not isinstance(data, pd.DataFrame):
@@ -407,8 +411,6 @@ def AgGrid(
     else:
         _inner_callback = None
 
-
-
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -425,7 +427,7 @@ def AgGrid(
             update_on=update_on,
             manual_update=manual_update,
             key=key,
-            on_change=_inner_callback
+            on_change=_inner_callback,
         )
 
     except Exception as ex:  # components.components.MarshallComponentException as ex:

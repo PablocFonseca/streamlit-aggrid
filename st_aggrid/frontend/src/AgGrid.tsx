@@ -138,6 +138,8 @@ interface State {
   gridOptions: GridOptions
   isRowDataEdited: Boolean
   api?: GridApi
+  enterprise_features_enabled: Boolean
+  debug: Boolean
 }
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
@@ -155,27 +157,36 @@ class AgGrid extends React.Component<ComponentProps, State> {
       addCustomCSS(props.args.custom_css)
     }
 
-    if (!props.args.enable_enterprise_modules) {
-      ModuleRegistry.registerModules([AllCommunityModule])
-    } else {
+    if (props.args.enable_enterprise_modules) {
       ModuleRegistry.registerModules([AllEnterpriseModule.with(AgChartsEnterpriseModule)])
-
+      
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])
       }
 
+    } else {
+      ModuleRegistry.registerModules([AllCommunityModule])
     }
     
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
     var go = this.parseGridoptions()
+
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
       isRowDataEdited: false,
       api: undefined,
+      enterprise_features_enabled: props.args.enable_enterprise_modules,
+      debug: false
     } as State
+
+    if (this.state.debug){
+      console.log("***Received Props", props)
+      console.log("*** Processed State", this.state)
+    }
+
   }
 
   private parseGridoptions() {
@@ -317,15 +328,18 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     })
 
+    //TODO:Review Selections
+    if (this.state.enterprise_features_enabled) {
     let selected: any = []
-    this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
-      
+
+    this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {  
       d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
         if (n.isSelected()) {
           selected.push(n.id)
         }
       })
     })
+  }
 
     //function to recursively walk through object keys and drop then based on value, avoids circular references
     function cleanEventKeys(obj: any, root = "", level = 0) {
@@ -444,12 +458,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
       (e: CellValueChangedEvent) => this.cellValueChanged(e)
     )
 
+    if (this.state.enterprise_features_enabled){
     this.attachStreamlitRerunToEvents(this.state.api)
     this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
         this.attachStreamlitRerunToEvents(i.api)
       }
     })
+  }
   }
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {

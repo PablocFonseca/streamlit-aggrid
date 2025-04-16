@@ -48,6 +48,11 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.1.3
+
+- fixes enterprise modules being enabled by default. (If using enterprise features, buy a license from Ag Grid.)
+- fixes grid initialization when neither data nor gridOptions are set.
+
 Version 1.1.2
 
 - adds PR #308 - Callbacl functionality

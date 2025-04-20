@@ -23,6 +23,13 @@ python-decouple = "*"
 [tool.poetry.dev-dependencies]
 ruff = "*"
 
+[tool.poetry.group.dev.dependencies]
+bs4 = "^0.0.2"
+playwright = "^1.51.0"
+pytest = "^8.3.5"
+pytest-playwright = "^0.7.0"
+watchdog = "^6.0.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -52,6 +52,7 @@ Version 1.1.3
 
 - fixes enterprise modules being enabled by default. (If using enterprise features, buy a license from Ag Grid.)
 - fixes grid initialization when neither data nor gridOptions are set.
+- 1.1.3.post1 fixes [#317](https://github.com/PablocFonseca/streamlit-aggrid/issues/317)
 
 Version 1.1.2
 

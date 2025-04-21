@@ -329,9 +329,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
     })
 
     //TODO:Review Selections
-    if (this.state.enterprise_features_enabled) {
     let selected: any = []
-
+    console.log(this.state.enterprise_features_enabled)
+    if (this.state.enterprise_features_enabled) {
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {  
       d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
         if (n.isSelected()) {
@@ -339,6 +339,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
         }
       })
     })
+  } else {
+    this.state.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
+        if (n.isSelected()) {
+          selected.push(n.id)
+        }
+      })
   }
 
     //function to recursively walk through object keys and drop then based on value, avoids circular references
@@ -457,9 +463,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
       "cellValueChanged",
       (e: CellValueChangedEvent) => this.cellValueChanged(e)
     )
-
-    if (this.state.enterprise_features_enabled){
+    
     this.attachStreamlitRerunToEvents(this.state.api)
+    if (this.state.enterprise_features_enabled){
     this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
         this.attachStreamlitRerunToEvents(i.api)

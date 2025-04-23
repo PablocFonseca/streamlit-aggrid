@@ -169,15 +169,13 @@ class AgGridReturn(Mapping):
         return groups
 
     def __get_data(self, onlySelected):
-        data = self.__original_data if not onlySelected else None
+        data = self.__original_data
 
         if self.__component_value_set:
             nodes = self.grid_response.get("nodes", [])
 
             if onlySelected:
-                nodes = list(
-                    filter(lambda n: n.get("isSelected", False) == True, nodes)
-                )
+                nodes = list(filter(lambda n: n.get("isSelected", False), nodes))
 
                 if not nodes:
                     return None
@@ -213,7 +211,8 @@ class AgGridReturn(Mapping):
                     ]
                 )
 
-        return data
+        if not onlySelected:
+            return data
 
     @property
     def data(self):

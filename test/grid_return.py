@@ -28,9 +28,9 @@ go = {
 }
 r = AgGrid(data, go, key="event_return_grid")
 
-# with st.expander("Raw Response"):
-#     st.write(r.grid_response)
+with st.expander("Raw Response"):
+    st.write(r.grid_response)
 
-# st.code(r.event_data)
-# st.code(r.data)
+st.code(r.event_data)
+st.code(r.data)
 st.code(r.selected_data)

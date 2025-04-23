@@ -330,7 +330,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     //TODO:Review Selections
     let selected: any = []
-    console.log(this.state.enterprise_features_enabled)
     if (this.state.enterprise_features_enabled) {
     this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {  
       d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {

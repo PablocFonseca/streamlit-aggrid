@@ -22,7 +22,7 @@ class AgGridReturn(Mapping):
         gridOptions=None,
         data_return_mode=DataReturnMode.AS_INPUT,
         try_to_convert_back_to_original_types=True,
-        conversion_errors="corce"
+        conversion_errors="corce",
     ) -> None:
         super().__init__()
 
@@ -42,17 +42,16 @@ class AgGridReturn(Mapping):
 
         self.__dict__["grid_response"] = {"gridOptions": gridOptions}
 
-
     def _set_component_value(self, component_value):
         self.__component_value_set = True
 
         self.__dict__["grid_response"] = component_value
         if isinstance(self.__dict__["grid_response"]["gridOptions"], dict):
-            pass # Callback is already a dict
+            pass  # Callback is already a dict
         else:
             self.__dict__["grid_response"]["gridOptions"] = json.loads(
-            self.__dict__["grid_response"]["gridOptions"]
-                )
+                self.__dict__["grid_response"]["gridOptions"]
+            )
 
     @property
     def grid_response(self):
@@ -92,7 +91,9 @@ class AgGridReturn(Mapping):
     def __process_vanilla_df_response(
         self, nodes, __try_to_convert_back_to_original_types
     ):
-        data = pd.DataFrame([n.get("data", {}) for n in nodes if not n.get("group", False) == True])
+        data = pd.DataFrame(
+            [n.get("data", {}) for n in nodes if not n.get("group", False) == True]
+        )
 
         if "__pandas_index" in data.columns:
             data.index = pd.Index(data["__pandas_index"], name="index")
@@ -147,11 +148,10 @@ class AgGridReturn(Mapping):
         self, nodes, __try_to_convert_back_to_original_types, __data_return_mode
     ):
         def travel_parent(o):
-
             if o.get("parent", None) == None:
                 return ""
 
-            return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get('key')}""".lstrip(
+            return rf"""{travel_parent(o.get("parent"))}.{o.get("parent").get("key")}""".lstrip(
                 "."
             )
 
@@ -161,42 +161,57 @@ class AgGridReturn(Mapping):
             if i.get("group", False) == False
         ]
         data = pd.DataFrame(data).set_index("__pandas_index")
-        data.index.name = ''
-        groups = [{tuple(v1.split(".")[1:]): v2.drop('parent', axis=1)} for v1, v2 in data.groupby("parent")]
+        data.index.name = ""
+        groups = [
+            {tuple(v1.split(".")[1:]): v2.drop("parent", axis=1)}
+            for v1, v2 in data.groupby("parent")
+        ]
         return groups
 
     def __get_data(self, onlySelected):
         data = self.__original_data if not onlySelected else None
 
         if self.__component_value_set:
-            nodes = self.grid_response.get("nodes",[])
+            nodes = self.grid_response.get("nodes", [])
 
             if onlySelected:
-                nodes = list(filter(lambda n: n.get('isSelected', False) == True, nodes))
+                nodes = list(
+                    filter(lambda n: n.get("isSelected", False) == True, nodes)
+                )
 
                 if not nodes:
                     return None
 
-            data = self.__process_vanilla_df_response(
-                    nodes,
-                    self.__try_to_convert_back_to_original_types and onlySelected
-                )
-
-
             reindex_ids_map = {
                 DataReturnMode.FILTERED: self.rows_id_after_filter,
-                DataReturnMode.FILTERED_AND_SORTED:self.rows_id_after_sort_and_filter
+                DataReturnMode.FILTERED_AND_SORTED: self.rows_id_after_sort_and_filter,
             }
 
             reindex_ids = reindex_ids_map.get(self.__data_return_mode, None)
 
-            if reindex_ids:
-                reindex_ids = pd.Index(reindex_ids)
+            if isinstance(data, pd.DataFrame):
+                data = self.__process_vanilla_df_response(
+                    nodes, self.__try_to_convert_back_to_original_types and onlySelected
+                )
 
-                if onlySelected:
-                    reindex_ids = reindex_ids.intersection(data.index)
+                if reindex_ids:
+                    reindex_ids = pd.Index(reindex_ids)
 
-                data = data.reindex(index=reindex_ids)
+                    if onlySelected:
+                        reindex_ids = reindex_ids.intersection(data.index)
+
+                    data = data.reindex(index=reindex_ids)
+                    return data
+
+            # TODO: imporove json testing.
+            elif isinstance(data, str) and (json.loads(data)):
+                return json.dumps(
+                    [
+                        n["data"]
+                        for n in list(sorted(nodes, key=lambda n: n["rowIndex"]))
+                        if n["id"] in reindex_ids
+                    ]
+                )
 
         return data
 
@@ -214,14 +229,14 @@ class AgGridReturn(Mapping):
 
     def __get_dataGroups(self, onlySelected):
         if self.__component_value_set:
-            nodes = self.grid_response.get("nodes",[])
+            nodes = self.grid_response.get("nodes", [])
 
             if onlySelected:
-                #n.get('isSelected', True). Default is true bc agGrid sets undefined for half selected groups
-                nodes = list(filter(lambda n: n.get('isSelected', True) == True, nodes))
+                # n.get('isSelected', True). Default is true bc agGrid sets undefined for half selected groups
+                nodes = list(filter(lambda n: n.get("isSelected", True) == True, nodes))
 
                 if not nodes:
-                    return [{(''):self.__get_data(onlySelected)}]
+                    return [{(""): self.__get_data(onlySelected)}]
 
             response_has_groups = any((n.get("group", False) for n in nodes))
 
@@ -233,7 +248,7 @@ class AgGridReturn(Mapping):
                 )
                 return data
 
-        return [{(''):self.__get_data(onlySelected)}]
+        return [{(""): self.__get_data(onlySelected)}]
 
     @property
     def dataGroups(self):
@@ -261,30 +276,29 @@ class AgGridReturn(Mapping):
 
         return selected_items
 
-    #TODO: implement event returns
+    # TODO: implement event returns
     @property
     def event_data(self):
         """Returns information about the event that triggered AgGrid Response"""
-        return self.grid_response.get("eventData",None)
+        return self.grid_response.get("eventData", None)
 
     # Backwards compatibility with dict interface
     def __getitem__(self, __k):
-
         try:
             return getattr(self, __k)
         except AttributeError:
-             return self.__dict__.__getitem__(__k)
+            return self.__dict__.__getitem__(__k)
 
     def __iter__(self):
-        attrs = (x for x in inspect.getmembers(self) if not x[0].startswith('_'))
+        attrs = (x for x in inspect.getmembers(self) if not x[0].startswith("_"))
         return attrs.__iter__()
 
     def __len__(self):
-        attrs = [x for x in inspect.getmembers(self) if not x[0].startswith('_')]
+        attrs = [x for x in inspect.getmembers(self) if not x[0].startswith("_")]
         return attrs.__len__()
 
     def keys(self):
-        return [x[0] for x in inspect.getmembers(self) if not x[0].startswith('_')]
+        return [x[0] for x in inspect.getmembers(self) if not x[0].startswith("_")]
 
     def values(self):
-        return [x[1] for x in inspect.getmembers(self) if not x[0].startswith('_')]
+        return [x[1] for x in inspect.getmembers(self) if not x[0].startswith("_")]

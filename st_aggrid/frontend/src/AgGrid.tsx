@@ -463,7 +463,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
       (e: CellValueChangedEvent) => this.cellValueChanged(e)
     )
     
+    //Attach events
     this.attachStreamlitRerunToEvents(this.state.api)
+
     if (this.state.enterprise_features_enabled){
     this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
       if (i.api !== undefined) {
@@ -471,6 +473,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     })
   }
+  
+  //If there is any event onGridReady in gridOptions, fire it
+  let {onGridReady} = this.state.gridOptions
+  onGridReady && onGridReady(event)
   }
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {

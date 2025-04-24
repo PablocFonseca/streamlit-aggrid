@@ -1,5 +1,5 @@
 import json
-from st_aggrid import AgGrid
+from st_aggrid import AgGrid, JsCode
 import streamlit as st
 import pandas as pd
 
@@ -25,12 +25,9 @@ go = {
     ],
     "autoSizeStrategy": {"type": "fitCellContents", "skipHeader": False},
     "rowSelection": {"mode": "singleRow"},
+    "onCellClicked": JsCode("function(){console.log('onCellClicked!')}"),
+    # "onGridReady": JsCode("function(){console.log('onGridReady!')}"),
 }
-r = AgGrid(data, go, key="event_return_grid")
+r = AgGrid(data, go, key="event_return_grid", allow_unsafe_jscode=True)
 
-# with st.expander("Raw Response"):
-#     st.write(r.grid_response)
-
-# st.code(r.event_data)
-# st.code(r.data)
-st.code(r.selected_data)
+st.json(r.event_data)

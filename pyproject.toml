@@ -1,27 +1,37 @@
-[tool.poetry]
+[project]
 name = "streamlit-aggrid"
-version = "1.1.3-1"
+version = "1.1.4-1"
 description = "Streamlit component implementation of ag-grid"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Pablo Fonseca", email = "pablo.fonseca+pip@gmail.com" }]
+keywords = ["streamlit", "ag-grid", "component"]
+dependencies = ["streamlit >=1.2", "pandas >=1.4.0", "python-decouple"]
+
+[project.urls]
+homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
+
+[tool.poetry]
+packages = [{ include = "st_aggrid/**/*.py" }]
+
+#exclude = [{ path = "st_aggrid/frontend/**/*" }]
+include = [
+    { path = "st_aggrid/frontend/build/**/*", format = [
+        "sdist",
+        "wheel",
+    ] },
+    { path = "st_aggrid/json/**/*.json", format = [
+        "sdist",
+        "wheel",
+    ] },
+
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
-authors = ["Pablo Fonseca <pablo.fonseca+pip@gmail.com>"]
-readme = "README.md"
-exclude = ["**/node_modules/**/*", "**/frontend/src/**/*", "**/.yarn/**/*"]
-include = ["**/frontend/build/**/*"]
-packages = [{ include = "st_aggrid" }]
-
-[tool.poetry.dependencies]
-python = ">=3.10"
-streamlit = ">=1.2"
-pandas = ">=1.4.0"
-python-decouple = "*"
-
-[tool.poetry.dev-dependencies]
-ruff = "*"
 
 [tool.poetry.group.dev.dependencies]
 bs4 = "^0.0.2"
@@ -29,6 +39,7 @@ playwright = "^1.51.0"
 pytest = "^8.3.5"
 pytest-playwright = "^0.7.0"
 watchdog = "^6.0.0"
+ruff = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

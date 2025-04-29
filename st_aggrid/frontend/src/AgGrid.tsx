@@ -64,9 +64,13 @@ function addCustomCSS(custom_css: CSSDict): void {
 
 function parseJsCodeFromPython(v: string) {
   const JS_PLACEHOLDER = "::JSCODE::"
-  let funcReg = new RegExp(
-    `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
-  )
+  
+  const funcReg = new RegExp(
+  `${JS_PLACEHOLDER}(.*?)${JS_PLACEHOLDER}`,
+  "s" 
+);
+
+  
 
   let match = funcReg.exec(v)
 

@@ -162,7 +162,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     if (props.args.enable_enterprise_modules) {
-      ModuleRegistry.registerModules([AllEnterpriseModule.with(AgChartsEnterpriseModule)])
+      if (props.args.enable_charts) {
+        ModuleRegistry.registerModules([AllEnterpriseModule.with(AgChartsEnterpriseModule)])
+      } else {
+        ModuleRegistry.registerModules([AllEnterpriseModule])
+      }
       
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])

@@ -158,6 +158,7 @@ def AgGrid(
     data_return_mode: DataReturnMode = DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool = False,
     enable_enterprise_modules: bool = False,
+    enable_charts: bool = False,
     license_key: str = None,
     try_to_convert_back_to_original_types: bool = True,
     conversion_errors: str = "coerce",
@@ -242,6 +243,10 @@ def AgGrid(
 
     enable_enterprise_modules : bool, optional
         Loads Ag-Grid enterprise modules (check licensing).
+        Defaults to False.
+
+    enable_charts: bool, optional
+        Loads Ag-Grid charts modules (check licensing).
         Defaults to False.
 
     license_key : str, optional
@@ -419,6 +424,7 @@ def AgGrid(
             frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
             enable_enterprise_modules=enable_enterprise_modules,
+            enable_charts=enable_charts,
             license_key=license_key,
             default=None,
             columns_state=columns_state,

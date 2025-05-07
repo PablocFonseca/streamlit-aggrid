@@ -411,6 +411,8 @@ def AgGrid(
     else:
         _inner_callback = None
 
+    pro_assets = default_column_parameters.pop("pro_assets", None)
+
     try:
         component_value = _component_func(
             gridOptions=gridOptions,
@@ -428,6 +430,7 @@ def AgGrid(
             manual_update=manual_update,
             key=key,
             on_change=_inner_callback,
+            pro_assets=pro_assets,
         )
 
     except Exception as ex:  # components.components.MarshallComponentException as ex:

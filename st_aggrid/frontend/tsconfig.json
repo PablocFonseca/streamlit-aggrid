@@ -22,5 +22,5 @@
   },
   "include": [
     "src"
-  ]
+, "globals.d.ts"  ]
 }

@@ -88,19 +88,15 @@ class AgGrid extends React.Component<ComponentProps, State> {
     var go = this.parseGridoptions()
 
     const StreamlitAgGridPro = (window as any)?.StreamlitAgGridPro
-
     if (StreamlitAgGridPro) {
-      // Bind the returnGridValue function to the global StreamlitAgGridPro object
       StreamlitAgGridPro.returnGridValue = this.returnGridValue.bind(this)
 
-      const StreamlitAgGridProComponents = StreamlitAgGridPro.components
-
-      if (StreamlitAgGridProComponents) {
-        // Merge custom components from StreamlitAgGridPro into gridOptions
-        go.components = {
-          ...go.components,
-          ...StreamlitAgGridProComponents,
-        }
+      if (StreamlitAgGridPro.extenders && Array.isArray(StreamlitAgGridPro.extenders)) {
+        StreamlitAgGridPro.extenders.forEach((extender: (go: any) => void) => {
+          if (typeof extender === "function") {
+            extender(go)
+          }
+        })
       }
     }
 

@@ -66,8 +66,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
       addCustomCSS(props.args.custom_css)
     }
 
-    if (props.args.pro_assets) {
-      injectProAssets(props.args.pro_assets?.js, props.args.pro_assets?.css)
+    if (props.args.pro_assets && Array.isArray(props.args.pro_assets)) {
+      props.args.pro_assets.forEach((asset: any) => {
+      //console.log(asset);
+      injectProAssets(asset?.js, asset?.css)
+      })
     }
 
     if (props.args.enable_enterprise_modules) {

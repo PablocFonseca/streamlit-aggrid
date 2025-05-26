@@ -167,18 +167,21 @@ def AgGrid(
     key: typing.Any = None,
     update_on=[],
     callback=None,
+    show_toolbar: bool = True,
+    show_search: bool = True,
+    show_download_button: bool = True,
     **default_column_parameters,
 ) -> AgGridReturn:
-    """Reders a DataFrame using AgGrid.
+    """Renders a DataFrame using AgGrid.
 
     Parameters
     ----------
     dataframe : pd.DataFrame
-        The underlaying dataframe to be used.
+        The underlying dataframe to be used.
 
     gridOptions : typing.Dict, optional
         A dictionary of options for ag-grid. Documentation on www.ag-grid.com
-        If None default grid options will be created with GridOptionsBuilder.from_dataframe() call.
+        If None, default grid options will be created with GridOptionsBuilder.from_dataframe() call.
         Default: None
 
     height : int, optional
@@ -191,11 +194,11 @@ def AgGrid(
 
     fit_columns_on_grid_load : bool, optional
         DEPRECATED, use columns_auto_size_mode
-        Use gidOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
+        Use gridOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
 
     columns_auto_size_mode: ColumnsAutoSizeMode, optional
         DEPRECATED.
-        Use gidOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
+        Use gridOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
 
     update_mode : GridUpdateMode, optional
         DEPRECATED. USE update_on instead.
@@ -209,31 +212,31 @@ def AgGrid(
             GridUpdateMode.FILTERING_CHANGED
             GridUpdateMode.SORTING_CHANGED
             GridUpdateMode.MODEL_CHANGED
-        When using manual a save button will be drawn on top of grid.
-        modes can be combined with bitwise OR operator |, for instance:
+        When using manual, a save button will be drawn on top of the grid.
+        Modes can be combined with bitwise OR operator |, for instance:
         GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
         Default: GridUpdateMode.MODEL_CHANGED
 
-    update_on: list[string | tuple[sting, int]], optional
-        defines the events that will trigger a refresh and grid return on streamlit app.
-        valid string named events are listed in https://www.ag-grid.com/javascript-data-grid/grid-events/.
+    update_on: list[string | tuple[string, int]], optional
+        Defines the events that will trigger a refresh and grid return on the Streamlit app.
+        Valid string-named events are listed in https://www.ag-grid.com/javascript-data-grid/grid-events/.
         If a tuple[string, int] is present on the list, that event will be debounced by x milliseconds.
-        for instance:
+        For instance:
             if update_on = ['cellValueChanged', ("columnResized", 500)]
-            Grid will return when cell values are changed AND when columns are resized, however the later will
+            The grid will return when cell values are changed AND when columns are resized, however the latter will
             be debounced by 500 ms. More information about debounced functions
             here: https://www.freecodecamp.org/news/javascript-debounce-example/
 
-    callback: callable, option
-        defines a function that will be called on change. One argument will be passed to the function
+    callback: callable, optional
+        Defines a function that will be called on change. One argument will be passed to the function
         which will be an AgGridReturn object in the same fashion as what is returned by this class.
         Requires key to be set.
 
     data_return_mode : DataReturnMode, optional
-        Defines how the data will be retrieved from components client side. One of:
-            DataReturnMode.AS_INPUT             -> Returns grid data as inputed. Includes cell editions
-            DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order
-            DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted
+        Defines how the data will be retrieved from the component's client side. One of:
+            DataReturnMode.AS_INPUT             -> Returns grid data as inputted. Includes cell edits.
+            DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order.
+            DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted.
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
@@ -245,66 +248,62 @@ def AgGrid(
         Defaults to False.
 
     license_key : str, optional
-        Licence key to use for enterprise modules
-        By default None
+        License key to use for enterprise modules.
+        By default None.
 
     try_to_convert_back_to_original_types : bool, optional
         Attempts to convert data retrieved from the grid to original types.
         Defaults to True.
 
     conversion_errors : str, optional
-        Behaviour when conversion fails. One of:
-            'raise'     -> invalid parsing will raise an exception.
-            'coerce'    -> then invalid parsing will be set as NaT/NaN.
-            'ignore'    -> invalid parsing will return the input.
+        Behavior when conversion fails. One of:
+            'raise'     -> Invalid parsing will raise an exception.
+            'coerce'    -> Invalid parsing will be set as NaT/NaN.
+            'ignore'    -> Invalid parsing will return the input.
         Defaults to 'coerce'.
 
-    reload_data : bool, optional
-        DEPRECATED.
-        Grid Behaviour changed on V 1.0. Grid will update when data or gridOptions changes.
-        If data is edited on grid UI, it will stop refreshing on data parameter changes..
-
-    enable_quicksearch: bool, optional
-        DEPRECATED
-        Adds a quicksearch text field on top of grid.
-        Defaults to False
-
-    excel_export_mode: ExcelExportMode, optional
-        DEPRECATED
-        Defines how Excel Export integration behaves:
-            NONE -> Nothing Changes. Default grid behaviour.
-            MANUAL -> Adds a download button on grid's top that triggers download.
-            FILE_BLOB_IN_GRID_RESPONSE -> include in grid's return an ExcelBlob Property with file binary encoded as B64 String
-            TRIGGER_DOWNLOAD_AFTER_REFRESH -> Triggers file download before returning results to streamlit.
-            SHEET_BLOB_IN_GRID_RESPONSE -> include in grid's return a SheetlBlob Property with sheet binary encoded as B64 String. Meant to be used with MULTIPLE
-            MULTIPLE_SHEETS -> Same as TRIGGER_DOWNLOAD_AFTER_REFRESH but will include b64 encoded *SHEETS* returned with SHEET_BLOB_IN_GRID_RESPONSE and supplied to grid's call using excel_export_extra_sheets parameter.
-
-    theme : str, optional
-        theme used by ag-grid. One of:
-
-            'streamlit' -> follows default streamlit colors
-            'light'     -> ag-grid balham-light theme
-            'dark'      -> ag-grid balham-dark theme
-            'blue'      -> ag-grid blue theme
-            'fresh'     -> ag-grid fresh theme
-            'material'  -> ag-grid material theme
-        By default 'light'
-
-    custom_css (dict, optional):
-        Custom CSS rules to be added to the component's iframe.
-
-    key : typing.Any, optional
-        Streamlits key argument. Check streamlit's documentation.
+    columns_state : dict, optional
+        Allows setting the initial state of columns (e.g., visibility, order, etc.).
         Defaults to None.
 
+    theme : str | StAggridTheme, optional
+        Theme used by ag-grid. One of:
+
+            'streamlit' -> Follows default Streamlit colors.
+            'light'     -> Ag-grid balham-light theme.
+            'dark'      -> Ag-grid balham-dark theme.
+            'blue'      -> Ag-grid blue theme.
+            'fresh'     -> Ag-grid fresh theme.
+            'material'  -> Ag-grid material theme.
+        By default 'streamlit'.
+
+    custom_css : dict, optional
+        Custom CSS rules to be added to the component's iframe.
+        Defaults to None.
+
+    key : typing.Any, optional
+        Streamlit's key argument. Check Streamlit's documentation.
+        Defaults to None.
+
+    show_toolbar : bool, optional
+        Whether to show the toolbar above the grid.
+        Defaults to True.
+
+    show_search : bool, optional
+        Whether to show the search bar in the toolbar.
+        Defaults to True.
+
+    show_download_button : bool, optional
+        Whether to show the download button in the toolbar.
+        Defaults to True.
+
     **default_column_parameters:
-        Other parameters will be passed as key:value pairs on gripdOptions defaultColDef.
+        Other parameters will be passed as key:value pairs on gridOptions defaultColDef.
 
     Returns
     -------
-    Dict
-        returns a dictionary with grid's data is in dictionary's 'data' key.
-        Other keys may be present depending on gridOptions parameters
+    AgGridReturn
+        Returns an AgGridReturn object containing the grid's data and other metadata.
     """
 
     # if not (isinstance(theme, (str, AgGridTheme)) and (theme in AgGridTheme)):
@@ -430,6 +429,9 @@ def AgGrid(
             manual_update=manual_update,
             key=key,
             on_change=_inner_callback,
+            show_toolbar=show_toolbar or True,
+            show_search=show_search or True,
+            show_download_button=show_download_button or True,
             pro_assets=pro_assets,
         )
 

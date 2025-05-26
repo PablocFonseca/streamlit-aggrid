@@ -32,7 +32,7 @@ import { ThemeParser } from "./ThemeParser"
 import { getGridReturnValue } from "./utils/agGridReturnUtils"
 
 import "@fontsource/source-sans-pro"
-//import "./agGridStyle.scss"
+import "./AgGrid.css"
 
 import { themeBalham } from "ag-grid-community"
 
@@ -338,10 +338,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   public render = (): ReactNode => {
-    let shouldRenderGridToolbar =
-      this.props.args.enable_quicksearch === true ||
-      this.props.args.manual_update ||
-      this.props.args.excelExportMode === "MANUAL"
+    let manualUpdate =  this.props.args.manual_update === true
 
     return (
       <div
@@ -349,30 +346,22 @@ class AgGrid extends React.Component<ComponentProps, State> {
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
-        <GridToolBar enabled={shouldRenderGridToolbar}>
-          <ManualUpdateButton
-            manualUpdate={this.props.args.manual_update}
-            onClick={(e: any) => this.returnGridValue(e, "ManualUpdate")}
-          />
-          <ManualDownloadButton
-            enabled={this.props.args.excelExportMode === "MANUAL"}
-            onClick={(e: any) => this.state.api?.exportDataAsExcel()}
-          />
-          <QuickSearch
-            enableQuickSearch={this.props.args.enable_quicksearch}
-            showOverlay={throttle(
-              () => this.state.api?.showLoadingOverlay(),
-              1000,
-              {
-                trailing: false,
-              }
-            )}
-            onChange={debounce((e) => {
-              this.state.api?.setGridOption("quickFilterText", e.target.value)
-              this.state.api?.hideOverlay()
-            }, 1000)}
-          />
-        </GridToolBar>
+        <GridToolBar
+          showManualUpdateButton={manualUpdate}
+          enabled={this.props.args.show_toolbar ?? true}
+          showSearch={this.props.args.show_search ?? true}
+          showDownloadButton={this.props.args.show_download_button ?? true}
+          onQuickSearchChange={(value) => {
+        this.state.api?.setGridOption("quickFilterText", value);
+        this.state.api?.hideOverlay(); // Hide any overlay if present
+          }}
+          onDownloadClick={() => {
+        this.state.api?.exportDataAsCsv();
+          }}
+          onManualUpdateClick={() => {
+        console.log("Manual update triggered");
+          }}
+        />
         <AgGridReact
           onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}

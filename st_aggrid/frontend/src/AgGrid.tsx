@@ -72,18 +72,26 @@ class AgGrid extends React.Component<ComponentProps, State> {
       injectProAssets(asset?.js, asset?.css)
       })
     }
-
-    if (props.args.enable_enterprise_modules) {
+    const enableEnterpriseModules = props.args.enable_enterprise_modules
+    if (
+      enableEnterpriseModules === true ||
+      enableEnterpriseModules === "enterprise+AgCharts"
+    ) {
       ModuleRegistry.registerModules([
-        AllEnterpriseModule.with(AgChartsEnterpriseModule),
+      AllEnterpriseModule.with(AgChartsEnterpriseModule),
       ])
-
       if ("license_key" in props.args) {
-        LicenseManager.setLicenseKey(props.args["license_key"])
+      LicenseManager.setLicenseKey(props.args["license_key"])
+      }
+    } else if (enableEnterpriseModules === "enterpriseOnly") {
+      ModuleRegistry.registerModules([AllEnterpriseModule])
+      if ("license_key" in props.args) {
+      LicenseManager.setLicenseKey(props.args["license_key"])
       }
     } else {
       ModuleRegistry.registerModules([AllCommunityModule])
     }
+
 
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"

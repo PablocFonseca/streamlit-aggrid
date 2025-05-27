@@ -48,6 +48,12 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.1.5
+
+- Fix licensing when not using License bundled with AgCharts.
+- Added option for fullscreen mode.
+- Refactored grid toolbar.
+
 Version 1.1.4
 
 - onGridReady Event fires when set in grid Options.

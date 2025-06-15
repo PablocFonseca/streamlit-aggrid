@@ -17,25 +17,29 @@ import {
   GridReadyEvent,
   GridSizeChangedEvent,
   IRowNode,
-  ModuleRegistry
+  ModuleRegistry,
 } from "ag-grid-community"
 
-import { AgChartsEnterpriseModule } from 'ag-charts-enterprise'
-import { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise'
+import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
+import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
 import _, { debounce, throttle } from "lodash"
 
 import { eventDataWhiteList } from "./constants"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
-import { ThemeParser} from "./ThemeParser"
+import { ThemeParser } from "./ThemeParser"
+import { getGridReturnValue } from "./utils/agGridReturnUtils"
 
 import "@fontsource/source-sans-pro"
-//import "./agGridStyle.scss"
+import "./AgGrid.css"
 
-import { themeBalham } from 'ag-grid-community'
+import { themeBalham } from "ag-grid-community"
 
-type CSSDict = { [key: string]: { [key: string]: string } }
+import GridToolBar from "./components/GridToolBar"
+import ManualUpdateButton from "./components/ManualUpdateButton"
+import ManualDownloadButton from "./components/ManualDownloadButton"
+import QuickSearch from "./components/QuickSearch"
 
 interface CustomStylesheetProps {
   url: string;
@@ -54,115 +58,22 @@ function CustomStylesheet({ url }: CustomStylesheetProps) {
   return null;
 }
 
-function getCSS(styles: CSSDict): string {
-  var css = []
-  for (let selector in styles) {
-    let style = selector + " {"
+import {
+  getCSS,
+  addCustomCSS,
+  injectProAssets,
+  parseJsCodeFromPython,
+} from "./utils/gridUtils"
 
-    for (let prop in styles[selector]) {
-      style += prop + ": " + styles[selector][prop] + ";"
-    }
+import { State } from "./types/AgGridTypes"
 
-    style += "}"
-
-    css.push(style)
-  }
-
-  return css.join("\n")
-}
-
-function addCustomCSS(custom_css: CSSDict): void {
-  var css = getCSS(custom_css)
-  var styleSheet = document.createElement("style")
-  styleSheet.type = "text/css"
-  styleSheet.innerText = css
-  document.head.appendChild(styleSheet)
-}
-
-function parseJsCodeFromPython(v: string) {
-  const JS_PLACEHOLDER = "::JSCODE::"
-  let funcReg = new RegExp(
-    `${JS_PLACEHOLDER}\\s*((function|class)\\s*.*)\\s*${JS_PLACEHOLDER}`
-  )
-
-  let match = funcReg.exec(v)
-
-  if (match) {
-
-    const funcStr = match[1]
-    // eslint-disable-next-line
-    return new Function("return " + funcStr)()
-  } else {
-    return v
-  }
-}
-
-function GridToolBar(props: any) {
-  if (props.enabled) {
-    return (
-      <div id="gridToolBar" style={{ paddingBottom: 30 }}>
-        <div className="ag-row-odd ag-row-no-focus ag-row ag-row-level-0 ag-row-position-absolute">
-          <div className="">
-            <div className="ag-cell-wrapper">{props.children}</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-  return <></>
-}
-
-function QuickSearch(props: any) {
-  if (props.enableQuickSearch) {
-    return (
-      <input
-        className="ag-cell-value"
-        type="text"
-        onChange={props.onChange}
-        onKeyUp={props.showOverlay}
-        placeholder="quickfilter..."
-        style={{ marginLeft: 5, marginRight: 5 }}
-      />
-    )
-  }
-  return <></>
-}
-
-function ManualUpdateButton(props: any) {
-  if (props.manualUpdate) {
-    return (
-      <button onClick={props.onClick} style={{ marginLeft: 5, marginRight: 5 }}>
-        Update
-      </button>
-    )
-  }
-  return <></>
-}
-
-function ManualDownloadButton(props: any) {
-  if (props.enabled) {
-    return (
-      <button onClick={props.onClick} style={{ marginLeft: 5, marginRight: 5 }}>
-        Download
-      </button>
-    )
-  }
-  return <></>
-}
-
-interface State {
-  gridHeight: number
-  gridOptions: GridOptions
-  isRowDataEdited: Boolean
-  api?: GridApi
-}
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
 
   private gridContainerRef: React.RefObject<HTMLDivElement>
   private isGridAutoHeightOn: boolean
   private renderedGridHeightPrevious: number = 0
-  private themeParser : ThemeParser | undefined=  undefined
+  private themeParser: ThemeParser | undefined = undefined
 
   constructor(props: ComponentProps) {
     super(props)
@@ -172,27 +83,64 @@ class AgGrid extends React.Component<ComponentProps, State> {
       addCustomCSS(props.args.custom_css)
     }
 
-    if (!props.args.enable_enterprise_modules) {
-      ModuleRegistry.registerModules([AllCommunityModule])
-    } else {
-      ModuleRegistry.registerModules([AllEnterpriseModule.with(AgChartsEnterpriseModule)])
-
-      if ("license_key" in props.args) {
-        LicenseManager.setLicenseKey(props.args["license_key"])
-      }
-
+    if (props.args.pro_assets && Array.isArray(props.args.pro_assets)) {
+      props.args.pro_assets.forEach((asset: any) => {
+      //console.log(asset);
+      injectProAssets(asset?.js, asset?.css)
+      })
     }
-    
+    const enableEnterpriseModules = props.args.enable_enterprise_modules
+    if (
+      enableEnterpriseModules === true ||
+      enableEnterpriseModules === "enterprise+AgCharts"
+    ) {
+      ModuleRegistry.registerModules([
+      AllEnterpriseModule.with(AgChartsEnterpriseModule),
+      ])
+      if ("license_key" in props.args) {
+      LicenseManager.setLicenseKey(props.args["license_key"])
+      }
+    } else if (enableEnterpriseModules === "enterpriseOnly") {
+      ModuleRegistry.registerModules([AllEnterpriseModule])
+      if ("license_key" in props.args) {
+      LicenseManager.setLicenseKey(props.args["license_key"])
+      }
+    } else {
+      ModuleRegistry.registerModules([AllCommunityModule])
+    }
+
+
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
 
     var go = this.parseGridoptions()
+
+    const StreamlitAgGridPro = (window as any)?.StreamlitAgGridPro
+    if (StreamlitAgGridPro) {
+      StreamlitAgGridPro.returnGridValue = this.returnGridValue.bind(this)
+
+      if (StreamlitAgGridPro.extenders && Array.isArray(StreamlitAgGridPro.extenders)) {
+        StreamlitAgGridPro.extenders.forEach((extender: (go: any) => void) => {
+          if (typeof extender === "function") {
+            extender(go)
+          }
+        })
+      }
+    }
+
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
       isRowDataEdited: false,
       api: undefined,
+      enterprise_features_enabled: props.args.enable_enterprise_modules,
+      debug: true,
     } as State
+
+    if (this.state.debug) {
+      console.log("***Received Props", props)
+      console.log("*** Processed State", this.state)
+    }
   }
 
   private parseGridoptions() {
@@ -220,13 +168,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
       gridOptions.columnTypes || {},
       columnFormaters
     )
-    
+
     //processTheming
     this.themeParser = new ThemeParser()
     let streamlitTheme = this.props.theme
     let agGridTheme = this.props.args.theme
 
-    gridOptions.theme = this.themeParser.parse(agGridTheme,streamlitTheme)
+    gridOptions.theme = this.themeParser.parse(agGridTheme, streamlitTheme)
 
     return gridOptions
   }
@@ -237,9 +185,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
     updateEvents.forEach((element: any) => {
       //if element is a tuple (eventName,timeout) apply debounce func for timeout seconds.
       if (Array.isArray(element)) {
-        api.addEventListener(element[0], debounce((e: any) => this.returnGridValue(e, element[0]), element[1]))
+        api.addEventListener(
+          element[0],
+          debounce((e: any) => this.returnGridValue(e, element[0]), element[1])
+        )
       } else {
-        api.addEventListener(element, (e: any) => this.returnGridValue(e, element))
+        api.addEventListener(element, (e: any) =>
+          this.returnGridValue(e, element)
+        )
       }
       console.log("Attached grid return event %s", element)
     })
@@ -271,121 +224,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
     e: any,
     streamlitRerunEventTriggerName: string
   ) {
-    function fetch_node_props(n: IRowNode | null): any {
-      if (n == null) {
-        return null
-      }
-      return {
-        id: n.id,
-        data: n.data,
-        rowIndex: n.rowIndex,
-        rowTop: n.rowTop,
-        displayed: n.displayed,
-        isHovered: n.isHovered(),
-        isFullWidthCell: n.isFullWidthCell(),
-        expanded: n.expanded,
-        isExpandable: n.expanded,
-        group: n.group,
-        groupData: n.groupData,
-        aggData: n.aggData,
-        key: n.key,
-        field: n.field,
-        rowGroupColumn: n.rowGroupColumn?.getColId(),
-        rowGroupIndex: n.rowIndex,
-        footer: n.footer,
-        parent: fetch_node_props(n.parent),
-        firstChild: n.firstChild,
-        lastChild: n.lastChild,
-        childIndex: n.childIndex,
-        level: n.level,
-        uiLevel: n.uiLevel,
-        //allLeafChildren: n.allLeafChildren.map(v=> fetch_node_props(v)),
-        //childrenAfterGroup: n.childrenAfterGroup?.map(v => fetch_node_props(v)),
-        //childrenAfterFilter: n.childrenAfterFilter?.map(v => fetch_node_props(v)),
-        //childrenAfterSort: n.childrenAfterSort?.map(v => fetch_node_props(v)),
-        allChildrenCount: n.allChildrenCount,
-        leafGroup: n.leafGroup,
-        sibling: fetch_node_props(n.sibling),
-        rowHeight: n.rowHeight,
-        master: n.master,
-        detail: n.detail,
-        rowPinned: n.rowPinned,
-        isRowPinned: n.isRowPinned(),
-        selectable: n.selectable,
-        isSelected: n.isSelected(),
-      }
-    }
-    let nodes: any[] = []
-    this.state.api?.forEachNode((n: any, i: any) => {
-      nodes.push(fetch_node_props(n))
-    })
-
-    let rowsAfterFilter: any[] = []
-    this.state.api?.forEachNodeAfterFilter((row: { group: any; id: any }) => {
-      if (!row.group) {
-        rowsAfterFilter.push(row.id)
-      }
-    })
-
-    let rowsAfterSortAndFilter: any[] = []
-    this.state.api?.forEachNodeAfterFilterAndSort((row: { group: any; id: any }) => {
-      if (!row.group) {
-        rowsAfterSortAndFilter.push(row.id)
-      }
-    })
-
-    let selected: any = []
-    this.state.api?.forEachDetailGridInfo((d: DetailGridInfo) => {
-      
-      d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
-        if (n.isSelected()) {
-          selected.push(n.id)
-        }
-      })
-    })
-
-    //function to recursively walk through object keys and drop then based on value, avoids circular references
-    function cleanEventKeys(obj: any, root = "", level = 0) {
-      if (Array.isArray(obj)) {
-        obj.forEach((v) => {
-          return cleanEventKeys(v, root, level + 1)
-        })
-      } else if (typeof obj === "object") {
-        Object.keys(obj).forEach(function (key) {
-          if (level > 3) return
-          if (key === "data") return 
-          let fullKey = [root, key].filter((v) => v !== "").join(".")
-
-          if (!eventDataWhiteList.includes(fullKey)) {
-            delete obj[key]
-          } else if (typeof obj[key] === "object" && obj[key] !== null) {
-            cleanEventKeys(obj[key], fullKey, level + 1)
-          }
-        })
-      }
-      return obj
-    }
-    
-    let cleanEventData = cleanEventKeys(_.cloneDeep(e))
-    cleanEventData["streamlitRerunEventTriggerName"] =
+    return getGridReturnValue(
+      this.state.api,
+      this.state.enterprise_features_enabled,
+      this.state.gridOptions,
+      this.props,
+      e,
       streamlitRerunEventTriggerName
-
-    
-    let returnValue = {
-      originalDtypes: this.props.args.frame_dtypes,
-      nodes: nodes,
-      selectedItems: this.state.api?.getSelectedRows(),
-      gridState: this.state.api?.getState(),
-      columnsState: this.state.api?.getColumnState(),
-      gridOptions: JSON.stringify(this.state.gridOptions), //performance bottleneck
-      rowIdsAfterFilter: rowsAfterFilter,
-      rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
-      eventData: cleanEventData,
-    }
-    return returnValue
+    )
   }
 
   private returnGridValue(e: any, streamlitRerunEventTriggerName: string) {
+    if (this.state.debug) {
+      console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
+    }
     this.getGridReturnValue(e, streamlitRerunEventTriggerName).then((v) =>
       Streamlit.setComponentValue(v)
     )
@@ -409,17 +261,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
     const currGridOptions = this.props.args.gridOptions
 
     //Theme object Changes here
-    if ((!_.isEqual(prevProps.theme , this.props.theme)) || (! _.isEqual(this.props.args.theme, prevProps.args.theme))) {
+    if (
+      !_.isEqual(prevProps.theme, this.props.theme) ||
+      !_.isEqual(this.props.args.theme, prevProps.args.theme)
+    ) {
       let streamlitTheme = this.props.theme
       let agGridTheme = this.props.args.theme
 
-      this.state.api?.updateGridOptions({theme: this.themeParser?.parse(agGridTheme,streamlitTheme)});
+      this.state.api?.updateGridOptions({
+        theme: this.themeParser?.parse(agGridTheme, streamlitTheme),
+      })
     }
-
 
     //const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
     if (!_.isEqual(prevGridOptions, currGridOptions)) {
-
       let go = this.parseGridoptions()
       let row_data = go.rowData
 
@@ -461,12 +316,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
       (e: CellValueChangedEvent) => this.cellValueChanged(e)
     )
 
+    //Attach events
     this.attachStreamlitRerunToEvents(this.state.api)
-    this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
-      if (i.api !== undefined) {
-        this.attachStreamlitRerunToEvents(i.api)
-      }
-    })
+
+    if (this.state.enterprise_features_enabled) {
+      this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
+        if (i.api !== undefined) {
+          this.attachStreamlitRerunToEvents(i.api)
+        }
+      })
+    }
+
+    //If there is any event onGridReady in gridOptions, fire it
+    let { onGridReady } = this.state.gridOptions
+    onGridReady && onGridReady(event)
   }
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {
@@ -500,10 +363,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   public render = (): ReactNode => {
-    let shouldRenderGridToolbar =
-      this.props.args.enable_quicksearch === true ||
-      this.props.args.manual_update ||
-      this.props.args.excelExportMode === "MANUAL"
+    let manualUpdate =  this.props.args.manual_update === true
 
     return (
       <div
@@ -514,30 +374,22 @@ class AgGrid extends React.Component<ComponentProps, State> {
         {this.props.args.links?.map((url: string) => (
           <CustomStylesheet key={url} url={url} />
         ))}
-        <GridToolBar enabled={shouldRenderGridToolbar}>
-          <ManualUpdateButton
-            manualUpdate={this.props.args.manual_update}
-            onClick={(e: any) => this.returnGridValue(e, "ManualUpdate")}
-          />
-          <ManualDownloadButton
-            enabled={this.props.args.excelExportMode === "MANUAL"}
-            onClick={(e: any) => this.state.api?.exportDataAsExcel()}
-          />
-          <QuickSearch
-            enableQuickSearch={this.props.args.enable_quicksearch}
-            showOverlay={throttle(
-              () => this.state.api?.showLoadingOverlay(),
-              1000,
-              {
-                trailing: false,
-              }
-            )}
-            onChange={debounce((e) => {
-              this.state.api?.setGridOption('quickFilterText', e.target.value)
-              this.state.api?.hideOverlay()
-            }, 1000)}
-          />
-        </GridToolBar>
+        <GridToolBar
+          showManualUpdateButton={manualUpdate}
+          enabled={this.props.args.show_toolbar ?? true}
+          showSearch={this.props.args.show_search ?? true}
+          showDownloadButton={this.props.args.show_download_button ?? true}
+          onQuickSearchChange={(value) => {
+        this.state.api?.setGridOption("quickFilterText", value);
+        this.state.api?.hideOverlay(); // Hide any overlay if present
+          }}
+          onDownloadClick={() => {
+        this.state.api?.exportDataAsCsv();
+          }}
+          onManualUpdateClick={() => {
+        console.log("Manual update triggered");
+          }}
+        />
         <AgGridReact
           onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}

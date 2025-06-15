@@ -1,0 +1,143 @@
+.grid-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 50px; /* Anchor the toolbar to the right */
+    z-index: 1000;
+    display: flex;
+    flex-direction: row; /* Normal order of buttons */
+    align-items: center;
+    gap: 2px; /* Adjust gap between elements */
+    background-color: var(--ag-background-color, #fff); /* Use AG Grid background color */
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    border-radius: 12px; /* Adjust border radius */
+    padding: 4px 8px; /* Small padding */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; /* Smooth fade-in/out */
+    cursor: grab;
+    border: 1px solid var(--ag-border-color, #ccc); /* Use AG Grid border color */
+    opacity: 0; /* Initially hidden */
+    visibility: hidden; /* Hide toolbar when not hovering */
+    height: 36px; /* Set fixed height */
+}
+
+#gridContainer:hover .grid-toolbar {
+    opacity: 1; /* Show toolbar on hover */
+    visibility: visible; /* Make toolbar visible */
+}
+
+.grid-toolbar:active {
+    cursor: grabbing;
+}
+
+.toolbar-button {
+    background-color: transparent;
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    border: none;
+    border-radius: 50%;
+    width: 24px; /* Adjust button size */
+    height: 24px; /* Adjust button size */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.toolbar-button:hover,
+.toolbar-button:focus {
+    background-color: var(--ag-secondary-background-color, rgba(0, 0, 0, 0.1)); /* Use AG Grid secondary background color */
+    transform: scale(1.05);
+    outline: none;
+}
+
+.toolbar-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align content to the right */
+    flex-grow: 1; /* Allow the search box to grow */
+    height: 36px; /* Match toolbar height */
+    /*  padding: 12px 10px; Increase vertical padding for larger gap */
+}
+
+.toolbar-search .toolbar-input {
+    display: flex;
+    align-items: center;
+    background-color: var(--ag-secondary-background-color, rgba(0, 0, 0, 0.05)); /* Use AG Grid secondary background color */
+    border: 1px solid var(--ag-border-color, #ccc); /* Use AG Grid border color */
+    border-radius: 8px; /* Adjust border radius */
+    padding: 2px 4px; /* Smaller padding inside the input */
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    width: 24px; /* Make the search box smaller */
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    justify-content: flex-start; /* Align content to the left */
+    height: 28px; /* Reduce height to make it smaller */
+}
+
+.toolbar-search:hover .toolbar-input {
+    width: 120px; /* Slightly expand on hover */
+}
+
+.toolbar-input input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    font-size: 12px; /* Keep the font size small */
+    flex: 1;
+    min-width: 0; /* Prevent input from forcing width */
+    opacity: 0; /* Initially hidden */
+    transition: opacity 0.3s ease-in-out;
+    text-align: left; /* Align text to the left */
+    padding: 2px; /* Add padding inside the input */
+}
+
+.toolbar-input:hover input {
+    opacity: 1; /* Show input on hover */
+}
+
+.toolbar-input svg {
+    width: 14px; /* Adjust icon size */
+    height: 14px; /* Adjust icon size */
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    flex-shrink: 0;
+    margin-right: 4px; /* Adjust spacing between the icon and input */
+}
+
+.drag-handle {
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -6px; /* Adjust spacing for compact layout */
+    color: var(--ag-foreground-color, #000); /* Use AG Grid foreground color */
+    font-size: 14px; /* Adjust font size */
+    width: 30px; /* Match toolbar height */
+    height: 30px; /* Match toolbar height */
+}
+
+/* Collapsed toolbar styles */
+.grid-toolbar.collapsed {
+    width: 36px; /* Shrink toolbar to the size of the toggle button */
+    height: 36px; /* Keep height consistent */
+    overflow: hidden; /* Hide content */
+    justify-content: center; /* Center the toggle button */
+    padding: 0; /* Remove padding */
+    right: 0; /* Position the toolbar on the far right */
+    /* border-radius: 50%; Make it circular */
+    background-color: var(--ag-background-color, #fff); /* Match background color */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    z-index: 1001; /* Ensure it appears above other elements */
+}
+
+/* Ensure only the toggle button is visible when collapsed */
+.grid-toolbar.collapsed .toggle-button {
+    display: flex; /* Ensure the toggle button is visible */
+}
+
+/* Hide all other buttons when collapsed */
+.grid-toolbar.collapsed .toolbar-button:not(.toggle-button),
+.grid-toolbar.collapsed .toolbar-search {
+    display: none;
+}

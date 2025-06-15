@@ -41,6 +41,23 @@ import ManualUpdateButton from "./components/ManualUpdateButton"
 import ManualDownloadButton from "./components/ManualDownloadButton"
 import QuickSearch from "./components/QuickSearch"
 
+interface CustomStylesheetProps {
+  url: string;
+}
+ 
+function CustomStylesheet({ url }: CustomStylesheetProps) {
+  React.useEffect(() => {
+    const link = document.createElement('link');
+    link.href = url;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [url]);
+  return null;
+}
+
 import {
   getCSS,
   addCustomCSS,
@@ -354,6 +371,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
         ref={this.gridContainerRef}
         style={this.defineContainerHeight()}
       >
+        {this.props.args.links?.map((url: string) => (
+          <CustomStylesheet key={url} url={url} />
+        ))}
         <GridToolBar
           showManualUpdateButton={manualUpdate}
           enabled={this.props.args.show_toolbar ?? true}

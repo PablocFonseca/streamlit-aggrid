@@ -164,6 +164,7 @@ def AgGrid(
     columns_state=None,
     theme: str | StAggridTheme = "streamlit",
     custom_css=None,
+    links: typing.List[str] = None,
     key: typing.Any = None,
     update_on=[],
     callback=None,
@@ -281,6 +282,9 @@ def AgGrid(
         Custom CSS rules to be added to the component's iframe.
         Defaults to None.
 
+    links : typing.List[str], optional
+         List of URLs to external stylesheets (e.g. FontAwesome, Material Icons) to be loaded in the component.
+
     key : typing.Any, optional
         Streamlit's key argument. Check Streamlit's documentation.
         Defaults to None.
@@ -376,6 +380,7 @@ def AgGrid(
         try_to_convert_back_to_original_types = False
 
     custom_css = custom_css or dict()
+    links = links or []
 
     if height == None:
         gridOptions["domLayout"] = "autoHeight"
@@ -425,6 +430,7 @@ def AgGrid(
             columns_state=columns_state,
             theme=themeObj,
             custom_css=custom_css,
+            links=links,
             update_on=update_on,
             manual_update=manual_update,
             key=key,

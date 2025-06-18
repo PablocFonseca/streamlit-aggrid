@@ -208,3 +208,4 @@ test/_*
 streamlit-aggrid-examples/*
 streamlit-aggrid-examples
 test/screenshots
+output.txt

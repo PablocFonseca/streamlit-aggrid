@@ -16,7 +16,6 @@ import {
   GridOptions,
   GridReadyEvent,
   GridSizeChangedEvent,
-  IRowNode,
   ModuleRegistry,
 } from "ag-grid-community"
 
@@ -25,7 +24,6 @@ import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
 import _, { debounce, throttle } from "lodash"
 
-import { eventDataWhiteList } from "./constants"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
@@ -34,19 +32,12 @@ import { getGridReturnValue } from "./utils/agGridReturnUtils"
 import "@fontsource/source-sans-pro"
 import "./AgGrid.css"
 
-import { themeBalham } from "ag-grid-community"
-
 import GridToolBar from "./components/GridToolBar"
 import ManualUpdateButton from "./components/ManualUpdateButton"
 import ManualDownloadButton from "./components/ManualDownloadButton"
 import QuickSearch from "./components/QuickSearch"
 
-import {
-  getCSS,
-  addCustomCSS,
-  injectProAssets,
-  parseJsCodeFromPython,
-} from "./utils/gridUtils"
+import { addCustomCSS, injectProAssets, parseJsCodeFromPython } from "./utils/gridUtils"
 
 import { State } from "./types/AgGridTypes"
 

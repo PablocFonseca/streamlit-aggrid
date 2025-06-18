@@ -347,6 +347,15 @@ module.exports = function (webpackEnv) {
           loader: require.resolve('source-map-loader'),
         },
         {
+          test: /\.mjs$/,
+          enforce: 'pre',
+          use: ['source-map-loader'],
+          resolve: {
+            fullySpecified: false,
+          },
+          exclude: /node_modules/,
+        },
+        {
           // "oneOf" will traverse all following loaders until one will
           // match the requirements. When no loader matches it will fall
           // back to the "file" loader at the end of the loader list.
@@ -751,5 +760,11 @@ module.exports = function (webpackEnv) {
     // Turn off performance processing because we utilize
     // our own hints via the FileSizeReporter
     performance: false,
+    devServer: {
+      setupMiddlewares: (middlewares, devServer) => {
+        // Your middleware logic here
+        return middlewares;
+      },
+    },
   };
 };

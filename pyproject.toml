@@ -1,6 +1,6 @@
 [project]
 name = "streamlit-aggrid"
-version = "1.1.5"
+version = "1.1.5-2"
 description = "Streamlit component implementation of ag-grid"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,6 +40,7 @@ pytest = "^8.3.5"
 pytest-playwright = "^0.7.0"
 watchdog = "^6.0.0"
 ruff = "*"
+streamlit-code-editor = "^0.1.12"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

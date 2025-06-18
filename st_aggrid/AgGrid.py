@@ -167,7 +167,7 @@ def AgGrid(
     key: typing.Any = None,
     update_on=[],
     callback=None,
-    show_toolbar: bool = True,
+    show_toolbar: bool = False,
     show_search: bool = True,
     show_download_button: bool = True,
     **default_column_parameters,
@@ -429,9 +429,9 @@ def AgGrid(
             manual_update=manual_update,
             key=key,
             on_change=_inner_callback,
-            show_toolbar=show_toolbar or True,
-            show_search=show_search or True,
-            show_download_button=show_download_button or True,
+            show_toolbar=show_toolbar,
+            show_search=show_search,
+            show_download_button=show_download_button,
             pro_assets=pro_assets,
         )
 

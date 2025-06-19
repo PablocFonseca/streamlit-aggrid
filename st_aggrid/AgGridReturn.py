@@ -12,10 +12,6 @@ import inspect
 class AgGridReturn(Mapping):
     """Class to hold AgGrid call return"""
 
-    # selected_rows: List[Mapping] = field(default_factory=list)
-    # column_state = None
-    # excel_blob = None
-
     def __init__(
         self,
         originalData,
@@ -25,11 +21,6 @@ class AgGridReturn(Mapping):
         conversion_errors="corce",
     ) -> None:
         super().__init__()
-
-        # def ddict():
-        #     return defaultdict(ddict)
-
-        # self.__dict__ = ddict()
 
         self.__component_value_set = False
 
@@ -47,7 +38,7 @@ class AgGridReturn(Mapping):
 
         self.__dict__["grid_response"] = component_value
         if isinstance(self.__dict__["grid_response"]["gridOptions"], dict):
-            pass  # Callback is already a dict
+            pass
         else:
             self.__dict__["grid_response"]["gridOptions"] = json.loads(
                 self.__dict__["grid_response"]["gridOptions"]
@@ -186,8 +177,7 @@ class AgGridReturn(Mapping):
             }
 
             reindex_ids = reindex_ids_map.get(self.__data_return_mode, None)
-
-            if isinstance(data, pd.DataFrame):
+            if isinstance(data, pd.DataFrame) and not data.empty:
                 data = self.__process_vanilla_df_response(
                     nodes, self.__try_to_convert_back_to_original_types and onlySelected
                 )
@@ -202,7 +192,11 @@ class AgGridReturn(Mapping):
                     return data
 
             # TODO: imporove json testing.
-            elif isinstance(data, str) and (json.loads(data)):
+            elif (
+                (isinstance(data, str) and (json.loads(data)))
+                or (isinstance(data, pd.DataFrame) and data.empty)
+                or (data is None)
+            ):
                 return json.dumps(
                     [
                         n["data"]

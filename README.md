@@ -3,7 +3,13 @@
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] [![Downloads][downloads_badge]][downloads_link]
 
 > [!IMPORTANT]
-> 💰 If you want to support this lonely python coder you can [Wise](https://wise.com/pay/r/nZDsjl5fZgPxYt0) or [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ) me. (Any help is much appreciated).
+> 💡 **Support the Development of streamlit-aggrid!**  
+> This project is the result of countless hours of dedication by a solo Python developer. If you find it useful, consider giving back to help keep it alive and thriving.  
+> 
+> ### Ways to Contribute:
+> - **[Donate via PayPal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ):** A quick and secure way to show your support.  
+> 
+> Every contribution, no matter the size, makes a difference and helps ensure the continued improvement of this project. Thank you for your generosity! 🙌
 
 > For sponsoring, development support, features prioritization you can [email me](mailto:pablo.fonseca+staggrid@gmail.com).
 

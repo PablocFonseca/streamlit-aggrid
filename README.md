@@ -3,16 +3,7 @@
 [![Open in Streamlit][share_badge]][share_link] [![GitHub][github_badge]][github_link] [![PyPI][pypi_badge]][pypi_link] [![Downloads][downloads_badge]][downloads_link]
 
 > [!IMPORTANT]
-## Support My Work
-
-If you'd like to support my work, consider making a donation:
-
-<form action="https://www.paypal.com/donate" method="post" target="_top">
-  <input type="hidden" name="hosted_button_id" value="8HGLA4JZBYFPQ" />
-  <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" 
-         title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-  <img alt="" border="0" src="https://www.paypal.com/en_BR/i/scr/pixel.gif" width="1" height="1" />
-</form>
+> 💰 If you want to support this lonely python coder you can [Wise](https://wise.com/pay/r/nZDsjl5fZgPxYt0) or [Paypal](https://www.paypal.com/donate?hosted_button_id=8HGLA4JZBYFPQ) me. (Any help is much appreciated).
 
 > For sponsoring, development support, features prioritization you can [email me](mailto:pablo.fonseca+staggrid@gmail.com).
 

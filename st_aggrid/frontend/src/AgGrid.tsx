@@ -108,7 +108,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       isRowDataEdited: false,
       api: undefined,
       enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: true,
+      debug: false,
     } as State
 
     if (this.state.debug) {
@@ -154,22 +154,34 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private attachStreamlitRerunToEvents(api: GridApi) {
-    const updateEvents = this.props.args.update_on
+    const updateEvents = this.props.args.update_on;
 
     updateEvents.forEach((element: any) => {
-      //if element is a tuple (eventName,timeout) apply debounce func for timeout seconds.
-      if (Array.isArray(element)) {
-        api.addEventListener(
-          element[0],
-          debounce((e: any) => this.returnGridValue(e, element[0]), element[1])
-        )
-      } else {
-        api.addEventListener(element, (e: any) =>
-          this.returnGridValue(e, element)
-        )
-      }
-      console.log("Attached grid return event %s", element)
-    })
+        if (Array.isArray(element)) {
+            // If element is a tuple (eventName, timeout), apply debounce for the timeout duration
+            const [eventName, timeout] = element;
+            api.addEventListener(
+                eventName,
+                debounce(
+                    (e: any) => {
+                        this.returnGridValue(e, eventName);
+                    },
+                    timeout,
+                    {
+                        leading: false,
+                        trailing: true,
+                        maxWait: timeout,
+                    }
+                )
+            );
+        } else {
+            // Attach event listener for non-tuple events
+            api.addEventListener(element, (e: any) => {
+                this.returnGridValue(e, element);
+            });
+        }
+        console.log(`Attached grid return event: ${element}`);
+    });
   }
 
   private loadColumnsState() {

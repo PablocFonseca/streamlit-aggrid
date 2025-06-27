@@ -411,7 +411,6 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
-
     try:
         component_value = _component_func(
             gridOptions=gridOptions,

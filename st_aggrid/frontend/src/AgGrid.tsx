@@ -22,7 +22,7 @@ import {
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
 import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
-import _, { debounce, throttle } from "lodash"
+import {debounce, cloneDeep, every, isEqual} from "lodash"
 
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
@@ -33,9 +33,9 @@ import "@fontsource/source-sans-pro"
 import "./AgGrid.css"
 
 import GridToolBar from "./components/GridToolBar"
-import ManualUpdateButton from "./components/ManualUpdateButton"
-import ManualDownloadButton from "./components/ManualDownloadButton"
-import QuickSearch from "./components/QuickSearch"
+// import ManualUpdateButton from "./components/ManualUpdateButton"
+// import ManualDownloadButton from "./components/ManualDownloadButton"
+// import QuickSearch from "./components/QuickSearch"
 
 import { addCustomCSS, injectProAssets, parseJsCodeFromPython } from "./utils/gridUtils"
 
@@ -118,7 +118,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private parseGridoptions() {
-    let gridOptions: GridOptions = _.cloneDeep(this.props.args.gridOptions)
+    let gridOptions: GridOptions = cloneDeep(this.props.args.gridOptions)
 
     if (this.props.args.allow_unsafe_jscode) {
       console.warn("flag allow_unsafe_jscode is on.")
@@ -126,7 +126,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
-    if (_.every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
+    if (every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
       if (!("getRowId" in gridOptions)) {
         gridOptions["getRowId"] = (params: GetRowIdParams) =>
           params.data.__pandas_index as string
@@ -248,8 +248,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     //Theme object Changes here
     if (
-      !_.isEqual(prevProps.theme, this.props.theme) ||
-      !_.isEqual(this.props.args.theme, prevProps.args.theme)
+      !isEqual(prevProps.theme, this.props.theme) ||
+      !isEqual(this.props.args.theme, prevProps.args.theme)
     ) {
       let streamlitTheme = this.props.theme
       let agGridTheme = this.props.args.theme
@@ -259,8 +259,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
       })
     }
 
-    //const objectDiff = (a: any, b: any) => _.fromPairs(_.differenceWith(_.toPairs(a), _.toPairs(b), _.isEqual))
-    if (!_.isEqual(prevGridOptions, currGridOptions)) {
+    //const objectDiff = (a: any, b: any) => fromPairs(differenceWith(toPairs(a), toPairs(b), isEqual))
+    if (!isEqual(prevGridOptions, currGridOptions)) {
       let go = this.parseGridoptions()
       let row_data = go.rowData
 
@@ -273,7 +273,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     if (
-      !_.isEqual(prevProps.args.columns_state, this.props.args.columns_state)
+      !isEqual(prevProps.args.columns_state, this.props.args.columns_state)
     ) {
       this.loadColumnsState()
     }

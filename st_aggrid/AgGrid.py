@@ -248,7 +248,7 @@ def AgGrid(
             True     -> Both AG Grid Enterprise and AG Charts Enterprise modules will be loaded.
             False    -> No enterprise modules will be loaded.
             'enterprise+AgCharts'    -> Equivalent to True.
-            'enterpriseOnly'    -> Only AG Grid Enterprise modules will be loaded.
+            'enterpriseOnly'    -> Only AG Grid Enterprise module will be loaded.
         Defaults to False.
 
     license_key : str, optional

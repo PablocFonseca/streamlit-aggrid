@@ -7,7 +7,7 @@ import warnings
 import typing
 
 from decouple import config
-from typing import Any, Mapping, Tuple, Union
+from typing import Any, Literal, Mapping, Tuple, Union
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import (
     GridUpdateMode,
@@ -157,7 +157,7 @@ def AgGrid(
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode = DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool = False,
-    enable_enterprise_modules: bool = False,
+    enable_enterprise_modules: bool | Literal["enterprise+AgCharts", "enterpriseOnly"] = False,
     license_key: str = None,
     try_to_convert_back_to_original_types: bool = True,
     conversion_errors: str = "coerce",
@@ -243,8 +243,12 @@ def AgGrid(
         Allows jsCode to be injected in gridOptions.
         Defaults to False.
 
-    enable_enterprise_modules : bool, optional
-        Loads Ag-Grid enterprise modules (check licensing).
+    enable_enterprise_modules : bool | Literal["enterprise+AgCharts", "enterpriseOnly"], optional
+        Loads Ag-Grid enterprise modules (check licensing). One of:
+            True     -> Both AG Grid Enterprise and AG Charts Enterprise modules will be loaded.
+            False    -> No enterprise modules will be loaded.
+            'enterprise+AgCharts'    -> Equivalent to True.
+            'enterpriseOnly'    -> Only AG Grid Enterprise modules will be loaded.
         Defaults to False.
 
     license_key : str, optional

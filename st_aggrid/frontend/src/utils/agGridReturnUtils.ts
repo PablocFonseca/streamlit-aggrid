@@ -21,7 +21,7 @@ export async function getGridReturnValue(
       rowTop: n.rowTop,
       displayed: n.displayed,
       isHovered: n.isHovered(),
-      isFullWidthCell: n.isFullWidthCell(),
+      //isFullWidthCell: n.isFullWidthCell(),
       expanded: n.expanded,
       isExpandable: n.expanded,
       group: n.group,
@@ -40,7 +40,7 @@ export async function getGridReturnValue(
       uiLevel: n.uiLevel,
       allChildrenCount: n.allChildrenCount,
       leafGroup: n.leafGroup,
-      sibling: fetch_node_props(n.sibling),
+      //sibling: fetch_node_props(n.sibling), //this is causing stack overvlow errors TODO: revisit what needs to be returned on grid events.
       rowHeight: n.rowHeight,
       master: n.master,
       detail: n.detail,

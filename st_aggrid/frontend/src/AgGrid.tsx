@@ -283,6 +283,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.setState({ api: event.api })
 
     //Is it ugly? Yes. Does it work? Yes. Why? IDK
+    // eslint-disable-next-line
     this.state.api = event.api
 
     this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
@@ -374,7 +375,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
           }}
         />
         <AgGridReact
-          onGridReady={(e: GridReadyEvent) => this.onGridReady(e)}
+          onGridReady={(e: GridReadyEvent<any, any>) => this.onGridReady(e)}
           gridOptions={this.state.gridOptions}
         ></AgGridReact>
       </div>

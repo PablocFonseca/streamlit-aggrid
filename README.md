@@ -19,7 +19,7 @@
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
-Current AgGrid version is [33.0.3](https://www.ag-grid.com/archive/33.0.3/)
+Current AgGrid version is [34.0.2](https://www.ag-grid.com/archive/34.0.2/)
 
 # Install
 
@@ -53,6 +53,11 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 ![example image](https://github.com/PablocFonseca/streamlit-aggrid/raw/main/group_selection_example.gif)
 
 # Development Notes
+
+Version 1.1.7
+
+- Updates inner Ag-Grid to v. 34.0.2
+- Fixes a bug related to moving columns with grandTotalRow present
 
 Version 1.1.5
 

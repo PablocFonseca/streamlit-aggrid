@@ -1,6 +1,6 @@
 [project]
 name = "streamlit-aggrid"
-version = "1.1.6"
+version = "1.1.7"
 description = "Streamlit component implementation of ag-grid"
 readme = "README.md"
 requires-python = ">=3.10"

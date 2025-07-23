@@ -4,7 +4,7 @@ import pytest
 
 from playwright.sync_api import Page, expect
 
-from .e2e_utils import StreamlitRunner
+from e2e_utils import StreamlitRunner
 
 ROOT_DIRECTORY = Path(__file__).parent.parent.absolute()
 BASIC_EXAMPLE_FILE = ROOT_DIRECTORY / "test" / "grid_initialization.py"

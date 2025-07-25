@@ -160,7 +160,7 @@ class AgGridReturn(Mapping):
         return groups
 
     def __get_data(self, onlySelected):
-        data = self.__original_data
+            data = self.__original_data
 
         if self.__component_value_set:
             nodes = self.grid_response.get("nodes", [])
@@ -177,6 +177,7 @@ class AgGridReturn(Mapping):
             }
 
             reindex_ids = reindex_ids_map.get(self.__data_return_mode, None)
+
             if isinstance(data, pd.DataFrame) and not data.empty:
                 data = self.__process_vanilla_df_response(
                     nodes, self.__try_to_convert_back_to_original_types and onlySelected

@@ -1,5 +1,5 @@
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode, DataReturnMode
 import pandas as pd
 
 st.set_page_config(page_title="AG Grid Drag and Drop Example")
@@ -20,12 +20,15 @@ gb.configure_grid_options(rowDragManaged=True, getRowId=JsCode("params => params
 grid_options = gb.build()
 
 st.markdown('<div class="st-key-drag_grid"></div>', unsafe_allow_html=True)
-AgGrid(
+r = AgGrid(
     df,  # <-- Pass the DataFrame here
     gridOptions=grid_options,
     enable_enterprise_modules=False,
     height=300,
     fit_columns_on_grid_load=True,
     key="drag_grid", 
-    allow_unsafe_jscode=True
+    allow_unsafe_jscode=True,
+    data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
+    update_on=['dragStopped']
 )
+r.data

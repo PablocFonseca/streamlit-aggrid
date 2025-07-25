@@ -209,3 +209,5 @@ streamlit-aggrid-examples/*
 streamlit-aggrid-examples
 test/screenshots
 output.txt
+test/issues/*
+test/src_original/*

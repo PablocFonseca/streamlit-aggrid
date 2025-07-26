@@ -104,6 +104,7 @@ def __parse_grid_options(
 
     return gridOptions
 
+
 def __parse_update_mode(update_mode: GridUpdateMode):
     update_on = []
 
@@ -147,6 +148,7 @@ else:
     build_dir = os.path.join(parent_dir, "frontend", "build")
     _component_func = components.declare_component("agGrid", path=build_dir)
 
+
 def AgGrid(
     data: Union[pd.DataFrame, str] = None,
     gridOptions: typing.Dict = None,
@@ -169,6 +171,7 @@ def AgGrid(
     show_search: bool = True,
     show_download_button: bool = True,
     should_grid_return: JsCode = None,
+    collect_grid_return: JsCode = None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -305,7 +308,6 @@ def AgGrid(
         Returns an AgGridReturn object containing the grid's data and other metadata.
     """
 
-
     ##Parses Themes
     if isinstance(theme, (str, AgGridTheme)):
         # Legacy compatibility
@@ -356,8 +358,15 @@ def AgGrid(
         if not isinstance(should_grid_return, JsCode):
             raise ValueError("If set, should_grid_update must be a JsCode Object.")
         else:
-            #allow_unsafe_jscode = True
-            pass
+            should_grid_return = should_grid_return.js_code
+            allow_unsafe_jscode = True
+
+    if collect_grid_return:
+        if not isinstance(collect_grid_return, JsCode):
+            raise ValueError("If set, collect_grid_return must be a JsCode Object.")
+        else:
+            collect_grid_return = collect_grid_return.js_code
+            allow_unsafe_jscode = True
 
     # Parse gridOptions
     gridOptions = __parse_grid_options(
@@ -430,7 +439,8 @@ def AgGrid(
             show_download_button=show_download_button,
             show_search=show_search,
             show_toolbar=show_toolbar,
-            should_grid_return=should_grid_return.js_code,
+            should_grid_return=should_grid_return,
+            collect_grid_return=collect_grid_return,
             theme=themeObj,
             update_on=update_on,
         )
@@ -444,7 +454,10 @@ def AgGrid(
         # ex = components.components.MarshallComponentException(*args)
         raise (ex)
 
-    if component_value:
+    if collect_grid_return:
+        response = component_value
+
+    elif component_value:
         response._set_component_value(component_value)
 
     return response

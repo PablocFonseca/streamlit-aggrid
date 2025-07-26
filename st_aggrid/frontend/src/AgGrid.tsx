@@ -22,7 +22,7 @@ import {
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
 import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
-import {debounce, cloneDeep, every, isEqual} from "lodash"
+import { debounce, cloneDeep, every, isEqual } from "lodash"
 
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
@@ -37,7 +37,11 @@ import GridToolBar from "./components/GridToolBar"
 // import ManualDownloadButton from "./components/ManualDownloadButton"
 // import QuickSearch from "./components/QuickSearch"
 
-import { addCustomCSS, injectProAssets, parseJsCodeFromPython } from "./utils/gridUtils"
+import {
+  addCustomCSS,
+  injectProAssets,
+  parseJsCodeFromPython,
+} from "./utils/gridUtils"
 
 import { State } from "./types/AgGridTypes"
 
@@ -49,6 +53,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private renderedGridHeightPrevious: number = 0
   private themeParser: ThemeParser | undefined = undefined
   private shouldGridReturn: Function | undefined = undefined
+  private collectGridReturn: Function | undefined = undefined
 
   constructor(props: ComponentProps) {
     super(props)
@@ -60,8 +65,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     if (props.args.pro_assets && Array.isArray(props.args.pro_assets)) {
       props.args.pro_assets.forEach((asset: any) => {
-      //console.log(asset);
-      injectProAssets(asset?.js, asset?.css)
+        //console.log(asset);
+        injectProAssets(asset?.js, asset?.css)
       })
     }
     const enableEnterpriseModules = props.args.enable_enterprise_modules
@@ -70,20 +75,19 @@ class AgGrid extends React.Component<ComponentProps, State> {
       enableEnterpriseModules === "enterprise+AgCharts"
     ) {
       ModuleRegistry.registerModules([
-      AllEnterpriseModule.with(AgChartsEnterpriseModule),
+        AllEnterpriseModule.with(AgChartsEnterpriseModule),
       ])
       if ("license_key" in props.args) {
-      LicenseManager.setLicenseKey(props.args["license_key"])
+        LicenseManager.setLicenseKey(props.args["license_key"])
       }
     } else if (enableEnterpriseModules === "enterpriseOnly") {
       ModuleRegistry.registerModules([AllEnterpriseModule])
       if ("license_key" in props.args) {
-      LicenseManager.setLicenseKey(props.args["license_key"])
+        LicenseManager.setLicenseKey(props.args["license_key"])
       }
     } else {
       ModuleRegistry.registerModules([AllCommunityModule])
     }
-
 
     this.isGridAutoHeightOn =
       this.props.args.gridOptions?.domLayout === "autoHeight"
@@ -94,7 +98,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
     if (StreamlitAgGridPro) {
       StreamlitAgGridPro.returnGridValue = this.returnGridValue.bind(this)
 
-      if (StreamlitAgGridPro.extenders && Array.isArray(StreamlitAgGridPro.extenders)) {
+      if (
+        StreamlitAgGridPro.extenders &&
+        Array.isArray(StreamlitAgGridPro.extenders)
+      ) {
         StreamlitAgGridPro.extenders.forEach((extender: (go: any) => void) => {
           if (typeof extender === "function") {
             extender(go)
@@ -102,8 +109,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
         })
       }
     }
-    
-    this.shouldGridReturn = this.props.args.should_grid_return ? parseJsCodeFromPython(this.props.args.should_grid_return) : undefined
+
+    this.shouldGridReturn = this.props.args.should_grid_return
+      ? parseJsCodeFromPython(this.props.args.should_grid_return)
+      : undefined
+
+    this.collectGridReturn = this.props.args.collect_grid_return
+      ? parseJsCodeFromPython(this.props.args.collect_grid_return)
+      : undefined
 
     this.state = {
       gridHeight: this.props.args.height,
@@ -157,34 +170,34 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private attachStreamlitRerunToEvents(api: GridApi) {
-    const updateEvents = this.props.args.update_on;
+    const updateEvents = this.props.args.update_on
 
     updateEvents.forEach((element: any) => {
-        if (Array.isArray(element)) {
-            // If element is a tuple (eventName, timeout), apply debounce for the timeout duration
-            const [eventName, timeout] = element;
-            api.addEventListener(
-                eventName,
-                debounce(
-                    (e: any) => {
-                        this.returnGridValue(e, eventName);
-                    },
-                    timeout,
-                    {
-                        leading: false,
-                        trailing: true,
-                        maxWait: timeout,
-                    }
-                )
-            );
-        } else {
-            // Attach event listener for non-tuple events
-            api.addEventListener(element, (e: any) => {
-                this.returnGridValue(e, element);
-            });
-        }
-        console.log(`Attached grid return event: ${element}`);
-    });
+      if (Array.isArray(element)) {
+        // If element is a tuple (eventName, timeout), apply debounce for the timeout duration
+        const [eventName, timeout] = element
+        api.addEventListener(
+          eventName,
+          debounce(
+            (e: any) => {
+              this.returnGridValue(e, eventName)
+            },
+            timeout,
+            {
+              leading: false,
+              trailing: true,
+              maxWait: timeout,
+            }
+          )
+        )
+      } else {
+        // Attach event listener for non-tuple events
+        api.addEventListener(element, (e: any) => {
+          this.returnGridValue(e, element)
+        })
+      }
+      console.log(`Attached grid return event: ${element}`)
+    })
   }
 
   private loadColumnsState() {
@@ -213,6 +226,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     e: any,
     streamlitRerunEventTriggerName: string
   ) {
+    return {};
     return getGridReturnValue(
       this.state.api,
       this.state.enterprise_features_enabled,
@@ -223,22 +237,37 @@ class AgGrid extends React.Component<ComponentProps, State> {
     )
   }
 
-  private returnGridValue(eventData: any, streamlitRerunEventTriggerName: string) {
-    //console.log("streamlitRerunEventTriggerName: ", streamlitRerunEventTriggerName)
-    //console.log("event: ", e)
+  private returnGridValue(
+    eventData: any,
+    streamlitRerunEventTriggerName: string
+  ) {
+
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
     }
 
     if (typeof this.shouldGridReturn === "function") {
-        if (this.shouldGridReturn({streamlitRerunEventTriggerName, eventData}) !== true){return }
+      if (
+        this.shouldGridReturn({ streamlitRerunEventTriggerName, eventData }) !==
+        true
+      ) {
+        return
+      }
     }
 
-
-
-    this.getGridReturnValue(eventData, streamlitRerunEventTriggerName).then((v) =>
-      Streamlit.setComponentValue(v)
-    )
+    if (typeof this.collectGridReturn === "function") {
+      try {
+        const grid_return = this.collectGridReturn({
+          streamlitRerunEventTriggerName,
+          eventData,
+        })
+        Streamlit.setComponentValue(grid_return)
+      } catch {}
+    } else {
+      this.getGridReturnValue(eventData, streamlitRerunEventTriggerName).then(
+        (v) => Streamlit.setComponentValue(v)
+      )
+    }
   }
 
   private defineContainerHeight() {
@@ -284,9 +313,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.state.api?.updateGridOptions(go)
     }
 
-    if (
-      !isEqual(prevProps.args.columns_state, this.props.args.columns_state)
-    ) {
+    if (!isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
       this.loadColumnsState()
     }
   }
@@ -362,7 +389,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   public render = (): ReactNode => {
-    let manualUpdate =  this.props.args.manual_update === true
+    let manualUpdate = this.props.args.manual_update === true
 
     return (
       <div
@@ -376,14 +403,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
           showSearch={this.props.args.show_search ?? true}
           showDownloadButton={this.props.args.show_download_button ?? true}
           onQuickSearchChange={(value) => {
-        this.state.api?.setGridOption("quickFilterText", value);
-        this.state.api?.hideOverlay(); // Hide any overlay if present
+            this.state.api?.setGridOption("quickFilterText", value)
+            this.state.api?.hideOverlay() // Hide any overlay if present
           }}
           onDownloadClick={() => {
-        this.state.api?.exportDataAsCsv();
+            this.state.api?.exportDataAsCsv()
           }}
           onManualUpdateClick={() => {
-        console.log("Manual update triggered");
+            console.log("Manual update triggered")
           }}
         />
         <AgGridReact

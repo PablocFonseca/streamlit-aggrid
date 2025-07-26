@@ -104,21 +104,6 @@ def __parse_grid_options(
 
     return gridOptions
 
-
-_RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
-
-if not _RELEASE:
-    warnings.warn("WARNING: ST_AGGRID is in development mode.")
-    _component_func = components.declare_component(
-        "agGrid",
-        url="http://localhost:3001",
-    )
-else:
-    parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "frontend", "build")
-    _component_func = components.declare_component("agGrid", path=build_dir)
-
-
 def __parse_update_mode(update_mode: GridUpdateMode):
     update_on = []
 
@@ -149,6 +134,19 @@ def __parse_update_mode(update_mode: GridUpdateMode):
     return update_on
 
 
+_RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
+
+if not _RELEASE:
+    warnings.warn("WARNING: ST_AGGRID is in development mode.")
+    _component_func = components.declare_component(
+        "agGrid",
+        url="http://localhost:3001",
+    )
+else:
+    parent_dir = os.path.dirname(os.path.abspath(__file__))
+    build_dir = os.path.join(parent_dir, "frontend", "build")
+    _component_func = components.declare_component("agGrid", path=build_dir)
+
 def AgGrid(
     data: Union[pd.DataFrame, str] = None,
     gridOptions: typing.Dict = None,
@@ -170,6 +168,7 @@ def AgGrid(
     show_toolbar: bool = False,
     show_search: bool = True,
     show_download_button: bool = True,
+    should_grid_return: JsCode = None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -306,13 +305,6 @@ def AgGrid(
         Returns an AgGridReturn object containing the grid's data and other metadata.
     """
 
-    # if not (isinstance(theme, (str, AgGridTheme)) and (theme in AgGridTheme)):
-    #     raise ValueError(
-    #         f"{theme} is not valid. Available options: {AgGridTheme.__members__}"
-    #     )
-    # else:
-    #     if isinstance(theme, AgGridTheme):
-    #         theme = theme.value
 
     ##Parses Themes
     if isinstance(theme, (str, AgGridTheme)):
@@ -359,6 +351,13 @@ def AgGrid(
         else:
             manual_update = False
             update_on.extend(__parse_update_mode(update_mode))
+
+    if should_grid_return:
+        if not isinstance(should_grid_return, JsCode):
+            raise ValueError("If set, should_grid_update must be a JsCode Object.")
+        else:
+            #allow_unsafe_jscode = True
+            pass
 
     # Parse gridOptions
     gridOptions = __parse_grid_options(
@@ -411,27 +410,29 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
+
     try:
         component_value = _component_func(
+            allow_unsafe_jscode=allow_unsafe_jscode,
+            columns_state=columns_state,
+            custom_css=custom_css,
+            data_return_mode=data_return_mode,
+            default=None,
+            enable_enterprise_modules=enable_enterprise_modules,
+            frame_dtypes=frame_dtypes,
             gridOptions=gridOptions,
             height=height,
-            data_return_mode=data_return_mode,
-            frame_dtypes=frame_dtypes,
-            allow_unsafe_jscode=allow_unsafe_jscode,
-            enable_enterprise_modules=enable_enterprise_modules,
-            license_key=license_key,
-            default=None,
-            columns_state=columns_state,
-            theme=themeObj,
-            custom_css=custom_css,
-            update_on=update_on,
-            manual_update=manual_update,
             key=key,
+            license_key=license_key,
+            manual_update=manual_update,
             on_change=_inner_callback,
-            show_toolbar=show_toolbar,
-            show_search=show_search,
-            show_download_button=show_download_button,
             pro_assets=pro_assets,
+            show_download_button=show_download_button,
+            show_search=show_search,
+            show_toolbar=show_toolbar,
+            should_grid_return=should_grid_return.js_code,
+            theme=themeObj,
+            update_on=update_on,
         )
 
     except Exception as ex:  # components.components.MarshallComponentException as ex:
@@ -445,13 +446,5 @@ def AgGrid(
 
     if component_value:
         response._set_component_value(component_value)
-
-    # if component_value:
-    # response.grid_response = component_value
-
-    # if isinstance(component_value, str):
-    #     component_value = json.loads(component_value)
-    # frame = pd.DataFrame(component_value["rowData"])
-    # original_types = component_value["originalDtypes"]
 
     return response

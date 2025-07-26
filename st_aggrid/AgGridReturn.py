@@ -160,7 +160,7 @@ class AgGridReturn(Mapping):
         return groups
 
     def __get_data(self, onlySelected):
-            data = self.__original_data
+        data = self.__original_data
 
         if self.__component_value_set:
             nodes = self.grid_response.get("nodes", [])

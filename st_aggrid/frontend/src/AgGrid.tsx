@@ -48,6 +48,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private isGridAutoHeightOn: boolean
   private renderedGridHeightPrevious: number = 0
   private themeParser: ThemeParser | undefined = undefined
+  private shouldGridReturn: Function | undefined = undefined
 
   constructor(props: ComponentProps) {
     super(props)
@@ -101,6 +102,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
         })
       }
     }
+    
+    this.shouldGridReturn = this.props.args.should_grid_return ? parseJsCodeFromPython(this.props.args.should_grid_return) : undefined
 
     this.state = {
       gridHeight: this.props.args.height,
@@ -220,11 +223,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
     )
   }
 
-  private returnGridValue(e: any, streamlitRerunEventTriggerName: string) {
+  private returnGridValue(eventData: any, streamlitRerunEventTriggerName: string) {
+    //console.log("streamlitRerunEventTriggerName: ", streamlitRerunEventTriggerName)
+    //console.log("event: ", e)
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
     }
-    this.getGridReturnValue(e, streamlitRerunEventTriggerName).then((v) =>
+
+    if (typeof this.shouldGridReturn === "function") {
+        if (this.shouldGridReturn({streamlitRerunEventTriggerName, eventData}) !== true){return }
+    }
+
+
+
+    this.getGridReturnValue(eventData, streamlitRerunEventTriggerName).then((v) =>
       Streamlit.setComponentValue(v)
     )
   }

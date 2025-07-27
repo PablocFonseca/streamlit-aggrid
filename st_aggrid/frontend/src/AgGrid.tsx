@@ -226,7 +226,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     e: any,
     streamlitRerunEventTriggerName: string
   ) {
-    return {};
     return getGridReturnValue(
       this.state.api,
       this.state.enterprise_features_enabled,

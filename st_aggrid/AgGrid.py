@@ -1,138 +1,26 @@
-import os
-import json
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import warnings
+import os
 import typing
-
 from decouple import config
-from typing import Any, Mapping, Tuple, Union
-from st_aggrid.grid_options_builder import GridOptionsBuilder
+from typing import Union
 from st_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
     JsCode,
     StAggridTheme,
-    walk_gridOptions,
     AgGridTheme,
+)
+from st_aggrid.aggrid_utils import (
+    parse_row_data,
+    parse_grid_options,
+    parse_update_mode,
 )
 from st_aggrid.AgGridReturn import AgGridReturn
 
 
-# This function exists because pandas behaviour when converting tz aware datetime to iso format.
-def __cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
-    """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
-    for c, d in dataframe.dtypes.items():
-        if d.kind == "M":
-            dataframe[c] = dataframe[c].apply(lambda s: s.isoformat())
-
-
-def __parse_row_data(data) -> Tuple[Any, Any]:
-    """Internal method to process data from data_parameter"""
-    # no data received, render an empty grid if gridOptions is present
-    if data is None:
-        return [], None
-
-    if isinstance(data, pd.DataFrame):
-        data_parameter = data.copy()
-        __cast_date_columns_to_iso8601(data_parameter)
-        # creates an index column that uniquely identify the rows, this index will be used in AgGrid getRowId call on the Javascript side.
-        data_parameter["__pandas_index"] = [
-            str(i) for i in range(data_parameter.shape[0])
-        ]
-        row_data = data_parameter.to_json(orient="records", date_format="iso")
-        frame_dtypes = dict(
-            zip(data_parameter.columns, (t.kind for t in data_parameter.dtypes))
-        )
-        del data_parameter["__pandas_index"]
-        return json.loads(row_data), frame_dtypes
-
-    if isinstance(data, str):
-        # is data the path to a local json file?
-        if data.endswith(".json") and os.path.exists(data):
-            try:
-                with open(os.path.abspath(data)) as f:
-                    return json.loads(json.dumps(json.load(f))), None
-            except Exception as ex:
-                raise Exception(f"Error reading {data}. {ex}")
-
-        # is data raw valid json?
-        try:
-            return json.loads(data), None
-        except Exception:
-            raise Exception("Error parsing data parameter as raw json.")
-
-    raise ValueError("Invalid data")
-
-
-def __parse_grid_options(
-    gridOptions_parameter, data, default_column_parameters, unsafe_allow_jscode
-):
-    """Internal method to cast gridOptions parameter to a valid gridoptions"""
-    # if no gridOptions is passed, builds a default one.
-    if (gridOptions_parameter == None) and not (data is None):
-        gb = GridOptionsBuilder.from_dataframe(data, **default_column_parameters)
-        gridOptions = gb.build()
-
-    # if it is a dict-like object, assumes is valid and use it.
-    elif isinstance(gridOptions_parameter, Mapping):
-        gridOptions = gridOptions_parameter
-
-    # if it is a string check if is valid path or a valid json and use it.
-    elif isinstance(gridOptions_parameter, str):
-        import os
-        import json
-
-        is_path = gridOptions_parameter.endswith(".json") and os.path.exists(
-            gridOptions_parameter
-        )
-
-        if is_path:
-            gridOptions = json.load(open(os.path.abspath(gridOptions_parameter)))
-        else:
-            gridOptions = json.loads(gridOptions_parameter)
-
-    else:
-        raise ValueError("gridOptions is invalid.")
-
-    if unsafe_allow_jscode:
-        # NOTE: Streamlit should allow passing a class to its inner component dumps, this way any class could serialized on AgGrid call.
-        walk_gridOptions(
-            gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v
-        )
-
-    return gridOptions
-
-
-def __parse_update_mode(update_mode: GridUpdateMode):
-    update_on = []
-
-    if update_mode & GridUpdateMode.VALUE_CHANGED:
-        update_on.append("cellValueChanged")
-
-    if update_mode & GridUpdateMode.SELECTION_CHANGED:
-        update_on.append("selectionChanged")
-
-    if update_mode & GridUpdateMode.FILTERING_CHANGED:
-        update_on.append("filterChanged")
-
-    if update_mode & GridUpdateMode.SORTING_CHANGED:
-        update_on.append("sortChanged")
-
-    if update_mode & GridUpdateMode.COLUMN_RESIZED:
-        update_on.append(("columnResized", 300))
-
-    if update_mode & GridUpdateMode.COLUMN_MOVED:
-        update_on.append(("columnMoved", 500))
-
-    if update_mode & GridUpdateMode.COLUMN_PINNED:
-        update_on.append("columnPinned")
-
-    if update_mode & GridUpdateMode.COLUMN_VISIBLE:
-        update_on.append("columnVisible")
-
-    return update_on
 
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
@@ -332,7 +220,7 @@ def AgGrid(
     elif isinstance(data_return_mode, str):
         try:
             data_return_mode = DataReturnMode[data_return_mode.upper()]
-        except:
+        except Exception:
             raise ValueError(f"{data_return_mode} is not valid.")
 
     # Parse update Mode
@@ -343,7 +231,7 @@ def AgGrid(
     elif isinstance(update_mode, str):
         try:
             update_mode = GridUpdateMode[update_mode.upper()]
-        except:
+        except Exception:
             raise ValueError(f"{update_mode} is not valid.")
 
     if update_mode:
@@ -352,24 +240,22 @@ def AgGrid(
             manual_update = True
         else:
             manual_update = False
-            update_on.extend(__parse_update_mode(update_mode))
+            update_on.extend(parse_update_mode(update_mode))
 
-    if should_grid_return:
+    if should_grid_return is not None:
         if not isinstance(should_grid_return, JsCode):
-            raise ValueError("If set, should_grid_update must be a JsCode Object.")
-        else:
-            should_grid_return = should_grid_return.js_code
-            allow_unsafe_jscode = True
+            raise ValueError("If set, should_grid_return must be a JsCode Object.")
+        should_grid_return = should_grid_return.js_code
+        allow_unsafe_jscode = True
 
-    if collect_grid_return:
+    if collect_grid_return is not None:
         if not isinstance(collect_grid_return, JsCode):
             raise ValueError("If set, collect_grid_return must be a JsCode Object.")
-        else:
-            collect_grid_return = collect_grid_return.js_code
-            allow_unsafe_jscode = True
+        collect_grid_return = collect_grid_return.js_code
+        allow_unsafe_jscode = True
 
     # Parse gridOptions
-    gridOptions = __parse_grid_options(
+    gridOptions = parse_grid_options(
         gridOptions, data, default_column_parameters, allow_unsafe_jscode
     )
 
@@ -377,7 +263,7 @@ def AgGrid(
 
     # rowData in grid options have precedence and are assumed to be correct json.
     if "rowData" not in gridOptions:
-        row_data, frame_dtypes = __parse_row_data(data)
+        row_data, frame_dtypes = parse_row_data(data)
         gridOptions["rowData"] = row_data
 
     if not isinstance(data, pd.DataFrame):
@@ -385,7 +271,7 @@ def AgGrid(
 
     custom_css = custom_css or dict()
 
-    if height == None:
+    if height is None:
         gridOptions["domLayout"] = "autoHeight"
 
     if fit_columns_on_grid_load:
@@ -396,25 +282,35 @@ def AgGrid(
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
+    
     response = AgGridReturn(
-        data,
-        gridOptions,
-        data_return_mode,
-        try_to_convert_back_to_original_types,
-        conversion_errors,
-    )
+            data,
+            gridOptions,
+            data_return_mode,
+            try_to_convert_back_to_original_types,
+            conversion_errors,
+        )
+
 
     if callback and not key:
         raise ValueError("Component key must be set to use a callback.")
+    
     elif key and not callback:
         # This allows the table to keep its state up to date (eg #176)
         def _inner_callback():
-            response._set_component_value(st.session_state[key])
+            component_value = st.session_state[key]
+            if isinstance(response, AgGridReturn):
+                response._set_component_value(component_value)
+
     elif callback and key:
         # User defined callback
         def _inner_callback():
-            response._set_component_value(st.session_state[key])
-            return callback(response)
+            component_value = st.session_state[key]
+            if isinstance(response, AgGridReturn):
+                response._set_component_value(component_value)
+                return callback(response)
+            else:
+                return callback(component_value)
     else:
         _inner_callback = None
 
@@ -459,5 +355,5 @@ def AgGrid(
 
     elif component_value:
         response._set_component_value(component_value)
-
+    
     return response

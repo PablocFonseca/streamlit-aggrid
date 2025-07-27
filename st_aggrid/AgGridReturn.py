@@ -37,12 +37,13 @@ class AgGridReturn(Mapping):
         self.__component_value_set = True
 
         self.__dict__["grid_response"] = component_value
-        if isinstance(self.__dict__["grid_response"]["gridOptions"], dict):
-            pass
-        else:
-            self.__dict__["grid_response"]["gridOptions"] = json.loads(
-                self.__dict__["grid_response"]["gridOptions"]
-            )
+        if (self.__dict__["grid_response"].get("gridOptions")):
+            if isinstance(self.__dict__["grid_response"]["gridOptions"], dict):
+                pass
+            else:
+                self.__dict__["grid_response"]["gridOptions"] = json.loads(
+                    self.__dict__["grid_response"]["gridOptions"]
+                )
 
     @property
     def grid_response(self):

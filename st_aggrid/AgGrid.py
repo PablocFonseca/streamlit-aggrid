@@ -5,7 +5,7 @@ import warnings
 import os
 import typing
 from decouple import config
-from typing import Union
+from typing import Union, Literal
 from st_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
@@ -45,7 +45,7 @@ def AgGrid(
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode = DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool = False,
-    enable_enterprise_modules: bool = False,
+    enable_enterprise_modules: bool | Literal['enterpriseOnly', 'enterprise+AgCharts']= False,
     license_key: str = None,
     try_to_convert_back_to_original_types: bool = True,
     conversion_errors: str = "coerce",
@@ -66,134 +66,167 @@ def AgGrid(
 
     Parameters
     ----------
-    dataframe : pd.DataFrame
-        The underlying dataframe to be used.
+    data : pd.DataFrame | str, optional
+        The DataFrame to display or a string containing JSON data.
+        Defaults to None.
 
-    gridOptions : typing.Dict, optional
-        A dictionary of options for ag-grid. Documentation on www.ag-grid.com
-        If None, default grid options will be created with GridOptionsBuilder.from_dataframe() call.
-        Default: None
+    gridOptions : dict, optional
+        Dictionary of AG Grid options. Full documentation at www.ag-grid.com
+        If None, default grid options will be created with GridOptionsBuilder.from_dataframe().
+        Defaults to None.
 
     height : int, optional
-        The grid height in pixels.
-        If None, grid will enable Auto Height by default https://www.ag-grid.com/react-data-grid/grid-size/#dom-layout
-        Default: None
-
-    width : [type], optional
-        Deprecated.
+        Grid height in pixels. If None, Auto Height is enabled.
+        See: https://www.ag-grid.com/react-data-grid/grid-size/#dom-layout
+        Defaults to 400.
 
     fit_columns_on_grid_load : bool, optional
-        DEPRECATED, use columns_auto_size_mode
-        Use gridOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
-
-    columns_auto_size_mode: ColumnsAutoSizeMode, optional
-        DEPRECATED.
-        Use gridOptions autoSizeStrategy (https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns)
+        DEPRECATED. Use gridOptions autoSizeStrategy instead.
+        See: https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns
+        Defaults to False.
 
     update_mode : GridUpdateMode, optional
-        DEPRECATED. USE update_on instead.
-
-        Defines how the grid will send results back to streamlit.
-        either a string, one or a combination of:
-            GridUpdateMode.NO_UPDATE
-            GridUpdateMode.MANUAL
-            GridUpdateMode.VALUE_CHANGED
-            GridUpdateMode.SELECTION_CHANGED
-            GridUpdateMode.FILTERING_CHANGED
-            GridUpdateMode.SORTING_CHANGED
-            GridUpdateMode.MODEL_CHANGED
-        When using manual, a save button will be drawn on top of the grid.
-        Modes can be combined with bitwise OR operator |, for instance:
-        GridUpdateMode = VALUE_CHANGED | SELECTION_CHANGED | FILTERING_CHANGED | SORTING_CHANGED
-        Default: GridUpdateMode.MODEL_CHANGED
-
-    update_on: list[string | tuple[string, int]], optional
-        Defines the events that will trigger a refresh and grid return on the Streamlit app.
-        Valid string-named events are listed in https://www.ag-grid.com/javascript-data-grid/grid-events/.
-        If a tuple[string, int] is present on the list, that event will be debounced by x milliseconds.
-        For instance:
-            if update_on = ['cellValueChanged', ("columnResized", 500)]
-            The grid will return when cell values are changed AND when columns are resized, however the latter will
-            be debounced by 500 ms. More information about debounced functions
-            here: https://www.freecodecamp.org/news/javascript-debounce-example/
-
-    callback: callable, optional
-        Defines a function that will be called on change. One argument will be passed to the function
-        which will be an AgGridReturn object in the same fashion as what is returned by this class.
-        Requires key to be set.
+        DEPRECATED. Use update_on parameter instead.
+        Defines how the grid sends results back to Streamlit.
+        Defaults to GridUpdateMode.MODEL_CHANGED.
 
     data_return_mode : DataReturnMode, optional
-        Defines how the data will be retrieved from the component's client side. One of:
-            DataReturnMode.AS_INPUT             -> Returns grid data as inputted. Includes cell edits.
-            DataReturnMode.FILTERED             -> Returns filtered grid data, maintains input order.
-            DataReturnMode.FILTERED_AND_SORTED  -> Returns grid data filtered and sorted.
+        How data is retrieved from the grid:
+            - AS_INPUT: Returns data as originally provided, includes edits
+            - FILTERED: Returns filtered data in original order
+            - FILTERED_AND_SORTED: Returns filtered and sorted data
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
-        Allows jsCode to be injected in gridOptions.
+        Allows JavaScript code injection in gridOptions. Use with caution.
         Defaults to False.
 
-    enable_enterprise_modules : bool, optional
-        Loads Ag-Grid enterprise modules (check licensing).
+    enable_enterprise_modules : bool | Literal['enterpriseOnly', 'enterprise+AgCharts'], optional
+        Enables AG Grid Enterprise features (requires license):
+            - True or 'enterpriseOnly': Enterprise modules only
+            - 'enterprise+AgCharts': Enterprise + AgCharts modules
+            - False: Community features only
         Defaults to False.
 
     license_key : str, optional
-        License key to use for enterprise modules.
-        By default None.
+        License key for AG Grid Enterprise features.
+        Defaults to None.
 
     try_to_convert_back_to_original_types : bool, optional
-        Attempts to convert data retrieved from the grid to original types.
+        Attempts to convert grid data back to original DataFrame types.
         Defaults to True.
 
     conversion_errors : str, optional
-        Behavior when conversion fails. One of:
-            'raise'     -> Invalid parsing will raise an exception.
-            'coerce'    -> Invalid parsing will be set as NaT/NaN.
-            'ignore'    -> Invalid parsing will return the input.
+        How to handle type conversion errors:
+            - 'raise': Raises exception on conversion failure
+            - 'coerce': Sets invalid values to NaT/NaN
+            - 'ignore': Returns input unchanged on failure
         Defaults to 'coerce'.
 
     columns_state : dict, optional
-        Allows setting the initial state of columns (e.g., visibility, order, etc.).
+        Initial column state (visibility, order, width, etc.).
         Defaults to None.
 
     theme : str | StAggridTheme, optional
-        Theme used by ag-grid. One of:
-
-            'streamlit' -> Follows default Streamlit colors.
-            'light'     -> Ag-grid balham-light theme.
-            'dark'      -> Ag-grid balham-dark theme.
-            'blue'      -> Ag-grid blue theme.
-            'fresh'     -> Ag-grid fresh theme.
-            'material'  -> Ag-grid material theme.
-        By default 'streamlit'.
+        Grid theme:
+            - 'streamlit': Matches Streamlit's default styling
+            - 'light': AG Grid balham-light theme
+            - 'dark': AG Grid balham-dark theme
+            - 'blue': AG Grid blue theme
+            - 'fresh': AG Grid fresh theme
+            - 'material': AG Grid material theme
+        Defaults to 'streamlit'.
 
     custom_css : dict, optional
-        Custom CSS rules to be added to the component's iframe.
+        Custom CSS rules injected into the component iframe.
         Defaults to None.
 
-    key : typing.Any, optional
-        Streamlit's key argument. Check Streamlit's documentation.
+    key : Any, optional
+        Streamlit widget key for maintaining state across reruns.
+        Defaults to None.
+
+    update_on : list[str | tuple[str, int]], optional
+        AG Grid events that trigger data return to Streamlit.
+        Events: https://www.ag-grid.com/javascript-data-grid/grid-events/
+        Use tuple (event_name, debounce_ms) for debounced events.
+        
+        Example: ['cellValueChanged', ('columnResized', 500)]
+        Defaults to [].
+
+    callback : callable, optional
+        Function called when grid data changes. Receives AgGridReturn object.
+        Requires key parameter to be set.
         Defaults to None.
 
     show_toolbar : bool, optional
-        Whether to show the toolbar above the grid.
-        Defaults to True.
+        Show toolbar above the grid.
+        Defaults to False.
 
     show_search : bool, optional
-        Whether to show the search bar in the toolbar.
+        Show search bar in toolbar.
         Defaults to True.
 
     show_download_button : bool, optional
-        Whether to show the download button in the toolbar.
+        Show CSV download button in toolbar.
         Defaults to True.
 
-    **default_column_parameters:
-        Other parameters will be passed as key:value pairs on gridOptions defaultColDef.
+    should_grid_return : JsCode, optional
+        JavaScript function determining when to return grid data.
+        Receives: {streamlitRerunEventTriggerName, eventData}
+        Should return boolean.
+        
+        Example:
+            JsCode('''
+            function({streamlitRerunEventTriggerName, eventData}) {
+                return eventData?.finished === true;
+            }
+            ''')
+        
+        Defaults to None (always returns data).
+
+    collect_grid_return : JsCode, optional
+        JavaScript function customizing returned data structure.
+        Receives: {streamlitRerunEventTriggerName, eventData}
+        
+        When provided:
+        - Uses CustomCollector pattern
+        - Returns CustomResponse instead of AgGridReturn
+        - Provides safe property access methods
+        
+        Example:
+            JsCode('''
+            function({streamlitRerunEventTriggerName, eventData}) {
+                let api = eventData.api;
+                return {
+                    columnNames: api.getAllDisplayedColumns().map(c => c.colDef.headerName),
+                    rowCount: api.getDisplayedRowCount(),
+                    selectedCount: api.getSelectedRows().length
+                };
+            }
+            ''')
+        
+        Defaults to None (uses standard data collection).
+
+    **default_column_parameters
+        Additional parameters passed to gridOptions.defaultColDef.
 
     Returns
     -------
-    AgGridReturn
-        Returns an AgGridReturn object containing the grid's data and other metadata.
+    AgGridReturn | CustomResponse
+        Returns an AgGridReturn object containing the grid's data and other metadata when using
+        the default (legacy) collector. When `collect_grid_return` is provided, returns a 
+        CustomResponse object containing the data structure returned by the custom JavaScript function.
+        
+        AgGridReturn provides properties like:
+            - .data: DataFrame with grid data
+            - .selected_data: DataFrame with selected rows
+            - .grid_state: Grid state information
+            - .columns_state: Column configuration state
+            
+        CustomResponse provides safe access methods:
+            - .raw_data: Access to the raw returned data
+            - .get(key, default): Safe key access with default value
+            - Standard dictionary access with helpful error messages
     """
 
     ##Parses Themes
@@ -242,12 +275,16 @@ def AgGrid(
             manual_update = False
             update_on.extend(parse_update_mode(update_mode))
 
+    # Store original JsCode objects for collector factory before conversion
+    original_should_grid_return = should_grid_return
+    original_collect_grid_return = collect_grid_return
+
     if should_grid_return is not None:
         if not isinstance(should_grid_return, JsCode):
             raise ValueError("If set, should_grid_return must be a JsCode Object.")
         should_grid_return = should_grid_return.js_code
         allow_unsafe_jscode = True
-
+    
     if collect_grid_return is not None:
         if not isinstance(collect_grid_return, JsCode):
             raise ValueError("If set, collect_grid_return must be a JsCode Object.")
@@ -284,15 +321,23 @@ def AgGrid(
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
-    
-    response = AgGridReturn(
-            data,
-            gridOptions,
-            data_return_mode,
-            try_to_convert_back_to_original_types,
-            conversion_errors,
-        )
+    # Import collector factory functions
+    from .collectors.factory import determine_collector
 
+    # Create appropriate collector based on parameters (use original JsCode objects)
+    collector = determine_collector(
+        collect_grid_return=original_collect_grid_return,
+        should_grid_return=original_should_grid_return,
+        data_return_mode=data_return_mode,
+        try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
+        conversion_errors=conversion_errors
+    )
+
+    # Create initial response object that callbacks can safely reference
+    response = collector.create_initial_response(
+        original_data=data,
+        grid_options=gridOptions
+    )
 
     if callback and not key:
         raise ValueError("Component key must be set to use a callback.")
@@ -301,18 +346,16 @@ def AgGrid(
         # This allows the table to keep its state up to date (eg #176)
         def _inner_callback():
             component_value = st.session_state[key]
-            if isinstance(response, AgGridReturn):
-                response._set_component_value(component_value)
+            # Update the existing response object with new component value
+            collector.update_response(response, component_value)
 
     elif callback and key:
         # User defined callback
         def _inner_callback():
             component_value = st.session_state[key]
-            if isinstance(response, AgGridReturn):
-                response._set_component_value(component_value)
-                return callback(response)
-            else:
-                return callback(component_value)
+            # Update the existing response object with new component value
+            updated_response = collector.update_response(response, component_value)
+            return callback(updated_response)
     else:
         _inner_callback = None
 
@@ -353,10 +396,15 @@ def AgGrid(
         # ex = components.components.MarshallComponentException(*args)
         raise (ex)
 
-    if collect_grid_return:
-        response = component_value
-
-    elif component_value:
-        response._set_component_value(component_value)
+    # Update the response object with final component data
+    try:
+        response = collector.update_response(response, component_value)
+    except Exception as ex:
+        # Enhanced error message for collector issues
+        args = list(ex.args)
+        args[0] += f". Error in {collector.__class__.__name__} processing."
+        if collect_grid_return:
+            args[0] += " Check your collect_grid_return JsCode implementation."
+        raise type(ex)(*args)
     
     return response

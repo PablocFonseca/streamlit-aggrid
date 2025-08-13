@@ -27,7 +27,8 @@ import { debounce, cloneDeep, every, isEqual } from "lodash"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
-import { getGridReturnValue } from "./utils/agGridReturnUtils"
+import { determineCollector, validateCollectorConfig } from "./collectors"
+import type { CollectorContext } from "./collectors"
 
 import "@fontsource/source-sans-pro"
 import "./AgGrid.css"
@@ -231,6 +232,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
     }
 
+    // Check if grid should return (existing logic)
     if (typeof this.shouldGridReturn === "function") {
       if (
         this.shouldGridReturn({ streamlitRerunEventTriggerName, eventData }) !==
@@ -239,26 +241,49 @@ class AgGrid extends React.Component<ComponentProps, State> {
         return
       }
     }
-    
-    if (typeof this.collectGridReturn === "function") {
-      try {
-        const grid_return = this.collectGridReturn({
-          streamlitRerunEventTriggerName,
-          eventData,
-        })
-        Streamlit.setComponentValue(grid_return)
-        return
-      } catch {}
-    }
 
-    const v = await getGridReturnValue(
-      this.state,
-      this.props,
-      eventData,
-      streamlitRerunEventTriggerName
-    )
-    console.log(v)
-    Streamlit.setComponentValue(v)
+    try {
+      // Create collector configuration
+      const collectorConfig = {
+        customFunction: this.collectGridReturn,
+        shouldGridReturn: this.shouldGridReturn
+      }
+
+      // Validate collector configuration
+      const validation = validateCollectorConfig(collectorConfig)
+      if (!validation.valid) {
+        console.error(`Collector configuration error: ${validation.error}`)
+        return
+      }
+
+      // Determine and create appropriate collector
+      const collector = determineCollector(collectorConfig)
+
+      // Create collector context
+      const context: CollectorContext = {
+        state: this.state,
+        props: this.props,
+        eventData: eventData,
+        streamlitRerunEventTriggerName: streamlitRerunEventTriggerName
+      }
+
+      // Process response using collector
+      const result = await collector.processResponse(context)
+
+      if (result.success) {
+        if (this.state.debug) {
+          console.log(`Grid response processed by ${collector.getCollectorType()}:`, result.data)
+        }
+        Streamlit.setComponentValue(result.data)
+      } else {
+        console.error(`Collector processing failed: ${result.error}`)
+        // Fallback to no return to avoid breaking the UI
+      }
+
+    } catch (error) {
+      console.error('Error in returnGridValue collector processing:', error)
+      // Fallback to no return to avoid breaking the UI
+    }
   }
 
   private defineContainerHeight() {

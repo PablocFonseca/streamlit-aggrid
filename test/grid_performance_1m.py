@@ -133,7 +133,7 @@ grid_response = AgGrid(
     allow_unsafe_jscode=True,
     enable_enterprise_modules=True,
     should_grid_return=should_return,
-    collect_grid_return=collect_return,
+    #collect_grid_return=collect_return,
 )
 
 # Record end time
@@ -155,37 +155,10 @@ with col3:
 # Display grid return information
 if grid_response is not None:
     st.subheader("Grid Return Information")
-    from streamlit import dataframe_util
-    from streamlit.proto.Components_pb2 import ArrowTable as ArrowTableProto
-    from streamlit.components.v1 import component_arrow
-    import base64
-
-    base64_data = grid_response['nodes']['data']
-    arrow_bytes = base64.b64decode(str(base64_data))
-    print(arrow_bytes)
-    st.stop()
     
-    import pyarrow as pa
-    reader = pa.ipc.open_stream(arrow_bytes)
-    table = reader.read_pandas()
-
-
-    print(table)
-    st.stop()
-    st.write(component_arrow.arrow_proto_to_dataframe(grid_response['nodes']))
-
-
-    d = dataframe_util.convert_anything_to_pandas_df(grid_response['nodes'])
-
-    data = dataframe_util.convert_arrow_bytes_to_pandas_df(grid_response['nodes']['data'])
-    index = dataframe_util.convert_arrow_bytes_to_pandas_df(grid_response['nodes']['index'])
-    columns = dataframe_util.convert_arrow_bytes_to_pandas_df(grid_response['nodes']['columns'])
-    d =  pd.DataFrame(
-        data.to_numpy(),
-        index=index.to_numpy().T.tolist(),
-        columns=columns.to_numpy().T.tolist(),
-    )
-    st.code(d)
+    # Use the proper AgGridReturn interface
+    st.write("Grid response data:")
+    st.dataframe(grid_response.data)
     # st.write(f"Selected rows: {len(grid_response.get('selected_rows', []))}")
     # st.write(f"Data shape: {grid_response.get('data', df).shape}")
 

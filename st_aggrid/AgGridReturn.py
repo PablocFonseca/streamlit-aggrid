@@ -282,6 +282,11 @@ class AgGridReturn(Mapping):
         try:
             return getattr(self, __k)
         except AttributeError:
+            # Check if the key exists in the internal grid_response first
+            if hasattr(self, '__dict__') and 'grid_response' in self.__dict__ and isinstance(self.__dict__['grid_response'], dict):
+                if __k in self.__dict__['grid_response']:
+                    return self.__dict__['grid_response'][__k]
+            # Fall back to the original behavior
             return self.__dict__.__getitem__(__k)
 
     def __iter__(self):
@@ -293,7 +298,17 @@ class AgGridReturn(Mapping):
         return attrs.__len__()
 
     def keys(self):
-        return [x[0] for x in inspect.getmembers(self) if not x[0].startswith("_")]
+        # Get attribute keys
+        attr_keys = [x[0] for x in inspect.getmembers(self) if not x[0].startswith("_")]
+        
+        # Add grid_response keys for backward compatibility
+        grid_response_keys = []
+        if hasattr(self, '__dict__') and 'grid_response' in self.__dict__ and isinstance(self.__dict__['grid_response'], dict):
+            grid_response_keys = list(self.__dict__['grid_response'].keys())
+        
+        # Combine and remove duplicates while preserving order
+        all_keys = attr_keys + [k for k in grid_response_keys if k not in attr_keys]
+        return all_keys
 
     def values(self):
         return [x[1] for x in inspect.getmembers(self) if not x[0].startswith("_")]

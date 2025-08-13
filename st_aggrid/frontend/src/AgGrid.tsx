@@ -33,9 +33,6 @@ import "@fontsource/source-sans-pro"
 import "./AgGrid.css"
 
 import GridToolBar from "./components/GridToolBar"
-// import ManualUpdateButton from "./components/ManualUpdateButton"
-// import ManualDownloadButton from "./components/ManualDownloadButton"
-// import QuickSearch from "./components/QuickSearch"
 
 import {
   addCustomCSS,
@@ -44,6 +41,7 @@ import {
 } from "./utils/gridUtils"
 
 import { State } from "./types/AgGridTypes"
+import { ArrowTable } from "streamlit-component-lib"
 
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
@@ -54,6 +52,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private themeParser: ThemeParser | undefined = undefined
   private shouldGridReturn: Function | undefined = undefined
   private collectGridReturn: Function | undefined = undefined
+  private data: ArrowTable | undefined = undefined
 
   constructor(props: ComponentProps) {
     super(props)
@@ -70,17 +69,17 @@ class AgGrid extends React.Component<ComponentProps, State> {
       })
     }
     const enableEnterpriseModules = props.args.enable_enterprise_modules
-    if (
-      enableEnterpriseModules === true ||
-      enableEnterpriseModules === "enterprise+AgCharts"
-    ) {
+    if (enableEnterpriseModules === "enterprise+AgCharts") {
       ModuleRegistry.registerModules([
         AllEnterpriseModule.with(AgChartsEnterpriseModule),
       ])
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])
       }
-    } else if (enableEnterpriseModules === "enterpriseOnly") {
+    } else if (
+      enableEnterpriseModules === true ||
+      enableEnterpriseModules === "enterpriseOnly"
+    ) {
       ModuleRegistry.registerModules([AllEnterpriseModule])
       if ("license_key" in props.args) {
         LicenseManager.setLicenseKey(props.args["license_key"])
@@ -110,21 +109,23 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     }
 
-    this.shouldGridReturn = this.props.args.should_grid_return
-      ? parseJsCodeFromPython(this.props.args.should_grid_return)
-      : undefined
+    this.data = props.args.data
+    go.rowData = this.data ? this.data.table.toArray() : []
 
-    this.collectGridReturn = this.props.args.collect_grid_return
-      ? parseJsCodeFromPython(this.props.args.collect_grid_return)
-      : undefined
-
+    this.shouldGridReturn = props.args.should_grid_return
+      ? parseJsCodeFromPython(props.args.should_grid_return)
+      : null
+    this.collectGridReturn = props.args.collect_grid_return
+      ? parseJsCodeFromPython(props.args.collect_grid_return)
+      : null
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
       isRowDataEdited: false,
       api: undefined,
       enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: false,
+      debug: true,
+      editedRows: new Set(),
     } as State
 
     if (this.state.debug) {
@@ -222,25 +223,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
-  private async getGridReturnValue(
-    e: any,
-    streamlitRerunEventTriggerName: string
-  ) {
-    return getGridReturnValue(
-      this.state.api,
-      this.state.enterprise_features_enabled,
-      this.state.gridOptions,
-      this.props,
-      e,
-      streamlitRerunEventTriggerName
-    )
-  }
-
-  private returnGridValue(
+  private async returnGridValue(
     eventData: any,
     streamlitRerunEventTriggerName: string
   ) {
-
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
     }
@@ -253,7 +239,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
         return
       }
     }
-
+    
     if (typeof this.collectGridReturn === "function") {
       try {
         const grid_return = this.collectGridReturn({
@@ -261,12 +247,18 @@ class AgGrid extends React.Component<ComponentProps, State> {
           eventData,
         })
         Streamlit.setComponentValue(grid_return)
+        return
       } catch {}
-    } else {
-      this.getGridReturnValue(eventData, streamlitRerunEventTriggerName).then(
-        (v) => Streamlit.setComponentValue(v)
-      )
     }
+
+    const v = await getGridReturnValue(
+      this.state,
+      this.props,
+      eventData,
+      streamlitRerunEventTriggerName
+    )
+    console.log(v)
+    Streamlit.setComponentValue(v)
   }
 
   private defineContainerHeight() {
@@ -363,9 +355,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
   private cellValueChanged(event: CellValueChangedEvent) {
     console.log(
-      "Data edited on Grid. Ignoring further changes from data paramener (AgGrid(data=dataframe))"
+      "Data edited on Grid. Ignoring further changes from Streamlit side data paramener (AgGrid(data=dataframe))"
     )
-    this.setState({ isRowDataEdited: true })
+    let editedRows = new Set(this.state.editedRows).add(event.node.id)
+    this.setState({ isRowDataEdited: true, editedRows: editedRows })
   }
 
   private processPreselection() {

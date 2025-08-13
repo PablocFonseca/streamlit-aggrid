@@ -261,10 +261,12 @@ def AgGrid(
 
     frame_dtypes = []
 
+    #TODO: transfer data as arrowframes if they are json, convert to arrow before sending
+
     # rowData in grid options have precedence and are assumed to be correct json.
-    if "rowData" not in gridOptions:
-        row_data, frame_dtypes = parse_row_data(data)
-        gridOptions["rowData"] = row_data
+    # if "rowData" not in gridOptions:
+    #     row_data, frame_dtypes = __parse_row_data(data)
+    #     gridOptions["rowData"] = row_data
 
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
@@ -318,15 +320,16 @@ def AgGrid(
 
     try:
         component_value = _component_func(
+            data=data,
+            gridOptions=gridOptions,
+            height=height,
+            data_return_mode=data_return_mode,
+            frame_dtypes=frame_dtypes,
             allow_unsafe_jscode=allow_unsafe_jscode,
             columns_state=columns_state,
             custom_css=custom_css,
-            data_return_mode=data_return_mode,
             default=None,
             enable_enterprise_modules=enable_enterprise_modules,
-            frame_dtypes=frame_dtypes,
-            gridOptions=gridOptions,
-            height=height,
             key=key,
             license_key=license_key,
             manual_update=manual_update,

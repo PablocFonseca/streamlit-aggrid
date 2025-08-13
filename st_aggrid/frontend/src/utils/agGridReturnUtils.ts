@@ -1,127 +1,189 @@
-import _ from "lodash"
-import { IRowNode, DetailGridInfo, GridApi } from "ag-grid-community"
+import { IRowNode } from "ag-grid-community"
 import { eventDataWhiteList } from "../constants"
+import { State } from "../types/AgGridTypes"
+
+function fetch_node_props(n: IRowNode | null, visitedNodes = new Set<string>()): any {
+  if (n == null) {
+    return null
+  }
+  
+  // Prevent infinite recursion by tracking visited nodes
+  if (n.id && visitedNodes.has(n.id)) {
+    return { id: n.id }
+  }
+  if (n.id) {
+    visitedNodes.add(n.id)
+  }
+  
+  return {
+    id: n.id,
+    rowIndex: n.rowIndex,
+    data: n.data,
+    group: n.group,
+    isSelected: n.isSelected(),
+    parent: n.parent ? fetch_node_props(n.parent, visitedNodes) : null,
+  }
+}
+
+// Helper function to serialize objects safely for postMessage
+function serializeForPostMessage(obj: any, visited = new WeakSet()): any {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+
+  // Handle primitives
+  if (typeof obj !== "object") {
+    return obj
+  }
+
+  // Handle circular references
+  if (visited.has(obj)) {
+    return "[Circular]"
+  }
+  visited.add(obj)
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => serializeForPostMessage(item, visited))
+  }
+
+  // Handle AG Grid Row objects and other non-serializable objects
+  if (obj.constructor && obj.constructor.name === "Row") {
+    // Extract only the data from Row objects
+    return obj.data || null
+  }
+
+  // Handle dates
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+
+  // Handle functions
+  if (typeof obj === "function") {
+    return "[Function]"
+  }
+
+  // Handle regular objects
+  const serialized: any = {}
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      try {
+        serialized[key] = serializeForPostMessage(obj[key], visited)
+      } catch (error) {
+        serialized[key] = "[Unserializable]"
+      }
+    }
+  }
+  return serialized
+}
 
 export async function getGridReturnValue(
-  api: GridApi | undefined,
-  enterprise_features_enabled: boolean,
-  gridOptions: any,
+  state: State,
   props: any,
   e: any,
   streamlitRerunEventTriggerName: string
 ) {
-  function fetch_node_props(n: IRowNode | null): any {
-    if (n == null) {
-      return null
-    }
-    return {
-      id: n.id,
-      data: n.data,
-      rowIndex: n.rowIndex,
-      rowTop: n.rowTop,
-      displayed: n.displayed,
-      isHovered: n.isHovered(),
-      //isFullWidthCell: n.isFullWidthCell(),
-      expanded: n.expanded,
-      isExpandable: n.expanded,
-      group: n.group,
-      groupData: n.groupData,
-      aggData: n.aggData,
-      key: n.key,
-      field: n.field,
-      rowGroupColumn: n.rowGroupColumn?.getColId(),
-      rowGroupIndex: n.rowIndex,
-      footer: n.footer,
-      parent: fetch_node_props(n.parent),
-      firstChild: n.firstChild,
-      lastChild: n.lastChild,
-      childIndex: n.childIndex,
-      level: n.level,
-      uiLevel: n.uiLevel,
-      allChildrenCount: n.allChildrenCount,
-      leafGroup: n.leafGroup,
-      //sibling: fetch_node_props(n.sibling), //this is causing stack overvlow errors TODO: revisit what needs to be returned on grid events.
-      rowHeight: n.rowHeight,
-      master: n.master,
-      detail: n.detail,
-      rowPinned: n.rowPinned,
-      isRowPinned: n.isRowPinned(),
-      selectable: n.selectable,
-      isSelected: n.isSelected(),
-    }
+  let api = state.api
+
+  // Create functions for all data collection operations
+  const collectNodes = (): any[] => {
+    if (!api) return []
+
+    const nodes: any[] = []
+    api.forEachNode((n: any) => {
+      nodes.push(fetch_node_props(n))
+    })
+    return nodes
   }
 
-  let nodes: any[] = []
-  api?.forEachNode((n: any) => {
-    nodes.push(fetch_node_props(n))
-  })
-
-  let rowsAfterFilter: any[] = []
-  api?.forEachNodeAfterFilter((row: { group: any; id: any }) => {
-    if (!row.group) {
-      rowsAfterFilter.push(row.id)
-    }
-  })
-
-  let rowsAfterSortAndFilter: any[] = []
-  api?.forEachNodeAfterFilterAndSort((row: { group: any; id: any }) => {
-    if (!row.group) {
-      rowsAfterSortAndFilter.push(row.id)
-    }
-  })
-
-  let selected: any = []
-  if (enterprise_features_enabled) {
-    api?.forEachDetailGridInfo((d: DetailGridInfo) => {
-      d.api?.forEachNode((n: { isSelected: () => any; id: any }) => {
-        if (n.isSelected()) {
-          selected.push(n.id)
-        }
-      })
-    })
-  } else {
-    api?.forEachNode((n: { isSelected: () => any; id: any }) => {
-      if (n.isSelected()) {
-        selected.push(n.id)
+  const collectRowsAfterFilter = (): any[] => {
+    const rows: any[] = []
+    api?.forEachNodeAfterFilter((row: { group: any; id: any }) => {
+      if (!row.group) {
+        rows.push(row.id)
       }
     })
+    return rows
   }
 
-  function cleanEventKeys(obj: any, root = "", level = 0) {
-    if (Array.isArray(obj)) {
-      obj.forEach((v) => {
-        return cleanEventKeys(v, root, level + 1)
-      })
-    } else if (typeof obj === "object") {
-      Object.keys(obj).forEach(function (key) {
-        if (level > 3) return
-        if (key === "data") return
-        let fullKey = [root, key].filter((v) => v !== "").join(".")
+  const collectRowsAfterSortAndFilter = (): any[] => {
+    const rows: any[] = []
+    api?.forEachNodeAfterFilterAndSort((row: { group: any; id: any }) => {
+      if (!row.group) {
+        rows.push(row.id)
+      }
+    })
+    return rows
+  }
 
-        if (!eventDataWhiteList.includes(fullKey)) {
-          delete obj[key]
-        } else if (typeof obj[key] === "object" && obj[key] !== null) {
-          cleanEventKeys(obj[key], fullKey, level + 1)
+  const collectGridState = () => {
+    return api?.getState()
+  }
+
+  const collectColumnsState = () => {
+    return api?.getColumnState()
+  }
+
+  const collectSelectedItems = () => {
+    const selectedRows = api?.getSelectedRows()
+    // Serialize each selected row to avoid DataCloneError
+    return selectedRows ? serializeForPostMessage(selectedRows) : []
+  }
+
+  const processEventData = () => {
+    function cleanEventKeys(obj: any, root = "", level = 0, visited = new WeakSet()): any {
+      // Handle circular references
+      if (typeof obj === "object" && obj !== null) {
+        if (visited.has(obj)) {
+          return "[Circular]"
         }
-      })
+        visited.add(obj)
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.map((v) => cleanEventKeys(v, root, level + 1, visited))
+      } else if (typeof obj === "object" && obj !== null) {
+        const cleanedObj: any = {}
+        Object.keys(obj).forEach(function (key) {
+          if (level > 3) return
+          if (key === "data") return
+          let fullKey = [root, key].filter((v) => v !== "").join(".")
+
+          if (eventDataWhiteList.includes(fullKey)) {
+            cleanedObj[key] = cleanEventKeys(obj[key], fullKey, level + 1, visited)
+          }
+        })
+        return cleanedObj
+      }
+      return obj
     }
-    return obj
+
+    // Process event data safely
+    let cleanEventData = cleanEventKeys(e)
+    cleanEventData["streamlitRerunEventTriggerName"] = streamlitRerunEventTriggerName
+    return cleanEventData
   }
 
-  let cleanEventData = cleanEventKeys(_.cloneDeep(e))
-  cleanEventData["streamlitRerunEventTriggerName"] =
-    streamlitRerunEventTriggerName
+  // Execute all collection operations synchronously
+  const nodes = collectNodes()
+  const rowsAfterFilter = collectRowsAfterFilter()
+  const rowsAfterSortAndFilter = collectRowsAfterSortAndFilter()
+  const gridState = collectGridState()
+  const columnsState = collectColumnsState()
+  const selectedItems = collectSelectedItems()
+  const eventData = processEventData()
 
-  let returnValue = {
+  // Serialize the entire return value to ensure it can be sent via postMessage
+  const returnValue = {
     originalDtypes: props.args.frame_dtypes,
     nodes: nodes,
-    selectedItems: api?.getSelectedRows(),
-    gridState: api?.getState(),
-    columnsState: api?.getColumnState(),
-    gridOptions: JSON.stringify(gridOptions), //performance bottleneck
+    selectedItems: selectedItems,
+    gridState: gridState,
+    columnsState: columnsState,
     rowIdsAfterFilter: rowsAfterFilter,
     rowIdsAfterSortAndFilter: rowsAfterSortAndFilter,
-    eventData: cleanEventData,
+    eventData: eventData,
   }
-  return returnValue
+
+  return serializeForPostMessage(returnValue)
 }

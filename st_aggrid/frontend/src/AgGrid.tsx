@@ -27,7 +27,7 @@ import { debounce, cloneDeep, every, isEqual } from "lodash"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
-import { determineCollector, validateCollectorConfig } from "./collectors"
+import { determineCollector, LegacyCollector, validateCollectorConfig } from "./collectors"
 import type { CollectorContext } from "./collectors"
 
 import "@fontsource/source-sans-pro"
@@ -54,10 +54,13 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private shouldGridReturn: Function | undefined = undefined
   private collectGridReturn: Function | undefined = undefined
   private data: ArrowTable | undefined = undefined
+  private dataReturnMode: String
 
   constructor(props: ComponentProps) {
     super(props)
     this.gridContainerRef = React.createRef()
+
+    this.dataReturnMode = this.props.args.data_return_mode
 
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css)
@@ -113,6 +116,21 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.data = props.args.data
     go.rowData = this.data ? JSON.parse(this.data?.table?.toString()) : []
 
+    if (!("getRowId" in go)) {
+      // If ::auto_unique_id:: exists in rowData, use it as getRowId
+      console.log((
+       go
+      ))
+      if (
+        Array.isArray(go.rowData) &&
+        go.rowData.length > 0 &&
+        go.rowData[0].hasOwnProperty("::auto_unique_id::")
+      ) {
+        go.getRowId = (params: GetRowIdParams) =>
+          params.data["::auto_unique_id::"] as string
+      }
+    }
+
     this.shouldGridReturn = props.args.should_grid_return
       ? parseJsCodeFromPython(props.args.should_grid_return)
       : null
@@ -144,27 +162,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     if (!("getRowId" in gridOptions)) {
-      // If ::auto_unique_id:: exists in rowData, use it as getRowId
-      if (
-        Array.isArray(gridOptions.rowData) &&
-        gridOptions.rowData.length > 0 &&
-        gridOptions.rowData[0].hasOwnProperty("::auto_unique_id::")
-      ) {
-        gridOptions.getRowId = (params: GetRowIdParams) =>
-          params.data["::auto_unique_id::"] as string
-      }
-    }
-
-    // //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
-    // if (every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
-    //   if (!("getRowId" in gridOptions)) {
-    //     gridOptions["getRowId"] = (params: GetRowIdParams) =>
-    //       params.data.__pandas_index as string
-    //   }
-    // }
-
-    if (!("getRowId" in gridOptions)) {
-      console.warn("getRowId was not set. Grid may behave bad when updating.")
+      console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
     }
 
     //adds custom columnFormatters
@@ -242,42 +240,29 @@ class AgGrid extends React.Component<ComponentProps, State> {
   ) {
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
+      console.log("dataReturnMode is ", this.dataReturnMode)
+    }
+    
+    // Create collector context
+    const context: CollectorContext = {
+      state: this.state,
+      props: this.props,
+      eventData: eventData,
+      streamlitRerunEventTriggerName: streamlitRerunEventTriggerName
     }
 
-    // Check if grid should return (existing logic)
-    if (typeof this.shouldGridReturn === "function") {
-      if (
-        this.shouldGridReturn({ streamlitRerunEventTriggerName, eventData }) !==
-        true
-      ) {
-        return
-      }
+
+    const collectorFactory = {
+      "AS_INPUT" : new LegacyCollector(),
+      "FILTERED" : new LegacyCollector(),
+      "FILTERED_AND_SORTED": new LegacyCollector(),
+      "MINIMAL": new LegacyCollector(),
+      "CUSTOM" : new LegacyCollector(),
     }
 
     try {
-      // Create collector configuration
-      const collectorConfig = {
-        customFunction: this.collectGridReturn,
-        shouldGridReturn: this.shouldGridReturn
-      }
-
-      // Validate collector configuration
-      const validation = validateCollectorConfig(collectorConfig)
-      if (!validation.valid) {
-        console.error(`Collector configuration error: ${validation.error}`)
-        return
-      }
-
       // Determine and create appropriate collector
-      const collector = determineCollector(collectorConfig)
-
-      // Create collector context
-      const context: CollectorContext = {
-        state: this.state,
-        props: this.props,
-        eventData: eventData,
-        streamlitRerunEventTriggerName: streamlitRerunEventTriggerName
-      }
+      const collector = collectorFactory[this.dataReturnMode as keyof typeof collectorFactory]
 
       // Process response using collector
       const result = await collector.processResponse(context)

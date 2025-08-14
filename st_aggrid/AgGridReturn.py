@@ -84,17 +84,17 @@ class AgGridReturn(Mapping):
         self, nodes, __try_to_convert_back_to_original_types
     ):
         data = pd.DataFrame(
-            [n.get("data", {}) for n in nodes if not n.get("group", False) == True]
+            [n.get("data", {}) for n in nodes if not n.get("group", False)]
         )
 
-        if "__pandas_index" in data.columns:
-            data.index = pd.Index(data["__pandas_index"], name="index")
-            del data["__pandas_index"]
+        if "::auto_unique_id::" in data.columns:
+            data.index = pd.Index(data["::auto_unique_id::"], name="index")
+            del data["::auto_unique_id::"]
 
         if __try_to_convert_back_to_original_types:
             original_types = self.grid_response["originalDtypes"]
             try:
-                original_types.pop("__pandas_index")
+                original_types.pop("::auto_unique_id::")
             except:
                 pass
 
@@ -190,8 +190,13 @@ class AgGridReturn(Mapping):
                     if onlySelected:
                         reindex_ids = reindex_ids.intersection(data.index)
 
-                    data = data.reindex(index=reindex_ids)
-                    return data
+                    data = data.reindex(index=reindex_ids).reset_index(drop=True)
+                    data_cols = list(data.columns)
+                    try:
+                        data_cols.remove("::auto_unique_id::")
+                    except ValueError:
+                        pass
+                    return data[data_cols]
 
             # TODO: imporove json testing.
             elif (

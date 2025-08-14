@@ -92,11 +92,12 @@ class GridUpdateMode(Flag):
     GRID_CHANGED = MODEL_CHANGED | COLUMN_CHANGED
 
 
-class DataReturnMode(IntEnum):
-    AS_INPUT = 0
-    FILTERED = 1
-    FILTERED_AND_SORTED = 2
-    MINIMAL = 4
+class DataReturnMode(str, Enum):
+    AS_INPUT = "AS_INPUT"
+    FILTERED = "FILTERED"
+    FILTERED_AND_SORTED = "FILTERED_AND_SORTED"
+    MINIMAL = "MINIMAL"
+    CUSTOM = "CUSTOM"
 
 
 class ColumnsAutoSizeMode(IntEnum):

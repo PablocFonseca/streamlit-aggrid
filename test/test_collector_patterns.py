@@ -79,15 +79,49 @@ if grid_response_custom is not None:
         # Direct access for custom response
         st.write("**Custom collector response:**", grid_response_custom)
 
-st.subheader("How to Handle Both Cases")
+# Test 3: Minimal Collector  
+st.subheader("3. Minimal Collector")
+
+from st_aggrid.shared import DataReturnMode
+
+grid_response_minimal = AgGrid(
+    df,
+    key="test_minimal", 
+    height=200,
+    data_return_mode=DataReturnMode.MINIMAL
+)
+
+if grid_response_minimal is not None:
+    st.write("**Response type:**", type(grid_response_minimal).__name__)
+    
+    # For minimal collectors, access through raw_data or direct properties
+    if hasattr(grid_response_minimal, 'raw_data'):
+        st.write("**Raw data available:**", grid_response_minimal.raw_data is not None)
+        
+    if hasattr(grid_response_minimal, 'data'):
+        st.write("**Basic data access:**", grid_response_minimal.data is not None)
+        
+    if hasattr(grid_response_minimal, 'selected_rows'):
+        st.write("**Selected rows count:**", len(grid_response_minimal.selected_rows))
+
+st.subheader("How to Handle All Collector Types")
 
 st.code('''
-# Safe way to handle both collector types:
+# Safe way to handle all collector types:
+
+from st_aggrid.AgGridReturn import AgGridReturn
+from st_aggrid.collectors.minimal import MinimalResponse
 
 if isinstance(grid_response, AgGridReturn):
     # Legacy collector - use AgGridReturn methods
     data = grid_response.data
     nodes = grid_response.grid_response.get('nodes', [])
+    
+elif isinstance(grid_response, MinimalResponse):
+    # Minimal collector - lightweight access
+    data = grid_response.data
+    selected = grid_response.selected_rows
+    custom_value = grid_response.get('customProperty', 'default')
     
 elif hasattr(grid_response, 'raw_data'):
     # Custom collector with CustomResponse wrapper

@@ -94,6 +94,7 @@ def AgGrid(
             - AS_INPUT: Returns data as originally provided, includes edits
             - FILTERED: Returns filtered data in original order
             - FILTERED_AND_SORTED: Returns filtered and sorted data
+            - MINIMAL: Returns lightweight MinimalResponse with raw data access
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
@@ -211,16 +212,24 @@ def AgGrid(
 
     Returns
     -------
-    AgGridReturn | CustomResponse
-        Returns an AgGridReturn object containing the grid's data and other metadata when using
-        the default (legacy) collector. When `collect_grid_return` is provided, returns a
-        CustomResponse object containing the data structure returned by the custom JavaScript function.
-
+    AgGridReturn | CustomResponse | MinimalResponse
+        The return type depends on the data_return_mode:
+        
+        - AS_INPUT, FILTERED, FILTERED_AND_SORTED: Returns AgGridReturn object with full grid data
+        - MINIMAL: Returns MinimalResponse object with lightweight access to raw data
+        - When collect_grid_return is provided with legacy modes: Returns CustomResponse
+        
         AgGridReturn provides properties like:
             - .data: DataFrame with grid data
             - .selected_data: DataFrame with selected rows
             - .grid_state: Grid state information
             - .columns_state: Column configuration state
+
+        MinimalResponse provides lightweight access:
+            - .raw_data: Access to the raw returned data
+            - .data: Basic data access without processing
+            - .selected_rows: Basic selected rows access
+            - .get(key, default): Safe key access with default value
 
         CustomResponse provides safe access methods:
             - .raw_data: Access to the raw returned data
@@ -294,8 +303,7 @@ def AgGrid(
     data, gridOptions = _parse_data_and_grid_options(
         data, gridOptions, default_column_parameters, allow_unsafe_jscode
     )
-
-    frame_dtypes = []
+    frame_dtypes = [i.kind for i in data.dtypes.values.tolist()]
 
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
@@ -327,7 +335,7 @@ def AgGrid(
 
     # Create initial response object that callbacks can safely reference
     response = collector.create_initial_response(
-        original_data=data, grid_options=gridOptions
+        original_data=data.drop("::auto_unique_id::", axis='columns'), grid_options=gridOptions
     )
 
     if callback and not key:
@@ -377,7 +385,6 @@ def AgGrid(
             theme=themeObj,
             update_on=update_on,
         )
-
     except Exception as ex:  # components.components.MarshallComponentException as ex:
         # uses a more complete error message.
         args = list(ex.args)
@@ -387,7 +394,7 @@ def AgGrid(
         # ex = components.components.MarshallComponentException(*args)
         raise (ex)
 
-    # Update the response object with final component data
+    #Update the response object with final component data
     try:
         response = collector.update_response(response, component_value)
     except Exception as ex:
@@ -397,5 +404,5 @@ def AgGrid(
         if collect_grid_return:
             args[0] += " Check your collect_grid_return JsCode implementation."
         raise type(ex)(*args)
-
+    
     return response

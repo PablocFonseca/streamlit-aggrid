@@ -6,6 +6,7 @@ from typing import Optional
 from .base import BaseCollector
 from .legacy import LegacyCollector
 from .custom import CustomCollector
+from .minimal import MinimalCollector
 from ..shared import DataReturnMode, JsCode
 
 
@@ -48,18 +49,20 @@ def determine_collector(
     conversion_errors: str = "coerce"
 ) -> BaseCollector:
     """
-    Factory function to determine and create the appropriate collector
+    Factory function to determine and create the appropriate collector based on DataReturnMode
     
     Parameters
     ----------
     collect_grid_return : JsCode or None
-        User-provided JsCode for custom data collection. 
-        If provided, returns CustomCollector.
+        DEPRECATED: User-provided JsCode for custom data collection.
+        Now only used if data_return_mode is not MINIMAL and collect_grid_return is provided.
     should_grid_return : JsCode or None
         User-provided JsCode for determining when to return.
         Currently passed to frontend but doesn't affect collector choice.
     data_return_mode : DataReturnMode
-        How to return data from the grid (for LegacyCollector)
+        Determines which collector to use:
+        - AS_INPUT, FILTERED, FILTERED_AND_SORTED: LegacyCollector
+        - MINIMAL: MinimalCollector
     try_to_convert_back_to_original_types : bool
         Whether to attempt type conversion (for LegacyCollector)
     conversion_errors : str
@@ -68,7 +71,7 @@ def determine_collector(
     Returns
     -------
     BaseCollector
-        The appropriate collector instance
+        The appropriate collector instance based on data_return_mode
         
     Raises
     ------
@@ -78,17 +81,26 @@ def determine_collector(
     # Validate parameters first
     validate_collector_params(collect_grid_return, should_grid_return)
     
-    # If user provided custom collector JsCode, use CustomCollector
-    if collect_grid_return is not None:
-        return CustomCollector(collect_grid_return.js_code)
+    # Determine collector based exclusively on DataReturnMode
+    if data_return_mode == DataReturnMode.MINIMAL:
+        # For MINIMAL mode, use MinimalCollector
+        return MinimalCollector()
     
-    # Otherwise, use LegacyCollector for backward compatibility
-    else:
+    # For the first 3 modes (AS_INPUT, FILTERED, FILTERED_AND_SORTED), use LegacyCollector
+    elif data_return_mode in (DataReturnMode.AS_INPUT, DataReturnMode.FILTERED, DataReturnMode.FILTERED_AND_SORTED):
+        # Legacy support: if collect_grid_return is provided with legacy modes, use CustomCollector
+        if collect_grid_return is not None:
+            return CustomCollector(collect_grid_return.js_code)
+        
+        # Otherwise use LegacyCollector for the first 3 modes
         return LegacyCollector(
             data_return_mode=data_return_mode,
             try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
             conversion_errors=conversion_errors
         )
+    
+    else:
+        raise ValueError(f"Unsupported DataReturnMode: {data_return_mode}")
 
 
 def get_collector_info(collector: BaseCollector) -> dict:
@@ -118,6 +130,10 @@ def get_collector_info(collector: BaseCollector) -> dict:
         info["data_return_mode"] = str(collector.data_return_mode)
         info["try_convert_types"] = collector.try_to_convert_back_to_original_types
         info["conversion_errors"] = collector.conversion_errors
+        info["has_custom_logic"] = False
+    elif isinstance(collector, MinimalCollector):
+        info["data_return_mode"] = "MINIMAL"
+        info["lightweight"] = True
         info["has_custom_logic"] = False
     
     return info

@@ -14,13 +14,11 @@ from st_aggrid.shared import (
     AgGridTheme,
 )
 from st_aggrid.aggrid_utils import (
-    parse_row_data,
-    parse_grid_options,
     parse_update_mode,
+    _parse_data_and_grid_options,
 )
 from st_aggrid.AgGridReturn import AgGridReturn
-
-
+from io import StringIO
 
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
@@ -45,7 +43,8 @@ def AgGrid(
     update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
     data_return_mode: DataReturnMode = DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool = False,
-    enable_enterprise_modules: bool | Literal['enterpriseOnly', 'enterprise+AgCharts']= False,
+    enable_enterprise_modules: bool
+    | Literal["enterpriseOnly", "enterprise+AgCharts"] = False,
     license_key: str = None,
     try_to_convert_back_to_original_types: bool = True,
     conversion_errors: str = "coerce",
@@ -149,7 +148,7 @@ def AgGrid(
         AG Grid events that trigger data return to Streamlit.
         Events: https://www.ag-grid.com/javascript-data-grid/grid-events/
         Use tuple (event_name, debounce_ms) for debounced events.
-        
+
         Example: ['cellValueChanged', ('columnResized', 500)]
         Defaults to [].
 
@@ -174,25 +173,25 @@ def AgGrid(
         JavaScript function determining when to return grid data.
         Receives: {streamlitRerunEventTriggerName, eventData}
         Should return boolean.
-        
+
         Example:
             JsCode('''
             function({streamlitRerunEventTriggerName, eventData}) {
                 return eventData?.finished === true;
             }
             ''')
-        
+
         Defaults to None (always returns data).
 
     collect_grid_return : JsCode, optional
         JavaScript function customizing returned data structure.
         Receives: {streamlitRerunEventTriggerName, eventData}
-        
+
         When provided:
         - Uses CustomCollector pattern
         - Returns CustomResponse instead of AgGridReturn
         - Provides safe property access methods
-        
+
         Example:
             JsCode('''
             function({streamlitRerunEventTriggerName, eventData}) {
@@ -204,7 +203,7 @@ def AgGrid(
                 };
             }
             ''')
-        
+
         Defaults to None (uses standard data collection).
 
     **default_column_parameters
@@ -214,15 +213,15 @@ def AgGrid(
     -------
     AgGridReturn | CustomResponse
         Returns an AgGridReturn object containing the grid's data and other metadata when using
-        the default (legacy) collector. When `collect_grid_return` is provided, returns a 
+        the default (legacy) collector. When `collect_grid_return` is provided, returns a
         CustomResponse object containing the data structure returned by the custom JavaScript function.
-        
+
         AgGridReturn provides properties like:
             - .data: DataFrame with grid data
             - .selected_data: DataFrame with selected rows
             - .grid_state: Grid state information
             - .columns_state: Column configuration state
-            
+
         CustomResponse provides safe access methods:
             - .raw_data: Access to the raw returned data
             - .get(key, default): Safe key access with default value
@@ -284,26 +283,19 @@ def AgGrid(
             raise ValueError("If set, should_grid_return must be a JsCode Object.")
         should_grid_return = should_grid_return.js_code
         allow_unsafe_jscode = True
-    
+
     if collect_grid_return is not None:
         if not isinstance(collect_grid_return, JsCode):
             raise ValueError("If set, collect_grid_return must be a JsCode Object.")
         collect_grid_return = collect_grid_return.js_code
         allow_unsafe_jscode = True
 
-    # Parse gridOptions
-    gridOptions = parse_grid_options(
-        gridOptions, data, default_column_parameters, allow_unsafe_jscode
+    # parse data and gridOptions
+    data, gridOptions = _parse_data_and_grid_options(
+        data, gridOptions, default_column_parameters, allow_unsafe_jscode
     )
 
     frame_dtypes = []
-
-    #TODO: transfer data as arrowframes if they are json, convert to arrow before sending
-
-    # rowData in grid options have precedence and are assumed to be correct json.
-    # if "rowData" not in gridOptions:
-    #     row_data, frame_dtypes = __parse_row_data(data)
-    #     gridOptions["rowData"] = row_data
 
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
@@ -330,18 +322,17 @@ def AgGrid(
         should_grid_return=original_should_grid_return,
         data_return_mode=data_return_mode,
         try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
-        conversion_errors=conversion_errors
+        conversion_errors=conversion_errors,
     )
 
     # Create initial response object that callbacks can safely reference
     response = collector.create_initial_response(
-        original_data=data,
-        grid_options=gridOptions
+        original_data=data, grid_options=gridOptions
     )
 
     if callback and not key:
         raise ValueError("Component key must be set to use a callback.")
-    
+
     elif key and not callback:
         # This allows the table to keep its state up to date (eg #176)
         def _inner_callback():
@@ -406,5 +397,5 @@ def AgGrid(
         if collect_grid_return:
             args[0] += " Check your collect_grid_return JsCode implementation."
         raise type(ex)(*args)
-    
+
     return response

@@ -1,76 +1,82 @@
 import os
 import json
 import pandas as pd
+
 from typing import Any, Mapping, Tuple
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import JsCode, walk_gridOptions, GridUpdateMode
-
-def cast_date_columns_to_iso8601(dataframe: pd.DataFrame):
-    """Internal Method to convert tz-aware datetime columns to correct ISO8601 format"""
-    for c, d in dataframe.dtypes.items():
-        if d.kind == "M":
-            dataframe[c] = dataframe[c].apply(lambda s: s.isoformat())
+from io import StringIO
 
 
-def parse_row_data(data) -> Tuple[Any, Any]:
-    """Internal method to process data from data_parameter"""
-    if data is None:
-        return [], None
-
-    if isinstance(data, pd.DataFrame):
-        data_parameter = data.copy()
-        cast_date_columns_to_iso8601(data_parameter)
-        data_parameter["__pandas_index"] = [
-            str(i) for i in range(data_parameter.shape[0])
-        ]
-        row_data = data_parameter.to_json(orient="records", date_format="iso")
-        frame_dtypes = dict(
-            zip(data_parameter.columns, (t.kind for t in data_parameter.dtypes))
-        )
-        del data_parameter["__pandas_index"]
-        return json.loads(row_data), frame_dtypes
+def _parse_data_and_grid_options(
+    data, grid_options, default_column_parameters, unsafe_allow_jscode
+):
 
     if isinstance(data, str):
+        #if data is a path to a json file. Validate and load it as string.
         if data.endswith(".json") and os.path.exists(data):
             try:
                 with open(os.path.abspath(data)) as f:
-                    return json.loads(json.dumps(json.load(f))), None
+                    data = json.dumps(json.load(f))
             except Exception as ex:
                 raise Exception(f"Error reading {data}. {ex}")
+            
+        #if data is a json string load is as as data frame
         try:
-            return json.loads(data), None
+            data = pd.read_json(StringIO(data))
         except Exception:
             raise Exception("Error parsing data parameter as raw json.")
 
-    raise ValueError("Invalid data")
-
-
-def parse_grid_options(
-    gridOptions_parameter, data, default_column_parameters, unsafe_allow_jscode
-):
-    """Internal method to cast gridOptions parameter to a valid gridoptions"""
-    if (gridOptions_parameter == None) and not (data is None):
+    if isinstance(data, pd.DataFrame):
+        #converts date columns to iso format:
+        for c, d in data.dtypes.items():
+            if d.kind == "M":
+                data[c] = data[c].apply(lambda s: s.isoformat())
+    
+    #if there is data and no grid options, create grid options from the data
+    if (data is not None) and (not grid_options):
         gb = GridOptionsBuilder.from_dataframe(data, **default_column_parameters)
-        gridOptions = gb.build()
-    elif isinstance(gridOptions_parameter, Mapping):
-        gridOptions = gridOptions_parameter
-    elif isinstance(gridOptions_parameter, str):
-        is_path = gridOptions_parameter.endswith(".json") and os.path.exists(
-            gridOptions_parameter
-        )
-        if is_path:
-            gridOptions = json.load(open(os.path.abspath(gridOptions_parameter)))
-        else:
-            gridOptions = json.loads(gridOptions_parameter)
-    else:
-        raise ValueError("gridOptions is invalid.")
+        grid_options = gb.build()
 
+    #if grid options is supplied as a dictionary, assume it is valid and use it
+    elif isinstance(grid_options, Mapping):
+        grid_options = grid_options
+
+    elif isinstance(grid_options, str):
+        #if grid_options is a path to a json file. Validate and load it as dictionary.
+        if grid_options.endswith(".json") and os.path.exists(grid_options):
+            try:
+                with open(os.path.abspath(grid_options)) as f:
+                    grid_options = json.dumps(json.load(f))
+            except Exception as ex:
+                raise Exception(f"Error reading {grid_options}. {ex}")
+        
+        #if grid_options is a json string load is as as dict
+        try:
+            grid_options = json.loads(grid_options)
+        except Exception:
+            raise Exception("Error parsing data parameter as raw json.")
+    
+    #if data is supplied via gridOptions.rowData move it to data parameter
+    if (grid_options.get('rowData', None)):
+        if data:
+            raise ValueError("Data was supplied by both data and gridOptions rowData. Use only one to load data into the grid.")
+        else:
+            data = grid_options.pop("rowData")
+            data = pd.read_json(StringIO(data))
+
+    #if rowId is not defined, create an unique row_id as the rows_hash
+    if "getRowId" not in grid_options and data is not None:
+        data['::auto_unique_id::'] = pd.util.hash_pandas_object(data).astype(str)
+
+            
+    #process the JsCode Objects
     if unsafe_allow_jscode:
         walk_gridOptions(
-            gridOptions, lambda v: v.js_code if isinstance(v, JsCode) else v
+            grid_options, lambda v: v.js_code if isinstance(v, JsCode) else v
         )
-    return gridOptions
-
+    
+    return data, grid_options
 
 def parse_update_mode(update_mode: GridUpdateMode):
     update_on = []

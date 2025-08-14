@@ -111,7 +111,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     this.data = props.args.data
-    go.rowData = this.data ? this.data.table.toArray() : []
+    go.rowData = this.data ? JSON.parse(this.data?.table?.toString()) : []
 
     this.shouldGridReturn = props.args.should_grid_return
       ? parseJsCodeFromPython(props.args.should_grid_return)
@@ -143,13 +143,25 @@ class AgGrid extends React.Component<ComponentProps, State> {
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ["rowData"])
     }
 
-    //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
-    if (every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
-      if (!("getRowId" in gridOptions)) {
-        gridOptions["getRowId"] = (params: GetRowIdParams) =>
-          params.data.__pandas_index as string
+    if (!("getRowId" in gridOptions)) {
+      // If ::auto_unique_id:: exists in rowData, use it as getRowId
+      if (
+        Array.isArray(gridOptions.rowData) &&
+        gridOptions.rowData.length > 0 &&
+        gridOptions.rowData[0].hasOwnProperty("::auto_unique_id::")
+      ) {
+        gridOptions.getRowId = (params: GetRowIdParams) =>
+          params.data["::auto_unique_id::"] as string
       }
     }
+
+    // //Sets getRowID if data came from a pandas dataframe like object. (has __pandas_index)
+    // if (every(gridOptions.rowData, (o) => "__pandas_index" in o)) {
+    //   if (!("getRowId" in gridOptions)) {
+    //     gridOptions["getRowId"] = (params: GetRowIdParams) =>
+    //       params.data.__pandas_index as string
+    //   }
+    // }
 
     if (!("getRowId" in gridOptions)) {
       console.warn("getRowId was not set. Grid may behave bad when updating.")

@@ -96,6 +96,7 @@ class DataReturnMode(IntEnum):
     AS_INPUT = 0
     FILTERED = 1
     FILTERED_AND_SORTED = 2
+    MINIMAL = 4
 
 
 class ColumnsAutoSizeMode(IntEnum):

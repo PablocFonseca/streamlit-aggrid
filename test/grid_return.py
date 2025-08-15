@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 
 
-TESTS = [3]
+TESTS = st.radio("Select Test", options=range(1,4))
 
 """grid launches with json data and grid options"""
 
@@ -40,7 +40,7 @@ def make_grid():
             },
         ],
         "autoSizeStrategy": {"type": "fitCellContents", "skipHeader": False},
-        "rowSelection": {"mode": "singleRow"},
+        "rowSelection": {"mode": "multiRow", "checkboxes": True},
     }
     r = AgGrid(data, go, key="event_return_grid")
 
@@ -53,21 +53,17 @@ def make_grid():
     st.subheader("Data returned by component")
     st.code(r.data)
 
-    st.subheader("Data Selected on component")
+    st.expander("Data Selected on component")
     st.code(r.selected_data)
 
     st.subheader("Full Grid Response")
     st.write(r.grid_response)
 
 
-if 1 in TESTS:
-    make_grid()
-
-
 @st.cache_resource
 def get_dummy_data():
     dummy_data = []
-    for i in range(300_000):
+    for i in range(300_00):
         row = {
             "employee_id": f"EMP{i + 1:03d}",
             "first_name": f"FirstName{i + 1}",
@@ -118,9 +114,6 @@ def make_grid2():
     st.code(r)
 
 
-if 2 in TESTS:
-    make_grid2()
-
 
 def make_grid3():
     # Test grouped data functionality with Olympic winners data
@@ -162,5 +155,14 @@ def make_grid3():
     st.write(r.grid_response)
 
 
-if 3 in TESTS:
+
+if TESTS == 1:
+    make_grid()
+
+if TESTS == 2:
+    make_grid2()
+
+if TESTS == 3:
     make_grid3()
+
+

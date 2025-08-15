@@ -57,8 +57,7 @@ def AgGrid(
     show_toolbar: bool = False,
     show_search: bool = True,
     show_download_button: bool = True,
-    should_grid_return: JsCode = None,
-    collect_grid_return: JsCode = None,
+    custom_jscode_for_grid_return: JsCode = None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -95,6 +94,7 @@ def AgGrid(
             - FILTERED: Returns filtered data in original order
             - FILTERED_AND_SORTED: Returns filtered and sorted data
             - MINIMAL: Returns lightweight MinimalResponse with raw data access
+            - CUSTOM: Returns CustomResponse with user-defined data structure (requires custom_jscode_for_grid_return)
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
@@ -170,28 +170,10 @@ def AgGrid(
         Show CSV download button in toolbar.
         Defaults to True.
 
-    should_grid_return : JsCode, optional
-        JavaScript function determining when to return grid data.
+    custom_jscode_for_grid_return : JsCode, optional
+        JavaScript function for custom data collection when using DataReturnMode.CUSTOM.
         Receives: {streamlitRerunEventTriggerName, eventData}
-        Should return boolean.
-
-        Example:
-            JsCode('''
-            function({streamlitRerunEventTriggerName, eventData}) {
-                return eventData?.finished === true;
-            }
-            ''')
-
-        Defaults to None (always returns data).
-
-    collect_grid_return : JsCode, optional
-        JavaScript function customizing returned data structure.
-        Receives: {streamlitRerunEventTriggerName, eventData}
-
-        When provided:
-        - Uses CustomCollector pattern
-        - Returns CustomResponse instead of AgGridReturn
-        - Provides safe property access methods
+        Required when data_return_mode is DataReturnMode.CUSTOM.
 
         Example:
             JsCode('''
@@ -205,19 +187,19 @@ def AgGrid(
             }
             ''')
 
-        Defaults to None (uses standard data collection).
+        Defaults to None.
 
     **default_column_parameters
         Additional parameters passed to gridOptions.defaultColDef.
 
     Returns
     -------
-    AgGridReturn | CustomResponse | MinimalResponse
+    AgGridReturn | MinimalResponse | CustomResponse
         The return type depends on the data_return_mode:
         
         - AS_INPUT, FILTERED, FILTERED_AND_SORTED: Returns AgGridReturn object with full grid data
         - MINIMAL: Returns MinimalResponse object with lightweight access to raw data
-        - When collect_grid_return is provided with legacy modes: Returns CustomResponse
+        - CUSTOM: Returns CustomResponse object with user-defined data structure
         
         AgGridReturn provides properties like:
             - .data: DataFrame with grid data
@@ -283,20 +265,17 @@ def AgGrid(
             manual_update = False
             update_on.extend(parse_update_mode(update_mode))
 
-    # Store original JsCode objects for collector factory before conversion
-    original_should_grid_return = should_grid_return
-    original_collect_grid_return = collect_grid_return
+    # Validate CUSTOM mode parameters
+    if data_return_mode == DataReturnMode.CUSTOM:
+        if custom_jscode_for_grid_return is None:
+            raise ValueError("custom_jscode_for_grid_return parameter is required when using DataReturnMode.CUSTOM")
+        if not isinstance(custom_jscode_for_grid_return, JsCode):
+            raise ValueError("custom_jscode_for_grid_return must be a JsCode object when using DataReturnMode.CUSTOM")
 
-    if should_grid_return is not None:
-        if not isinstance(should_grid_return, JsCode):
-            raise ValueError("If set, should_grid_return must be a JsCode Object.")
-        should_grid_return = should_grid_return.js_code
-        allow_unsafe_jscode = True
-
-    if collect_grid_return is not None:
-        if not isinstance(collect_grid_return, JsCode):
-            raise ValueError("If set, collect_grid_return must be a JsCode Object.")
-        collect_grid_return = collect_grid_return.js_code
+    # Process JsCode for CUSTOM mode
+    original_custom_jscode_for_grid_return = custom_jscode_for_grid_return
+    if custom_jscode_for_grid_return is not None:
+        custom_jscode_for_grid_return = custom_jscode_for_grid_return.js_code
         allow_unsafe_jscode = True
 
     # parse data and gridOptions
@@ -321,17 +300,21 @@ def AgGrid(
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
-    # Import collector factory functions
-    from .collectors.factory import determine_collector
-
-    # Create appropriate collector based on parameters (use original JsCode objects)
-    collector = determine_collector(
-        collect_grid_return=original_collect_grid_return,
-        should_grid_return=original_should_grid_return,
-        data_return_mode=data_return_mode,
-        try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
-        conversion_errors=conversion_errors,
-    )
+    # Create collector based solely on data_return_mode
+    if data_return_mode == DataReturnMode.MINIMAL:
+        from .collectors.minimal import MinimalCollector
+        collector = MinimalCollector()
+    elif data_return_mode == DataReturnMode.CUSTOM:
+        from .collectors.custom import CustomCollector
+        collector = CustomCollector(original_custom_jscode_for_grid_return.js_code)
+    else:
+        # Use LegacyCollector for AS_INPUT, FILTERED, FILTERED_AND_SORTED
+        from .collectors.legacy import LegacyCollector
+        collector = LegacyCollector(
+            data_return_mode=data_return_mode,
+            try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
+            conversion_errors=conversion_errors
+        )
 
     # Create initial response object that callbacks can safely reference
     response = collector.create_initial_response(
@@ -380,8 +363,7 @@ def AgGrid(
             show_download_button=show_download_button,
             show_search=show_search,
             show_toolbar=show_toolbar,
-            should_grid_return=should_grid_return,
-            collect_grid_return=collect_grid_return,
+            custom_jscode_for_grid_return=custom_jscode_for_grid_return,
             theme=themeObj,
             update_on=update_on,
         )
@@ -394,15 +376,15 @@ def AgGrid(
         # ex = components.components.MarshallComponentException(*args)
         raise (ex)
 
-    #Update the response object with final component data
+    # Update the response object with final component data
     try:
         response = collector.update_response(response, component_value)
     except Exception as ex:
         # Enhanced error message for collector issues
         args = list(ex.args)
         args[0] += f". Error in {collector.__class__.__name__} processing."
-        if collect_grid_return:
-            args[0] += " Check your collect_grid_return JsCode implementation."
+        if data_return_mode == DataReturnMode.CUSTOM:
+            args[0] += " Check your custom_jscode_for_grid_return JsCode implementation."
         raise type(ex)(*args)
     
     return response

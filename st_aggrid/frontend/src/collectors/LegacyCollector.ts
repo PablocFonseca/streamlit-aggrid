@@ -13,14 +13,55 @@ export class LegacyCollector extends BaseCollector {
       return null
     }
 
+    // Only calculate parentPath for non-group nodes (leaf nodes) to improve performance
+    const parentPath = n.group ? "" : this.get_parent_path(n)
+
     return {
       id: n.id,
       rowIndex: n.rowIndex,
       data: n.data,
       group: n.group,
       isSelected: n.isSelected(),
-      //parent: n.parent ? this.fetch_node_props(n.parent) : null,
+      parentPath: parentPath,
     }
+  }
+
+  private get_parent_path(node: IRowNode | null): string {
+    if (!node || !node.parent) {
+      return ""
+    }
+    
+    // Build path iteratively using row IDs instead of display values
+    const pathParts: string[] = []
+    let current: IRowNode | null = node.parent
+    const visited = new Set<string>() // Use string IDs instead of object references
+    let depth = 0
+    const MAX_DEPTH = 10 // Safety limit to prevent infinite loops
+    
+    // Traverse up the parent chain, collecting row IDs
+    while (current && depth < MAX_DEPTH) {
+      const nodeId = current.id
+      
+      // Check for circular references using ID
+      if (nodeId && visited.has(nodeId)) {
+        console.warn(`Circular reference detected in group hierarchy at node: ${nodeId}`)
+        break
+      }
+      
+      if (nodeId) {
+        visited.add(nodeId)
+        pathParts.unshift(nodeId) // Add to beginning to maintain order
+      }
+      
+      current = current.parent
+      depth++
+    }
+    
+    if (depth >= MAX_DEPTH) {
+      console.warn(`Maximum group hierarchy depth (${MAX_DEPTH}) exceeded`)
+    }
+    
+    return pathParts.join(".")
   }
 
   private filterSerializableEventData = (
@@ -154,7 +195,7 @@ export class LegacyCollector extends BaseCollector {
     const selectedItems = collectSelectedItems()
     const eventDataProcessed = processEventData()
 
-    console.log(api?.getGridOption("getRowId"))
+    // Debug output removed - use browser dev tools if needed to inspect getRowId
 
     // Serialize the entire return value to ensure it can be sent via postMessage
     const returnValue = {

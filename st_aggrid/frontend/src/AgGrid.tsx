@@ -27,7 +27,7 @@ import { debounce, cloneDeep, every, isEqual } from "lodash"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
-import { determineCollector, LegacyCollector, validateCollectorConfig } from "./collectors"
+import { CustomCollector, determineCollector, LegacyCollector, validateCollectorConfig } from "./collectors"
 import type { CollectorContext } from "./collectors"
 
 import "@fontsource/source-sans-pro"
@@ -118,9 +118,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     if (!("getRowId" in go)) {
       // If ::auto_unique_id:: exists in rowData, use it as getRowId
-      console.log((
-       go
-      ))
+      // Debug: console.log("Grid options:", go)
       if (
         Array.isArray(go.rowData) &&
         go.rowData.length > 0 &&
@@ -134,8 +132,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.shouldGridReturn = props.args.should_grid_return
       ? parseJsCodeFromPython(props.args.should_grid_return)
       : null
-    this.collectGridReturn = props.args.collect_grid_return
-      ? parseJsCodeFromPython(props.args.collect_grid_return)
+    this.collectGridReturn = props.args.custom_jscode_for_grid_return
+      ? parseJsCodeFromPython(props.args.custom_jscode_for_grid_return)
       : null
     this.state = {
       gridHeight: this.props.args.height,
@@ -157,12 +155,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
     let gridOptions: GridOptions = cloneDeep(this.props.args.gridOptions)
 
     if (this.props.args.allow_unsafe_jscode) {
-      console.warn("flag allow_unsafe_jscode is on.")
+      // Debug: console.warn("flag allow_unsafe_jscode is on.")
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ["rowData"])
     }
 
     if (!("getRowId" in gridOptions)) {
-      console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
+      // Debug: console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
     }
 
     //adds custom columnFormatters
@@ -208,7 +206,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
           this.returnGridValue(e, element)
         })
       }
-      console.log(`Attached grid return event: ${element}`)
+      if (this.state.debug) {
+        console.log(`Attached grid return event: ${element}`)
+      }
     })
   }
 
@@ -257,7 +257,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       "FILTERED" : new LegacyCollector(),
       "FILTERED_AND_SORTED": new LegacyCollector(),
       "MINIMAL": new LegacyCollector(),
-      "CUSTOM" : new LegacyCollector(),
+      "CUSTOM" : new CustomCollector(this.collectGridReturn || (() => {})),
     }
 
     try {
@@ -376,9 +376,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private cellValueChanged(event: CellValueChangedEvent) {
-    console.log(
-      "Data edited on Grid. Ignoring further changes from Streamlit side data paramener (AgGrid(data=dataframe))"
-    )
+    if (this.state.debug) {
+      console.log(
+        "Data edited on Grid. Ignoring further changes from Streamlit side data parameter (AgGrid(data=dataframe))"
+      )
+    }
     let editedRows = new Set(this.state.editedRows).add(event.node.id)
     this.setState({ isRowDataEdited: true, editedRows: editedRows })
   }
@@ -424,7 +426,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
             this.state.api?.exportDataAsCsv()
           }}
           onManualUpdateClick={() => {
-            console.log("Manual update triggered")
+            if (this.state.debug) {
+              console.log("Manual update triggered")
+            }
           }}
         />
         <AgGridReact

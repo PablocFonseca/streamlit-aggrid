@@ -67,7 +67,7 @@ def _parse_data_and_grid_options(
 
     #if rowId is not defined, create an unique row_id as the rows_hash
     if "getRowId" not in grid_options and data is not None:
-        data['::auto_unique_id::'] = pd.util.hash_pandas_object(data).astype(str)
+        data['::auto_unique_id::'] = list(map(str, range(data.shape[0]))) ##pd.util.hash_pandas_object(data).astype(str)
 
             
     #process the JsCode Objects

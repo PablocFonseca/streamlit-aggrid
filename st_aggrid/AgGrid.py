@@ -318,7 +318,7 @@ def AgGrid(
 
     # Create initial response object that callbacks can safely reference
     response = collector.create_initial_response(
-        original_data=data.drop("::auto_unique_id::", axis='columns'), grid_options=gridOptions
+        original_data=data.drop("::auto_unique_id::", axis='columns') if "::auto_unique_id::" in data.columns else data, grid_options=gridOptions
     )
 
     if callback and not key:

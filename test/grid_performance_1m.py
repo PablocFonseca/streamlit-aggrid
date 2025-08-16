@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode, DataReturnMode, GridUpdateMode
 import time
 
 st.set_page_config(page_title="Grid Performance Test - 1M Records", layout="wide")
@@ -15,7 +15,7 @@ def generate_large_dataset():
     """Generate a dataset with 1 million rows for performance testing."""
     np.random.seed(42)  # For reproducible results
 
-    n_rows = (1_000_000  // 100_000) * 2
+    n_rows = (1_000_000)
 
     data = {
         "id": range(n_rows),
@@ -128,12 +128,13 @@ grid_response = AgGrid(
     fit_columns_on_grid_load=True,
     theme="alpine",
     key="performance_grid_1m",
-    update_mode="MODEL_CHANGED",
+    update_mode=GridUpdateMode.NO_UPDATE,
     update_on=['columnMoved'],
     allow_unsafe_jscode=True,
+    data_return_mode=DataReturnMode.CUSTOM,
     enable_enterprise_modules=True,
     should_grid_return=should_return,
-    #collect_grid_return=collect_return,
+    custom_jscode_for_grid_return=collect_return,
 )
 
 # Record end time

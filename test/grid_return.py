@@ -4,7 +4,10 @@ import streamlit as st
 import pandas as pd
 
 
-TESTS = st.radio("Select Test", options=range(1,4))
+TESTS = st.radio(
+    "Select Test",
+    options=range(1, 4),
+)
 
 """grid launches with json data and grid options"""
 
@@ -44,20 +47,33 @@ def make_grid():
     }
     r = AgGrid(data, go, key="event_return_grid")
 
-    st.subheader("Event Retun Data")
-    if r.event_data:
-        st.json(r.event_data)
-    else:
-        st.write(r.event_data)
+    st.html(f"""
+    <span>
+    <h1> Returned Grid Data </h1>
+    <pre data-testid='returned-grid-data'>{r.data.to_string()}</pre>
+    </span>
+    """)
 
-    st.subheader("Data returned by component")
-    st.code(r.data)
+    st.html(f"""
+    <span>
+    <h1> Event Return Data </h1>
+    <pre data-testid='event-return-data'>{str(r.event_data)}</pre>
+    </span>
+    """)
 
-    st.expander("Data Selected on component")
-    st.code(r.selected_data)
+    st.html(f"""
+    <span>
+    <h1> Selected Data </h1>
+    <pre data-testid='selected-data'>{str(r.selected_data)}</pre>
+    </span>
+    """)
 
-    st.subheader("Full Grid Response")
-    st.write(r.grid_response)
+    st.html(f"""
+    <span>
+    <h1> Full Grid Response </h1>
+    <pre data-testid='full-grid-response'>{str(r.grid_response)}</pre>
+    </span>
+    """)
 
 
 @st.cache_resource
@@ -110,9 +126,12 @@ def make_grid2():
         rowSelection={"mode": "singleRow"},
     )
 
-    st.subheader("Data returned by component")
-    st.code(r)
-
+    st.html(f"""
+    <span>
+    <h1> Custom Grid Return Data (only column names) </h1>
+    <pre data-testid='custom-grid-return-data'>{str(r)}</pre>
+    </span>
+    """)
 
 
 def make_grid3():
@@ -123,37 +142,43 @@ def make_grid3():
         pathlib.Path(__file__).parent.joinpath("olympic-winners.json").absolute()
     )
     go = {
-        "columnDefs": [{"field": "sport", "rowGroup": True},{"field": "athlete", "rowGroup": True}, {"field": "age"}],
+        "columnDefs": [
+            {"field": "sport", "rowGroup": True},
+            {"field": "athlete", "rowGroup": True},
+            {"field": "age"},
+        ],
         "defaultColDef": {"width": 150, "cellStyle": {"fontWeight": "bold"}},
         "groupDisplayType": "groupRows",
-        "autoGroupColumnDef": {"headerName": "Sport", "field": "sport", "cellRenderer": "agGroupCellRenderer"},
+        "autoGroupColumnDef": {
+            "headerName": "Sport",
+            "field": "sport",
+            "cellRenderer": "agGroupCellRenderer",
+        },
     }
     r = AgGrid(
         data_file,
         go,
         key="grouped_data_grid",
-        update_on=["gridReady", "rowGroupOpened"],  # Trigger on grid ready and group changes
+        update_on=[
+            "gridReady",
+            "rowGroupOpened",
+        ],  # Trigger on grid ready and group changes
         enable_enterprise_modules=True,
     )
 
-    for i in r.dataGroups[0:10]:
-        st.write(list(i.keys())[0])
-        st.code(list(i.values())[0])
-    # st.subheader("Event Retun Data")
-    # if r.event_data:
-    #     st.json(r.event_data)
-    # else:
-    #     st.write(r.event_data)
+    st.html(f"""
+    <span>
+    <h1> Grouped Data Groups (first 5) </h1>
+    <pre data-testid='grouped-data-groups'>{"".join([f"<h4 data-testid='grouped-data-groups-header'>{k}</h4><pre data-testid='grouped-data-groups-data'>{e[k].to_string()}</pre>" for i, e in enumerate(r.dataGroups[:5]) for k in e])}</pre>
+    </span>
+    """)
 
-    # st.subheader("groupded Data returned by component")
-    # st.code(r.dataGroups)
-
-    # st.subheader("Data Selected on component")
-    # st.code(r.selected_data)
-
-    st.subheader("Full Grid Response")
-    st.write(r.grid_response)
-
+    st.html(f"""
+    <span>
+    <h1> Grouped Grid Response </h1>
+    <pre data-testid='grouped-grid-response'>{str(r.grid_response)}</pre>
+    </span>
+    """)
 
 
 if TESTS == 1:
@@ -164,5 +189,3 @@ if TESTS == 2:
 
 if TESTS == 3:
     make_grid3()
-
-

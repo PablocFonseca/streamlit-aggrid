@@ -34,7 +34,7 @@ class AgGridReturn(Mapping):
         
         # State
         self._component_value_set = False
-        self.__dict__["grid_response"] = {"gridOptions": gridOptions or {}}
+        self.__dict__["grid_response"] = {} #{"gridOptions": gridOptions or {}}
 
     def _set_component_value(self, component_value):
         """Set the response value from the AgGrid component."""
@@ -360,8 +360,7 @@ class AgGridReturn(Mapping):
     def _get_data_groups(self, only_selected=False):
         """Get grouped data from the grid."""
         if not self._component_value_set:
-            fallback_data = self._get_data(only_selected)
-            return [{(): fallback_data}]
+            return [{(): pd.DataFrame()}]
 
         nodes = self.grid_response.get("nodes", [])
         

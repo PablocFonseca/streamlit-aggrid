@@ -27,7 +27,12 @@ import { debounce, cloneDeep, every, isEqual } from "lodash"
 import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
-import { CustomCollector, determineCollector, LegacyCollector, validateCollectorConfig } from "./collectors"
+import {
+  CustomCollector,
+  determineCollector,
+  LegacyCollector,
+  validateCollectorConfig,
+} from "./collectors"
 import type { CollectorContext } from "./collectors"
 
 import "@fontsource/source-sans-pro"
@@ -114,11 +119,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     this.data = props.args.data
-    go.rowData = this.data ? JSON.parse(this.data?.table?.toString()) : []
+    go.rowData = this.data ? this.data?.table.toArray() : []
 
     if (!("getRowId" in go)) {
-      // If ::auto_unique_id:: exists in rowData, use it as getRowId
-      // Debug: console.log("Grid options:", go)
       if (
         Array.isArray(go.rowData) &&
         go.rowData.length > 0 &&
@@ -141,7 +144,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       isRowDataEdited: false,
       api: undefined,
       enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: true,
+      debug: false,
       editedRows: new Set(),
     } as State
 
@@ -155,12 +158,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
     let gridOptions: GridOptions = cloneDeep(this.props.args.gridOptions)
 
     if (this.props.args.allow_unsafe_jscode) {
-      // Debug: console.warn("flag allow_unsafe_jscode is on.")
+      console.warn("flag allow_unsafe_jscode is on.")
       gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ["rowData"])
     }
 
     if (!("getRowId" in gridOptions)) {
-      // Debug: console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
+      console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
     }
 
     //adds custom columnFormatters
@@ -242,43 +245,45 @@ class AgGrid extends React.Component<ComponentProps, State> {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
       console.log("dataReturnMode is ", this.dataReturnMode)
     }
-    
+
     // Create collector context
     const context: CollectorContext = {
       state: this.state,
       props: this.props,
       eventData: eventData,
-      streamlitRerunEventTriggerName: streamlitRerunEventTriggerName
+      streamlitRerunEventTriggerName: streamlitRerunEventTriggerName,
     }
 
-
     const collectorFactory = {
-      "AS_INPUT" : new LegacyCollector(),
-      "FILTERED" : new LegacyCollector(),
-      "FILTERED_AND_SORTED": new LegacyCollector(),
-      "MINIMAL": new LegacyCollector(),
-      "CUSTOM" : new CustomCollector(this.collectGridReturn || (() => {})),
+      AS_INPUT: new LegacyCollector(),
+      FILTERED: new LegacyCollector(),
+      FILTERED_AND_SORTED: new LegacyCollector(),
+      MINIMAL: new LegacyCollector(),
+      CUSTOM: new CustomCollector(this.collectGridReturn || (() => {})),
     }
 
     try {
       // Determine and create appropriate collector
-      const collector = collectorFactory[this.dataReturnMode as keyof typeof collectorFactory]
+      const collector =
+        collectorFactory[this.dataReturnMode as keyof typeof collectorFactory]
 
       // Process response using collector
       const result = await collector.processResponse(context)
 
       if (result.success) {
         if (this.state.debug) {
-          console.log(`Grid response processed by ${collector.getCollectorType()}:`, result.data)
+          console.log(
+            `Grid response processed by ${collector.getCollectorType()}:`,
+            result.data
+          )
         }
         Streamlit.setComponentValue(result.data)
       } else {
         console.error(`Collector processing failed: ${result.error}`)
         // Fallback to no return to avoid breaking the UI
       }
-
     } catch (error) {
-      console.error('Error in returnGridValue collector processing:', error)
+      console.error("Error in returnGridValue collector processing:", error)
       // Fallback to no return to avoid breaking the UI
     }
   }
@@ -300,6 +305,16 @@ class AgGrid extends React.Component<ComponentProps, State> {
     const prevGridOptions = prevProps.args.gridOptions
     const currGridOptions = this.props.args.gridOptions
 
+    if (!this.state.isRowDataEdited) {
+      if (this.props.args.data_hash !== prevProps.args.data_hash) {
+        const newData = this.props.args.data
+        if (newData) {
+          const rowData = newData.table?.toArray() || []
+          this.state.api?.updateGridOptions({ rowData })
+        }
+      }
+    }
+
     //Theme object Changes here
     if (
       !isEqual(prevProps.theme, this.props.theme) ||
@@ -316,13 +331,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     //const objectDiff = (a: any, b: any) => fromPairs(differenceWith(toPairs(a), toPairs(b), isEqual))
     if (!isEqual(prevGridOptions, currGridOptions)) {
       let go = this.parseGridoptions()
-      let row_data = go.rowData
-
-      if (!this.state.isRowDataEdited) {
-        this.state.api?.updateGridOptions({ rowData: row_data })
-      }
-
-      delete go.rowData
       this.state.api?.updateGridOptions(go)
     }
 

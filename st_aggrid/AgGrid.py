@@ -342,10 +342,12 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
+    data_hash = str(pd.util.hash_pandas_object(data).sum())
 
     try:
         component_value = _component_func(
             data=data,
+            data_hash=data_hash,
             gridOptions=gridOptions,
             height=height,
             data_return_mode=data_return_mode,

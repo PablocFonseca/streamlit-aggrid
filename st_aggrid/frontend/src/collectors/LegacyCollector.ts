@@ -8,6 +8,9 @@ import { CollectorContext, CollectorResult } from "./types"
 import { IRowNode } from "ag-grid-community"
 
 export class LegacyCollector extends BaseCollector {
+  
+
+
   private fetch_node_props(n: IRowNode | null): any {
     if (n == null) {
       return null
@@ -16,10 +19,29 @@ export class LegacyCollector extends BaseCollector {
     // Only calculate parentPath for non-group nodes (leaf nodes) to improve performance
     const parentPath = n.group ? "" : this.get_parent_path(n)
 
+    const sanitizeData = (obj: any): any => {
+      if (obj === null || obj === undefined) return obj
+      
+      const type = typeof obj
+      if (type === 'bigint') return Number(obj)
+      if (type === 'function' || type === 'symbol') return undefined
+      if (type !== 'object') return obj
+      
+      if (Array.isArray(obj)) return obj.map(sanitizeData)
+      
+      const result: any = {}
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          result[key] = sanitizeData(obj[key])
+        }
+      }
+      return result
+    }
+
     return {
       id: n.id,
       rowIndex: n.rowIndex,
-      data: n.data,
+      data: sanitizeData({...n.data}),
       group: n.group,
       isSelected: n.isSelected(),
       parentPath: parentPath,

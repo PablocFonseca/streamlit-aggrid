@@ -328,7 +328,7 @@ def AgGrid(
     data, gridOptions = _parse_data_and_grid_options(
         data, gridOptions, default_column_parameters, allow_unsafe_jscode
     )
-    frame_dtypes = [i.kind for i in data.dtypes.values.tolist()]
+    frame_dtypes = [i.kind for i in data.dtypes.values.tolist()] if data is not None else []
 
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
@@ -366,10 +366,16 @@ def AgGrid(
         )
 
     # Create initial response object that callbacks can safely reference
+    original_data = None
+    if data is not None:
+        original_data = (
+            data.drop("::auto_unique_id::", axis="columns")
+            if "::auto_unique_id::" in data.columns
+            else data
+        )
+    
     response = collector.create_initial_response(
-        original_data=data.drop("::auto_unique_id::", axis="columns")
-        if "::auto_unique_id::" in data.columns
-        else data,
+        original_data=original_data,
         grid_options=gridOptions,
     )
 
@@ -394,7 +400,7 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
-    data_hash = str(pd.util.hash_pandas_object(data).sum())
+    data_hash = str(pd.util.hash_pandas_object(data).sum()) if data is not None else ''
 
     try:
         component_value = _component_func(

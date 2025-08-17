@@ -20,6 +20,8 @@ from st_aggrid.aggrid_utils import (
 from st_aggrid.AgGridReturn import AgGridReturn
 from io import StringIO
 
+# Track shown deprecation warnings to avoid repetition in Streamlit
+_shown_deprecation_warnings = set()
 
 _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
 
@@ -40,37 +42,55 @@ def AgGrid(
     gridOptions: typing.Dict = None,
     height: int = 400,
     fit_columns_on_grid_load=False,
-    update_mode: GridUpdateMode = GridUpdateMode.MODEL_CHANGED,
-    data_return_mode: DataReturnMode = DataReturnMode.FILTERED_AND_SORTED,
+    update_mode: GridUpdateMode
+    | Literal[
+        "MANUAL", "MODEL_CHANGED", "VALUE_CHANGED", "SELECTION_CHANGED", "GRID_CHANGED"
+    ] = GridUpdateMode.NO_UPDATE,
+    data_return_mode: DataReturnMode
+    | Literal[
+        "AS_INPUT", "FILTERED", "FILTERED_AND_SORTED", "MINIMAL", "CUSTOM"
+    ] = DataReturnMode.FILTERED_AND_SORTED,
     allow_unsafe_jscode: bool = False,
     enable_enterprise_modules: bool
     | Literal["enterpriseOnly", "enterprise+AgCharts"] = False,
     license_key: str = None,
-    try_to_convert_back_to_original_types: bool = True,
+    try_to_convert_back_to_original_types: bool = False,
     conversion_errors: str = "coerce",
     columns_state=None,
-    theme: str | StAggridTheme = "streamlit",
+    theme: str
+    | StAggridTheme
+    | Literal["streamlit", "light", "dark", "blue", "fresh", "material"] = "streamlit",
     custom_css=None,
     key: typing.Any = None,
-    update_on=[],
+    update_on=["cellValueChanged", "selectionChanged", "filterChanged", "sortChanged"],
     callback=None,
     show_toolbar: bool = False,
     show_search: bool = True,
     show_download_button: bool = True,
     custom_jscode_for_grid_return: JsCode = None,
+    should_grid_return: JsCode = None,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
 
     Parameters
     ----------
-    data : pd.DataFrame | str, optional
-        The DataFrame to display or a string containing JSON data.
+    data : pd.DataFrame | pl.DataFrame | str | Path, optional
+        The data to be displayed on the grid. Accepts:
+            - Pandas or Polars DataFrames
+            - Json string data in records format (list like [{column -> value}, … , {column -> value}])
+            - Path to a json file with records
+
         Defaults to None.
 
     gridOptions : dict, optional
-        Dictionary of AG Grid options. Full documentation at www.ag-grid.com
-        If None, default grid options will be created with GridOptionsBuilder.from_dataframe().
+        Dictionary of AG Grid options. Full documentation at https://www.ag-grid.com/javascript-data-grid/grid-options/
+        If None, default grid options will be infered with GridOptionsBuilder.from_dataframe().
+        Defaults to None.
+
+    key : Any, optional
+        Streamlit widget key for maintaining state across reruns.
+        It is highly recommended setting it for each grid.
         Defaults to None.
 
     height : int, optional
@@ -86,19 +106,18 @@ def AgGrid(
     update_mode : GridUpdateMode, optional
         DEPRECATED. Use update_on parameter instead.
         Defines how the grid sends results back to Streamlit.
-        Defaults to GridUpdateMode.MODEL_CHANGED.
+        Defaults to GridUpdateMode.NO_UPDATE.
 
     data_return_mode : DataReturnMode, optional
         How data is retrieved from the grid:
             - AS_INPUT: Returns data as originally provided, includes edits
             - FILTERED: Returns filtered data in original order
             - FILTERED_AND_SORTED: Returns filtered and sorted data
-            - MINIMAL: Returns lightweight MinimalResponse with raw data access
-            - CUSTOM: Returns CustomResponse with user-defined data structure (requires custom_jscode_for_grid_return)
+            - CUSTOM: Returns CustomResponse with user-defined data structure (requires custom_jscode_for_grid_return set)
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
-        Allows JavaScript code injection in gridOptions. Use with caution.
+        Allows JavaScript code injection in gridOptions. Required when using JsCode.
         Defaults to False.
 
     enable_enterprise_modules : bool | Literal['enterpriseOnly', 'enterprise+AgCharts'], optional
@@ -114,7 +133,7 @@ def AgGrid(
 
     try_to_convert_back_to_original_types : bool, optional
         Attempts to convert grid data back to original DataFrame types.
-        Defaults to True.
+        Defaults to False.
 
     conversion_errors : str, optional
         How to handle type conversion errors:
@@ -125,6 +144,7 @@ def AgGrid(
 
     columns_state : dict, optional
         Initial column state (visibility, order, width, etc.).
+        Format follows https://www.ag-grid.com/javascript-data-grid/column-state/#reference-state-applyColumnState
         Defaults to None.
 
     theme : str | StAggridTheme, optional
@@ -141,17 +161,13 @@ def AgGrid(
         Custom CSS rules injected into the component iframe.
         Defaults to None.
 
-    key : Any, optional
-        Streamlit widget key for maintaining state across reruns.
-        Defaults to None.
-
     update_on : list[str | tuple[str, int]], optional
         AG Grid events that trigger data return to Streamlit.
         Events: https://www.ag-grid.com/javascript-data-grid/grid-events/
         Use tuple (event_name, debounce_ms) for debounced events.
 
         Example: ['cellValueChanged', ('columnResized', 500)]
-        Defaults to [].
+        Defaults to ['cellValueChanged', 'selectionChanged', 'filterChanged', 'sortChanged'].
 
     callback : callable, optional
         Function called when grid data changes. Receives AgGridReturn object.
@@ -189,29 +205,43 @@ def AgGrid(
 
         Defaults to None.
 
+    should_grid_return : JsCode, optional
+        JavaScript function that determines whether the grid should return data to Streamlit.
+        This function is called before each potential data return and can be used to 
+        conditionally prevent updates based on grid state or event data.
+        The function receives: {streamlitRerunEventTriggerName, eventData}
+        Should return: boolean (true to proceed with data return, false to skip)
+
+        Example:
+        should_return = JsCode('''
+        function should_return({streamlitRerunEventTriggerName, eventData}){
+                //returns only if column Move has finished
+                if (streamlitRerunEventTriggerName == 'columnMoved'){
+                    return eventData.finished;
+                }
+            return true;
+            }
+        ''')
+
+        Defaults to None.
+
     **default_column_parameters
         Additional parameters passed to gridOptions.defaultColDef.
 
     Returns
     -------
-    AgGridReturn | MinimalResponse | CustomResponse
+    AgGridReturn | CustomResponse
         The return type depends on the data_return_mode:
-        
+
         - AS_INPUT, FILTERED, FILTERED_AND_SORTED: Returns AgGridReturn object with full grid data
         - MINIMAL: Returns MinimalResponse object with lightweight access to raw data
         - CUSTOM: Returns CustomResponse object with user-defined data structure
-        
+
         AgGridReturn provides properties like:
             - .data: DataFrame with grid data
             - .selected_data: DataFrame with selected rows
             - .grid_state: Grid state information
             - .columns_state: Column configuration state
-
-        MinimalResponse provides lightweight access:
-            - .raw_data: Access to the raw returned data
-            - .data: Basic data access without processing
-            - .selected_rows: Basic selected rows access
-            - .get(key, default): Safe key access with default value
 
         CustomResponse provides safe access methods:
             - .raw_data: Access to the raw returned data
@@ -256,6 +286,18 @@ def AgGrid(
             update_mode = GridUpdateMode[update_mode.upper()]
         except Exception:
             raise ValueError(f"{update_mode} is not valid.")
+    
+    # Add deprecation warning for GridUpdateMode
+    if update_mode != GridUpdateMode.NO_UPDATE:
+        warning_key = "GridUpdateMode_deprecated"
+        if warning_key not in _shown_deprecation_warnings:
+            warnings.warn(
+                "GridUpdateMode is deprecated and will be removed in a future version. "
+                "Use the 'update_on' parameter instead to specify which events should trigger updates.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+            _shown_deprecation_warnings.add(warning_key)
 
     if update_mode:
         update_on = list(update_on)
@@ -268,9 +310,13 @@ def AgGrid(
     # Validate CUSTOM mode parameters
     if data_return_mode == DataReturnMode.CUSTOM:
         if custom_jscode_for_grid_return is None:
-            raise ValueError("custom_jscode_for_grid_return parameter is required when using DataReturnMode.CUSTOM")
+            raise ValueError(
+                "custom_jscode_for_grid_return parameter is required when using DataReturnMode.CUSTOM"
+            )
         if not isinstance(custom_jscode_for_grid_return, JsCode):
-            raise ValueError("custom_jscode_for_grid_return must be a JsCode object when using DataReturnMode.CUSTOM")
+            raise ValueError(
+                "custom_jscode_for_grid_return must be a JsCode object when using DataReturnMode.CUSTOM"
+            )
 
     # Process JsCode for CUSTOM mode
     original_custom_jscode_for_grid_return = custom_jscode_for_grid_return
@@ -295,7 +341,7 @@ def AgGrid(
     if fit_columns_on_grid_load:
         warnings.warn(
             DeprecationWarning(
-                "fit_columns_on_grid_load is deprecated and will be removed on next version."
+                "fit_columns_on_grid_load is deprecated and will be removed on next version. Use gridOptions autoSizeStrategy instead."
             )
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
@@ -303,22 +349,28 @@ def AgGrid(
     # Create collector based solely on data_return_mode
     if data_return_mode == DataReturnMode.MINIMAL:
         from .collectors.minimal import MinimalCollector
+
         collector = MinimalCollector()
     elif data_return_mode == DataReturnMode.CUSTOM:
         from .collectors.custom import CustomCollector
+
         collector = CustomCollector(original_custom_jscode_for_grid_return.js_code)
     else:
         # Use LegacyCollector for AS_INPUT, FILTERED, FILTERED_AND_SORTED
         from .collectors.legacy import LegacyCollector
+
         collector = LegacyCollector(
             data_return_mode=data_return_mode,
             try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
-            conversion_errors=conversion_errors
+            conversion_errors=conversion_errors,
         )
 
     # Create initial response object that callbacks can safely reference
     response = collector.create_initial_response(
-        original_data=data.drop("::auto_unique_id::", axis='columns') if "::auto_unique_id::" in data.columns else data, grid_options=gridOptions
+        original_data=data.drop("::auto_unique_id::", axis="columns")
+        if "::auto_unique_id::" in data.columns
+        else data,
+        grid_options=gridOptions,
     )
 
     if callback and not key:
@@ -366,6 +418,7 @@ def AgGrid(
             show_search=show_search,
             show_toolbar=show_toolbar,
             custom_jscode_for_grid_return=custom_jscode_for_grid_return,
+            should_grid_return=should_grid_return,
             theme=themeObj,
             update_on=update_on,
         )
@@ -386,7 +439,9 @@ def AgGrid(
         args = list(ex.args)
         args[0] += f". Error in {collector.__class__.__name__} processing."
         if data_return_mode == DataReturnMode.CUSTOM:
-            args[0] += " Check your custom_jscode_for_grid_return JsCode implementation."
+            args[0] += (
+                " Check your custom_jscode_for_grid_return JsCode implementation."
+            )
         raise type(ex)(*args)
-    
+
     return response

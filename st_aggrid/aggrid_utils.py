@@ -6,13 +6,16 @@ from typing import Any, Mapping, Tuple
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import JsCode, walk_gridOptions, GridUpdateMode
 from io import StringIO
-
+from pathlib import Path
 
 def _parse_data_and_grid_options(
     data, grid_options, default_column_parameters, unsafe_allow_jscode
 ):
 
-    if isinstance(data, str):
+    if isinstance(data, (str, Path)):
+        if isinstance(data, Path):
+            data = Path(data).resolve().absolute()
+
         #if data is a path to a json file. Validate and load it as string.
         if data.endswith(".json") and os.path.exists(data):
             try:
@@ -26,6 +29,15 @@ def _parse_data_and_grid_options(
             data = pd.read_json(StringIO(data))
         except Exception:
             raise Exception("Error parsing data parameter as raw json.")
+    
+    #handles the case where dataframe is a polars dataframe without add dependency on polars
+    if (
+        hasattr(data, '__class__') and 
+        data.__class__.__module__ and
+        'polars' in data.__class__.__module__ and
+        data.__class__.__name__ == 'DataFrame'
+    ):
+        data = data.to_pandas(use_pyarrow_extension_array=False)
 
     if isinstance(data, pd.DataFrame):
         #converts date columns to iso format:
@@ -42,7 +54,9 @@ def _parse_data_and_grid_options(
     elif isinstance(grid_options, Mapping):
         grid_options = grid_options
 
-    elif isinstance(grid_options, str):
+    elif isinstance(grid_options, (str, Path)):
+        if isinstance(grid_options, Path):
+            grid_options = Path(data).resolve().absolute()
         #if grid_options is a path to a json file. Validate and load it as dictionary.
         if grid_options.endswith(".json") and os.path.exists(grid_options):
             try:
@@ -78,22 +92,27 @@ def _parse_data_and_grid_options(
     
     return data, grid_options
 
-def parse_update_mode(update_mode: GridUpdateMode):
-    update_on = []
+def parse_update_mode(update_mode: GridUpdateMode, update_on=None):
+    def add_unique_update_event(update_on, event):
+        if event not in update_on:
+            update_on.append(event)
+    if update_on is None:
+        update_on = []
+
     if update_mode & GridUpdateMode.VALUE_CHANGED:
-        update_on.append("cellValueChanged")
+        add_unique_update_event(update_on, "cellValueChanged")
     if update_mode & GridUpdateMode.SELECTION_CHANGED:
-        update_on.append("selectionChanged")
+        add_unique_update_event(update_on, "selectionChanged")
     if update_mode & GridUpdateMode.FILTERING_CHANGED:
-        update_on.append("filterChanged")
+        add_unique_update_event(update_on, "filterChanged")
     if update_mode & GridUpdateMode.SORTING_CHANGED:
-        update_on.append("sortChanged")
+        add_unique_update_event(update_on, "sortChanged")
     if update_mode & GridUpdateMode.COLUMN_RESIZED:
-        update_on.append(("columnResized", 300))
+        add_unique_update_event(update_on, ("columnResized", 300))
     if update_mode & GridUpdateMode.COLUMN_MOVED:
-        update_on.append(("columnMoved", 500))
+        add_unique_update_event(update_on, ("columnMoved", 500))
     if update_mode & GridUpdateMode.COLUMN_PINNED:
-        update_on.append("columnPinned")
+        add_unique_update_event(update_on, "columnPinned")
     if update_mode & GridUpdateMode.COLUMN_VISIBLE:
-        update_on.append("columnVisible")
+        add_unique_update_event(update_on, "columnVisible")
     return update_on

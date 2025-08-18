@@ -54,6 +54,16 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.1.8
+
+- **Major refactor**: Introduced collector-based architecture for grid data return processing
+- Added new `DataReturnMode.CUSTOM` allowing custom JavaScript data collection logic
+- Improved data serialization and handling of complex data types (data is now transfered using Streamlit`s ArrowTable protobuff)
+- Enhanced performance for large datasets through optimized data processing
+- Added comprehensive test suite for grid return functionality
+- Added deprecation warnings for `GridUpdateMode` (use `update_on` parameter instead)
+- Enhanced documentation with detailed parameter descriptions
+
 Version 1.1.7
 
 - Updates inner Ag-Grid to v. 34.0.2

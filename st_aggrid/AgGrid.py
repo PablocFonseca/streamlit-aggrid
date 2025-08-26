@@ -47,7 +47,6 @@ def AgGrid(
     data: Union[pd.DataFrame, str] = None,
     gridOptions: typing.Dict = None,
     height: int = 400,
-    fit_columns_on_grid_load=False,
     update_mode: GridUpdateMode
     | Literal[
         "MANUAL", "MODEL_CHANGED", "VALUE_CHANGED", "SELECTION_CHANGED", "GRID_CHANGED"
@@ -75,7 +74,7 @@ def AgGrid(
     show_download_button: bool = True,
     custom_jscode_for_grid_return: JsCode = None,
     should_grid_return: JsCode = None,
-    use_json_serialization: bool | Literal['auto'] = 'auto',
+    use_json_serialization: bool | Literal["auto"] = "auto",
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -108,7 +107,6 @@ def AgGrid(
     fit_columns_on_grid_load : bool, optional
         DEPRECATED. Use gridOptions autoSizeStrategy instead.
         See: https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns
-        Defaults to False.
 
     update_mode : GridUpdateMode, optional
         DEPRECATED. Use update_on parameter instead.
@@ -214,7 +212,7 @@ def AgGrid(
 
     should_grid_return : JsCode, optional
         JavaScript function that determines whether the grid should return data to Streamlit.
-        This function is called before each potential data return and can be used to 
+        This function is called before each potential data return and can be used to
         conditionally prevent updates based on grid state or event data.
         The function receives: {streamlitRerunEventTriggerName, eventData}
         Should return: boolean (true to proceed with data return, false to skip)
@@ -234,15 +232,15 @@ def AgGrid(
 
     use_json_serialization : bool | Literal['auto'], optional
         Controls JSON serialization behavior for complex data types:
-        
-        - 'auto' (default): Automatically detect PyArrow conversion errors and fallback 
+
+        - 'auto' (default): Automatically detect PyArrow conversion errors and fallback
           to JSON serialization. User-friendly option that handles complex data seamlessly.
         - True: Always use JSON serialization for non-primitive data types (lists, dicts, sets).
           Converts complex objects to JSON strings before rendering.
-        - False: Never use JSON serialization. Will raise PyArrow conversion errors 
+        - False: Never use JSON serialization. Will raise PyArrow conversion errors
           for non-hashable or mixed-type data.
-          
-        Use 'auto' for best user experience, True for consistent JSON behavior, 
+
+        Use 'auto' for best user experience, True for consistent JSON behavior,
         or False for strict type checking.
         Defaults to 'auto'.
 
@@ -269,6 +267,15 @@ def AgGrid(
             - .get(key, default): Safe key access with default value
             - Standard dictionary access with helpful error messages
     """
+
+    ###Deprecation Warnings
+    # Check for deprecated reload_data parameter
+    if 'reload_data' in default_column_parameters:
+        default_column_parameters.pop('reload_data')
+        warning_key = "reload_data_deprecated"
+        if warning_key not in _shown_deprecation_warnings:
+            warnings.warn("The 'reload_data' parameter has been removed and has no effect.", DeprecationWarning, stacklevel=2)
+            _shown_deprecation_warnings.add(warning_key)
 
     ##Parses Themes
     if isinstance(theme, (str, AgGridTheme)):
@@ -307,7 +314,7 @@ def AgGrid(
             update_mode = GridUpdateMode[update_mode.upper()]
         except Exception:
             raise ValueError(f"{update_mode} is not valid.")
-    
+
     # Add deprecation warning for GridUpdateMode
     if update_mode != GridUpdateMode.NO_UPDATE:
         warning_key = "GridUpdateMode_deprecated"
@@ -316,7 +323,7 @@ def AgGrid(
                 "GridUpdateMode is deprecated and will be removed in a future version. "
                 "Use the 'update_on' parameter instead to specify which events should trigger updates.",
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             _shown_deprecation_warnings.add(warning_key)
 
@@ -347,10 +354,16 @@ def AgGrid(
 
     # parse data and gridOptions
     data, gridOptions = _parse_data_and_grid_options(
-        data, gridOptions, default_column_parameters, allow_unsafe_jscode, use_json_serialization
+        data,
+        gridOptions,
+        default_column_parameters,
+        allow_unsafe_jscode,
+        use_json_serialization,
     )
-    
-    frame_dtypes = [i.kind for i in data.dtypes.values.tolist()] if data is not None else []
+
+    frame_dtypes = (
+        [i.kind for i in data.dtypes.values.tolist()] if data is not None else []
+    )
 
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
@@ -360,12 +373,8 @@ def AgGrid(
     if height is None:
         gridOptions["domLayout"] = "autoHeight"
 
-    if fit_columns_on_grid_load:
-        warnings.warn(
-            DeprecationWarning(
-                "fit_columns_on_grid_load is deprecated and will be removed on next version. Use gridOptions autoSizeStrategy instead."
-            )
-        )
+    if  default_column_parameters.pop("fit_columns_on_grid_load", False):
+        warnings.warn("fit_columns_on_grid_load is deprecated. Use gridOptions autoSizeStrategy instead.", DeprecationWarning)
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
     # Create collector based solely on data_return_mode
@@ -395,7 +404,7 @@ def AgGrid(
             if "::auto_unique_id::" in data.columns
             else data
         )
-    
+
     response = collector.create_initial_response(
         original_data=original_data,
         grid_options=gridOptions,
@@ -422,102 +431,89 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
+
     def _compute_data_hash(df):
         if df is None:
-            return ''
-        
+            return ""
+
         try:
             return str(pd.util.hash_pandas_object(df).sum())
         except TypeError:
             import logging
-            logging.warning("DataFrame contains non-hashable data, attempting type conversion...")
-            
+
+            logging.warning(
+                "DataFrame contains non-hashable data, attempting type conversion..."
+            )
+
             try:
                 df_copy = df.copy()
                 for col in df_copy.columns:
-                    df_copy[col] = df_copy[col].apply(lambda x: 
-                        tuple(x) if isinstance(x, list) else
-                        frozenset(x) if isinstance(x, set) else
-                        frozenset(x.items()) if isinstance(x, dict) else
-                        x
+                    df_copy[col] = df_copy[col].apply(
+                        lambda x: tuple(x)
+                        if isinstance(x, list)
+                        else frozenset(x)
+                        if isinstance(x, set)
+                        else frozenset(x.items())
+                        if isinstance(x, dict)
+                        else x
                     )
                 return str(pd.util.hash_pandas_object(df_copy).sum())
             except (TypeError, ValueError, AttributeError) as e:
-                logging.warning(f"Type conversion failed ({e}), falling back to string-based hashing...")
+                logging.warning(
+                    f"Type conversion failed ({e}), falling back to string-based hashing..."
+                )
                 return str(hash(df.to_string()))
-    
+
     data_hash = _compute_data_hash(data)
 
+    _component_func_args = dict(
+        data=data,
+        data_hash=data_hash,
+        gridOptions=gridOptions,
+        height=height,
+        data_return_mode=data_return_mode,
+        frame_dtypes=frame_dtypes,
+        allow_unsafe_jscode=allow_unsafe_jscode,
+        columns_state=columns_state,
+        custom_css=custom_css,
+        default=None,
+        enable_enterprise_modules=enable_enterprise_modules,
+        key=key,
+        license_key=license_key,
+        manual_update=manual_update,
+        on_change=_inner_callback,
+        pro_assets=pro_assets,
+        show_download_button=show_download_button,
+        show_search=show_search,
+        show_toolbar=show_toolbar,
+        custom_jscode_for_grid_return=custom_jscode_for_grid_return,
+        should_grid_return=should_grid_return,
+        theme=themeObj,
+        debug=default_column_parameters.pop("debug", False),
+        update_on=update_on,
+        use_json_serialization=use_json_serialization
+    )
+
     try:
-        component_value = _component_func(
-            data=data,
-            data_hash=data_hash,
-            gridOptions=gridOptions,
-            height=height,
-            data_return_mode=data_return_mode,
-            frame_dtypes=frame_dtypes,
-            allow_unsafe_jscode=allow_unsafe_jscode,
-            columns_state=columns_state,
-            custom_css=custom_css,
-            default=None,
-            enable_enterprise_modules=enable_enterprise_modules,
-            key=key,
-            license_key=license_key,
-            manual_update=manual_update,
-            on_change=_inner_callback,
-            pro_assets=pro_assets,
-            show_download_button=show_download_button,
-            show_search=show_search,
-            show_toolbar=show_toolbar,
-            custom_jscode_for_grid_return=custom_jscode_for_grid_return,
-            should_grid_return=should_grid_return,
-            theme=themeObj,
-            update_on=update_on,
-        )
+        component_value = _component_func(**_component_func_args)
     except Exception as ex:
         # Check if this is a PyArrow conversion error and we should try JSON serialization
         error_msg = str(ex)
         is_pyarrow_error = (
-            "Could not convert" in error_msg 
+            "Could not convert" in error_msg
             or "pyarrow" in error_msg.lower()
             or "ArrowInvalid" in error_msg
             or "Conversion failed" in error_msg
         )
-        
-        if (
-            use_json_serialization == 'auto'
-            and data is not None 
-            and is_pyarrow_error
-        ):
-            logging.warning(f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}")
-            # Retry with JSON serialization enabled
-            return AgGrid(
-                data=data,
-                gridOptions=gridOptions,
-                height=height,
-                fit_columns_on_grid_load=fit_columns_on_grid_load,
-                update_mode=update_mode,
-                data_return_mode=data_return_mode,
-                allow_unsafe_jscode=allow_unsafe_jscode,
-                enable_enterprise_modules=enable_enterprise_modules,
-                license_key=license_key,
-                try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
-                conversion_errors=conversion_errors,
-                columns_state=columns_state,
-                theme=theme,
-                custom_css=custom_css,
-                key=key,
-                update_on=update_on,
-                callback=callback,
-                show_toolbar=show_toolbar,
-                show_search=show_search,
-                show_download_button=show_download_button,
-                custom_jscode_for_grid_return=original_custom_jscode_for_grid_return,
-                should_grid_return=should_grid_return,
-                use_json_serialization=True,
-                **default_column_parameters,
+
+        if use_json_serialization == "auto" and data is not None and is_pyarrow_error:
+            logging.warning(
+                f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}"
             )
-        elif use_json_serialization == False and data is not None and is_pyarrow_error:
+            # Retry with JSON serialization enabled
+            _component_func_args['use_json_serialization'] = True
+            return AgGrid(**_component_func_args)
+        elif not use_json_serialization and data is not None and is_pyarrow_error:
             # User explicitly disabled JSON serialization, raise the PyArrow error
             raise ex
         else:

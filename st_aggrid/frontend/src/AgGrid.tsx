@@ -152,13 +152,14 @@ class AgGrid extends React.Component<ComponentProps, State> {
     this.collectGridReturn = props.args.custom_jscode_for_grid_return
       ? parseJsCodeFromPython(props.args.custom_jscode_for_grid_return)
       : null
+
     this.state = {
       gridHeight: this.props.args.height,
       gridOptions: go,
       isRowDataEdited: false,
       api: undefined,
       enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: true,
+      debug: props.args.debug || false,
       editedRows: new Set(),
     } as State
 

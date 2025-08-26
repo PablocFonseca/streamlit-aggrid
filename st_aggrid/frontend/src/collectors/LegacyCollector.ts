@@ -194,12 +194,6 @@ export class LegacyCollector extends BaseCollector {
       return api?.getColumnState()
     }
 
-    const collectSelectedItems = () => {
-      const selectedRows = api?.getSelectedRows()
-
-      return selectedRows
-    }
-
     const processEventData = () => {
       const rawEventData = {
         ...eventData,
@@ -214,7 +208,6 @@ export class LegacyCollector extends BaseCollector {
     const rowsAfterSortAndFilter = collectRowsAfterSortAndFilter()
     const gridState = collectGridState()
     const columnsState = collectColumnsState()
-    const selectedItems = collectSelectedItems()
     const eventDataProcessed = processEventData()
 
     // Debug output removed - use browser dev tools if needed to inspect getRowId
@@ -223,7 +216,6 @@ export class LegacyCollector extends BaseCollector {
     const returnValue = {
       originalDtypes: props.args.frame_dtypes,
       nodes: nodes,
-      selectedItems: selectedItems,
       gridState: gridState,
       columnsState: columnsState,
       rowIdsAfterFilter: rowsAfterFilter,

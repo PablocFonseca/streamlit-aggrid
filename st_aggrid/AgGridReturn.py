@@ -411,7 +411,8 @@ class AgGridReturn(Mapping):
         Returns selected rows as a DataFrame.
         If there are grouped rows, returns a dict of {key: pd.DataFrame}.
         """
-        selected_items = pd.DataFrame(self.grid_response.get("selectedItems", {}))
+        nodes = self.grid_response.get('nodes', [])
+        selected_items = pd.DataFrame([n.get('data', None) for n in nodes if n.get('isSelected', None) is True])
 
         if selected_items.empty:
             return None

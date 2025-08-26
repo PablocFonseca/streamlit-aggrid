@@ -6,7 +6,7 @@ import pandas as pd
 
 TESTS = st.radio(
     "Select Test",
-    options=range(1, 4),
+    options=range(1, 5),
 )
 
 """grid launches with json data and grid options"""
@@ -145,7 +145,7 @@ def make_grid3():
         "columnDefs": [
             {"field": "sport", "rowGroup": True},
             {"field": "athlete", "rowGroup": True},
-            {"field": "age"},
+            {"field": "age", "checkboxSelection": True, "headerCheckboxSelection": True},
         ],
         "defaultColDef": {"width": 150, "cellStyle": {"fontWeight": "bold"}},
         "groupDisplayType": "groupRows",
@@ -153,7 +153,9 @@ def make_grid3():
             "headerName": "Sport",
             "field": "sport",
             "cellRenderer": "agGroupCellRenderer",
+            "checkboxSelection": True,
         },
+        "rowSelection": "multiple",
     }
     r = AgGrid(
         data_file,
@@ -163,6 +165,7 @@ def make_grid3():
             "gridReady",
             "rowGroupOpened",
             "sortChanged",
+            "selectionChanged",
         ],  
         enable_enterprise_modules=True,
     )
@@ -170,7 +173,7 @@ def make_grid3():
     st.html(f"""
     <span>
     <h1> Grouped Data Groups (first 5) </h1>
-    <pre data-testid='grouped-data-groups'>{"".join([f"<h4 data-testid='grouped-data-groups-header'>{k}</h4><pre data-testid='grouped-data-groups-data'>{e[k].to_string()}</pre>" for i, e in enumerate(r.dataGroups[:5]) for k in e])}</pre>
+    <pre data-testid='grouped-data-groups'>{"".join([f"<h4 data-testid='grouped-data-groups-header'>{k}</h4><pre data-testid='grouped-data-groups-data'>{e[k].to_string()}</pre>" for e in r.dataGroups[:5] for k in e])}</pre>
     </span>
     """)
 
@@ -178,6 +181,82 @@ def make_grid3():
     <span>
     <h1> Grouped Grid Response </h1>
     <pre data-testid='grouped-grid-response'>{str(r.grid_response)}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Grouped Grid Selected Data </h1>
+    <pre data-testid='grouped-selected-data'>{r.selected_data.to_string() if r.selected_data is not None and len(r.selected_data) > 0 else 'No rows selected'}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Grouped Grid Selection Count </h1>
+    <pre data-testid='grouped-selection-count'>{len(r.selected_data) if r.selected_data is not None else 0}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Selected Grouped Data Groups (first 5) </h1>
+    <pre data-testid='selected-grouped-data-groups'>{"".join([f"<h4 data-testid='selected-grouped-data-groups-header'>{k}</h4><pre data-testid='selected-grouped-data-groups-data'>{e[k].to_string()}</pre>" for e in r.selected_dataGroups[:5] for k in e])}</pre>
+    </span>
+    """)
+
+
+def make_grid4():
+    # Test comprehensive selection functionality
+    selection_data = pd.DataFrame({
+        'id': range(1, 21),
+        'name': [f'User{i}' for i in range(1, 21)],
+        'category': ['A', 'B', 'C', 'D', 'E'] * 4,
+        'value': [i * 10 for i in range(1, 21)],
+        'active': [i % 2 == 0 for i in range(1, 21)]
+    })
+    
+    go = {
+        "columnDefs": [
+            {"headerName": "ID", "field": "id", "width": 80},
+            {"headerName": "Name", "field": "name", "width": 100},
+            {"headerName": "Category", "field": "category", "width": 100, "checkboxSelection": True, "headerCheckboxSelection": True},
+            {"headerName": "Value", "field": "value", "width": 100},
+            {"headerName": "Active", "field": "active", "width": 100}
+        ],
+        "autoSizeStrategy": {"type": "fitGridWidth"},
+        "rowSelection": "multiple",
+        "pagination": True,
+        "paginationPageSize": 10
+    }
+    
+    r = AgGrid(selection_data, go, key="selection_test_grid")
+
+    st.html(f"""
+    <span>
+    <h1> Selection Test Grid Data </h1>
+    <pre data-testid='selection-grid-data'>{r.data.to_string()}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Selected Rows </h1>
+    <pre data-testid='selected-rows-data'>{r.selected_data.to_string() if r.selected_data is not None and len(r.selected_data) > 0 else 'No rows selected'}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Selection Event Data </h1>
+    <pre data-testid='selection-event-data'>{str(r.event_data)}</pre>
+    </span>
+    """)
+
+    st.html(f"""
+    <span>
+    <h1> Selection Count </h1>
+    <pre data-testid='selection-count'>{len(r.selected_data) if r.selected_data is not None else 0}</pre>
     </span>
     """)
 
@@ -190,3 +269,6 @@ if TESTS == 2:
 
 if TESTS == 3:
     make_grid3()
+
+if TESTS == 4:
+    make_grid4()

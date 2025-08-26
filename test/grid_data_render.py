@@ -3,7 +3,7 @@ from st_aggrid import AgGrid, JsCode
 import pandas as pd
 import json
 
-TESTS = [14]  # list(range(20))
+TESTS = list(range(20))
 
 if 1 in TESTS:
     """grid renders lists"""

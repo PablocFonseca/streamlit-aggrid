@@ -121,7 +121,7 @@ def make_grid2():
         data,
         key="custom_event_return_grid",
         data_return_mode="CUSTOM",
-        update_on=["columnMoved"],
+        update_on=["columnMoved", "sortChanged"],
         custom_jscode_for_grid_return=custom_return,
         rowSelection={"mode": "singleRow"},
     )
@@ -162,7 +162,8 @@ def make_grid3():
         update_on=[
             "gridReady",
             "rowGroupOpened",
-        ],  # Trigger on grid ready and group changes
+            "sortChanged",
+        ],  
         enable_enterprise_modules=True,
     )
 

@@ -119,7 +119,21 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     this.data = props.args.data
-    go.rowData = this.data ? this.data?.table.toArray() : []
+    
+    // Handle rowData: use data.table if available, otherwise check gridOptions.rowData
+    if (this.data) {
+      go.rowData = this.data.table.toArray()
+    } else if (go.rowData && typeof go.rowData === 'string') {
+      // If data is null but gridOptions.rowData contains JSON string, parse it
+      try {
+        go.rowData = JSON.parse(go.rowData)
+      } catch (e) {
+        console.warn('Failed to parse gridOptions.rowData as JSON:', e)
+        go.rowData = []
+      }
+    } else {
+      go.rowData = go.rowData || []
+    }
 
     if (!("getRowId" in go)) {
       if (
@@ -144,7 +158,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       isRowDataEdited: false,
       api: undefined,
       enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: false,
+      debug: true,
       editedRows: new Set(),
     } as State
 

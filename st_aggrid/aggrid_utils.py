@@ -9,7 +9,7 @@ from io import StringIO
 from pathlib import Path
 
 def _parse_data_and_grid_options(
-    data, grid_options, default_column_parameters, unsafe_allow_jscode
+    data, grid_options, default_column_parameters, unsafe_allow_jscode, use_json_serialization
 ):
 
     if isinstance(data, (str, Path)):
@@ -70,9 +70,10 @@ def _parse_data_and_grid_options(
             grid_options = json.loads(grid_options)
         except Exception:
             raise Exception("Error parsing data parameter as raw json.")
+        
     
     #if data is supplied via gridOptions.rowData move it to data parameter
-    if (grid_options.get('rowData', None)):
+    if (grid_options.get('rowData', None)) and use_json_serialization is not True:
         if data:
             raise ValueError("Data was supplied by both data and gridOptions rowData. Use only one to load data into the grid.")
         else:
@@ -83,7 +84,10 @@ def _parse_data_and_grid_options(
     if "getRowId" not in grid_options and data is not None:
         data['::auto_unique_id::'] = list(map(str, range(data.shape[0]))) ##pd.util.hash_pandas_object(data).astype(str)
 
-            
+    if use_json_serialization is True:
+        grid_options['rowData'] = data.to_json(orient='records')
+        data = None
+        
     #process the JsCode Objects
     if unsafe_allow_jscode:
         walk_gridOptions(

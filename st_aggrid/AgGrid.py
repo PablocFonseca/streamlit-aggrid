@@ -4,8 +4,14 @@ import pandas as pd
 import warnings
 import os
 import typing
+import logging
 from decouple import config
 from typing import Union, Literal
+
+try:
+    import pyarrow.lib
+except ImportError:
+    pyarrow = None
 from st_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
@@ -69,6 +75,7 @@ def AgGrid(
     show_download_button: bool = True,
     custom_jscode_for_grid_return: JsCode = None,
     should_grid_return: JsCode = None,
+    use_json_serialization: bool | Literal['auto'] = 'auto',
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -225,6 +232,20 @@ def AgGrid(
 
         Defaults to None.
 
+    use_json_serialization : bool | Literal['auto'], optional
+        Controls JSON serialization behavior for complex data types:
+        
+        - 'auto' (default): Automatically detect PyArrow conversion errors and fallback 
+          to JSON serialization. User-friendly option that handles complex data seamlessly.
+        - True: Always use JSON serialization for non-primitive data types (lists, dicts, sets).
+          Converts complex objects to JSON strings before rendering.
+        - False: Never use JSON serialization. Will raise PyArrow conversion errors 
+          for non-hashable or mixed-type data.
+          
+        Use 'auto' for best user experience, True for consistent JSON behavior, 
+        or False for strict type checking.
+        Defaults to 'auto'.
+
     **default_column_parameters
         Additional parameters passed to gridOptions.defaultColDef.
 
@@ -326,8 +347,9 @@ def AgGrid(
 
     # parse data and gridOptions
     data, gridOptions = _parse_data_and_grid_options(
-        data, gridOptions, default_column_parameters, allow_unsafe_jscode
+        data, gridOptions, default_column_parameters, allow_unsafe_jscode, use_json_serialization
     )
+    
     frame_dtypes = [i.kind for i in data.dtypes.values.tolist()] if data is not None else []
 
     if not isinstance(data, pd.DataFrame):
@@ -400,7 +422,31 @@ def AgGrid(
         _inner_callback = None
 
     pro_assets = default_column_parameters.pop("pro_assets", None)
-    data_hash = str(pd.util.hash_pandas_object(data).sum()) if data is not None else ''
+    def _compute_data_hash(df):
+        if df is None:
+            return ''
+        
+        try:
+            return str(pd.util.hash_pandas_object(df).sum())
+        except TypeError:
+            import logging
+            logging.warning("DataFrame contains non-hashable data, attempting type conversion...")
+            
+            try:
+                df_copy = df.copy()
+                for col in df_copy.columns:
+                    df_copy[col] = df_copy[col].apply(lambda x: 
+                        tuple(x) if isinstance(x, list) else
+                        frozenset(x) if isinstance(x, set) else
+                        frozenset(x.items()) if isinstance(x, dict) else
+                        x
+                    )
+                return str(pd.util.hash_pandas_object(df_copy).sum())
+            except (TypeError, ValueError, AttributeError) as e:
+                logging.warning(f"Type conversion failed ({e}), falling back to string-based hashing...")
+                return str(hash(df.to_string()))
+    
+    data_hash = _compute_data_hash(data)
 
     try:
         component_value = _component_func(
@@ -428,14 +474,59 @@ def AgGrid(
             theme=themeObj,
             update_on=update_on,
         )
-    except Exception as ex:  # components.components.MarshallComponentException as ex:
-        # uses a more complete error message.
-        args = list(ex.args)
-        args[0] += (
-            ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
+    except Exception as ex:
+        # Check if this is a PyArrow conversion error and we should try JSON serialization
+        error_msg = str(ex)
+        is_pyarrow_error = (
+            "Could not convert" in error_msg 
+            or "pyarrow" in error_msg.lower()
+            or "ArrowInvalid" in error_msg
+            or "Conversion failed" in error_msg
         )
-        # ex = components.components.MarshallComponentException(*args)
-        raise (ex)
+        
+        if (
+            use_json_serialization == 'auto'
+            and data is not None 
+            and is_pyarrow_error
+        ):
+            logging.warning(f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}")
+            # Retry with JSON serialization enabled
+            return AgGrid(
+                data=data,
+                gridOptions=gridOptions,
+                height=height,
+                fit_columns_on_grid_load=fit_columns_on_grid_load,
+                update_mode=update_mode,
+                data_return_mode=data_return_mode,
+                allow_unsafe_jscode=allow_unsafe_jscode,
+                enable_enterprise_modules=enable_enterprise_modules,
+                license_key=license_key,
+                try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
+                conversion_errors=conversion_errors,
+                columns_state=columns_state,
+                theme=theme,
+                custom_css=custom_css,
+                key=key,
+                update_on=update_on,
+                callback=callback,
+                show_toolbar=show_toolbar,
+                show_search=show_search,
+                show_download_button=show_download_button,
+                custom_jscode_for_grid_return=original_custom_jscode_for_grid_return,
+                should_grid_return=should_grid_return,
+                use_json_serialization=True,
+                **default_column_parameters,
+            )
+        elif use_json_serialization == False and data is not None and is_pyarrow_error:
+            # User explicitly disabled JSON serialization, raise the PyArrow error
+            raise ex
+        else:
+            # For other exceptions, add the original error message enhancement
+            args = list(ex.args)
+            args[0] += (
+                ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
+            )
+            raise type(ex)(*args)
 
     # Update the response object with final component data
     try:

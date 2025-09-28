@@ -3690,85 +3690,85 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ag-charts-community@npm:12.0.2":
-  version: 12.0.2
-  resolution: "ag-charts-community@npm:12.0.2"
+"ag-charts-community@npm:12.2.0":
+  version: 12.2.0
+  resolution: "ag-charts-community@npm:12.2.0"
   dependencies:
-    ag-charts-core: "npm:12.0.2"
-    ag-charts-locale: "npm:12.0.2"
-    ag-charts-types: "npm:12.0.2"
-  checksum: 10/577552ff1260c864a8cb17b87fb6dcc11ebbdbbf4102610c632db655818b09dd2b8c63f8f0c36676b43179d5fa79567198c8ce2a15b78179fd796cbeee206d4b
+    ag-charts-core: "npm:12.2.0"
+    ag-charts-locale: "npm:12.2.0"
+    ag-charts-types: "npm:12.2.0"
+  checksum: 10/157b72ee4729697af47174cb68ae4149b9a9ecc8021f6a085086a0dfd0b130784d1dde49e93cc14de2445ad6cfa6498a32e0df05823f32a7d867102cb2940c30
   languageName: node
   linkType: hard
 
-"ag-charts-core@npm:12.0.2":
-  version: 12.0.2
-  resolution: "ag-charts-core@npm:12.0.2"
+"ag-charts-core@npm:12.2.0":
+  version: 12.2.0
+  resolution: "ag-charts-core@npm:12.2.0"
   dependencies:
-    ag-charts-types: "npm:12.0.2"
-  checksum: 10/d69c61a0632d8ef6dca6cef67e2c535f0b70700232ffba5270c96a33485868ccecf3dbfb03955d4792519e7d9ecedf64a501bf5f63f1e592a886ad7427fa4d6f
+    ag-charts-types: "npm:12.2.0"
+  checksum: 10/7aa6f50e535a6ed3d707bb3c6d31bb07abe62cb9956b5cc55fb367f6e736dd2751c667480a5d22e8a29a8a46c8cc963a94fccff67ef9ddb0aa43d72f44d905c3
   languageName: node
   linkType: hard
 
-"ag-charts-enterprise@npm:12.0.2, ag-charts-enterprise@npm:^12.0.2":
-  version: 12.0.2
-  resolution: "ag-charts-enterprise@npm:12.0.2"
+"ag-charts-enterprise@npm:12.2.0, ag-charts-enterprise@npm:^12.2.0":
+  version: 12.2.0
+  resolution: "ag-charts-enterprise@npm:12.2.0"
   dependencies:
-    ag-charts-community: "npm:12.0.2"
-    ag-charts-core: "npm:12.0.2"
-  checksum: 10/836e52ea87b453f446cf42c41de62dc69becd977168345da1917485bfb005b01adaa0f75b868fef0bac005a3362a2884bb45b30e70a4d5230265224187b97d8c
+    ag-charts-community: "npm:12.2.0"
+    ag-charts-core: "npm:12.2.0"
+  checksum: 10/0718d6d5296bd4228bcb4dbe3ddfbef28d0f30b888d349a5e6bca7d46aad702cf2427cc60465c3a868c22803d483c99082f5c3f7554c07e0ed16e1607927c76f
   languageName: node
   linkType: hard
 
-"ag-charts-locale@npm:12.0.2":
-  version: 12.0.2
-  resolution: "ag-charts-locale@npm:12.0.2"
-  checksum: 10/c946945f9c451bc6f9fe5f5863016ccf14cdb4ad7feda9f31852ae89f9f3066162f4dbfcf4489ad7fa050d94f4924ce2e5a5d8219fa225222086eee03c6d4d49
+"ag-charts-locale@npm:12.2.0":
+  version: 12.2.0
+  resolution: "ag-charts-locale@npm:12.2.0"
+  checksum: 10/fdbb98ad55118101ad177df1cc8466ef5706c826acd7636acf2acc1d2365435703ee10577eb497b32bacec96991d1a2b273de943425b9b154f21074a2e5ba167
   languageName: node
   linkType: hard
 
-"ag-charts-types@npm:12.0.2":
-  version: 12.0.2
-  resolution: "ag-charts-types@npm:12.0.2"
-  checksum: 10/acf84686b5ccb69abae1711619db749f7dfd1f50c091b20ffd4000edaffc12bb2c6fdd8188a3bf2f7dba604df6089fe237684ad1f57d8c66b7d01c78412ad0d8
+"ag-charts-types@npm:12.2.0":
+  version: 12.2.0
+  resolution: "ag-charts-types@npm:12.2.0"
+  checksum: 10/f83e964fd8b7e1e203439bf321b1ccc55ca52b2316c4cd90ca7a10ae3ab717490a96a164551e0c59eeec0e1e0a167daa5eefe1e0417c498c95a63927b09a77d1
   languageName: node
   linkType: hard
 
-"ag-grid-community@npm:34.0.2, ag-grid-community@npm:^34.0.2":
-  version: 34.0.2
-  resolution: "ag-grid-community@npm:34.0.2"
+"ag-grid-community@npm:34.2.0, ag-grid-community@npm:^34.2.0":
+  version: 34.2.0
+  resolution: "ag-grid-community@npm:34.2.0"
   dependencies:
-    ag-charts-types: "npm:12.0.2"
-  checksum: 10/97d6bd117d02bf2687af82482d958074d18de76f09a1c6de2794470bd0f88f21998a5bbbb3dbfffd751dc40a03cb04c2afc5a86f3ebbe5b3aa70fcae5d6fe8c0
+    ag-charts-types: "npm:12.2.0"
+  checksum: 10/9e79469b862038fc55da6562d143efe3a7d9b3a05714a35687f8d89cfdb58cbda6c64151056155975958967cd34db906d4a1f812ccbd42339c3193275d091bf9
   languageName: node
   linkType: hard
 
-"ag-grid-enterprise@npm:34.0.2":
-  version: 34.0.2
-  resolution: "ag-grid-enterprise@npm:34.0.2"
+"ag-grid-enterprise@npm:34.2.0":
+  version: 34.2.0
+  resolution: "ag-grid-enterprise@npm:34.2.0"
   dependencies:
-    ag-charts-community: "npm:12.0.2"
-    ag-charts-enterprise: "npm:12.0.2"
-    ag-grid-community: "npm:34.0.2"
+    ag-charts-community: "npm:12.2.0"
+    ag-charts-enterprise: "npm:12.2.0"
+    ag-grid-community: "npm:34.2.0"
   dependenciesMeta:
     ag-charts-community:
       optional: true
     ag-charts-enterprise:
       optional: true
-  checksum: 10/b8c98de51b3a388af7973f5ffab9dc663a0f51976707566e63db1a367761c516acda890fef024067fcf36da39630c7a1eceda25e8307c087c9d37159ee7adee9
+  checksum: 10/62ee230a03c919b6e593d66c1da75f6d012f3fe3e82807c334f0d5ec3f75c9aa10294277abc0b2202411926ca5ee179c9c512357cc7a44bcf40a4585e7515cd6
   languageName: node
   linkType: hard
 
-"ag-grid-react@npm:34.0.2":
-  version: 34.0.2
-  resolution: "ag-grid-react@npm:34.0.2"
+"ag-grid-react@npm:34.2.0":
+  version: 34.2.0
+  resolution: "ag-grid-react@npm:34.2.0"
   dependencies:
-    ag-grid-community: "npm:34.0.2"
+    ag-grid-community: "npm:34.2.0"
     prop-types: "npm:^15.8.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/0ff9cb5715fa6f0bbf021d351371326171ded899289c87738ff848471ec3fe92c68b49dcefdf4aad17e57e5a2b00e5e715753f3e672159dbd8bf1a6799374f27
+  checksum: 10/5014abb2445fdb2cc1cf6c697c035ec63ddba5850ac7cfeaaf74766267742be6882cbf6fc3f592b1e6efae5b8533e0d42c14f50979f44752a38c83eea48f48bb
   languageName: node
   linkType: hard
 
@@ -6770,10 +6770,10 @@ __metadata:
     "@types/lodash": "npm:^4.17.13"
     "@types/react": "npm:^18.3.14"
     "@types/react-dom": "npm:^18.3.2"
-    ag-charts-enterprise: "npm:^12.0.2"
-    ag-grid-community: "npm:^34.0.2"
-    ag-grid-enterprise: "npm:34.0.2"
-    ag-grid-react: "npm:34.0.2"
+    ag-charts-enterprise: "npm:^12.2.0"
+    ag-grid-community: "npm:^34.2.0"
+    ag-grid-enterprise: "npm:34.2.0"
+    ag-grid-react: "npm:34.2.0"
     babel-jest: "npm:^29.7.0"
     babel-loader: "npm:^9.2.1"
     babel-preset-react-app: "npm:^10.0.1"

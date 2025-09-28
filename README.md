@@ -54,6 +54,10 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.1.9
+ - Updates internal grid to 34.2.0
+ - Fixes BigInt serialization bug, caused by the new PyArrow serialization.
+
 Version 1.1.8
 
 - **Major refactor**: Introduced collector-based architecture for grid data return processing

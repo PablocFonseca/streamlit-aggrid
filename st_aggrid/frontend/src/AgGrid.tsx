@@ -28,10 +28,8 @@ import { columnFormaters } from "./customColumns"
 import { deepMap } from "./utils"
 import { ThemeParser } from "./ThemeParser"
 import {
-  CustomCollector,
-  determineCollector,
+  CustomCollector,  
   LegacyCollector,
-  validateCollectorConfig,
 } from "./collectors"
 import type { CollectorContext } from "./collectors"
 
@@ -122,7 +120,29 @@ class AgGrid extends React.Component<ComponentProps, State> {
     
     // Handle rowData: use data.table if available, otherwise check gridOptions.rowData
     if (this.data) {
-      go.rowData = this.data.table.toArray()
+
+      //Quick fix for bigInt serializations. Python side should avoid sending non-json-serializabe entities.
+      const bigintReplacer = (key: any, value: any): any => {
+        if (typeof value === "bigint") {
+          return Number(value)
+        }
+        if (Array.isArray(value)) {
+          return value.map((item: any) => bigintReplacer(null, item))
+        }
+        if (value && typeof value === "object") {
+          // Recursively handle object properties
+          const replacedObj: any = {}
+          for (const prop in value) {
+        if (Object.prototype.hasOwnProperty.call(value, prop)) {
+          replacedObj[prop] = bigintReplacer(prop, value[prop])
+        }
+          }
+          return replacedObj
+        }
+        return value
+      }
+
+      go.rowData = JSON.parse(JSON.stringify(this.data.table.toArray(), bigintReplacer))  
     } else if (go.rowData && typeof go.rowData === 'string') {
       // If data is null but gridOptions.rowData contains JSON string, parse it
       try {

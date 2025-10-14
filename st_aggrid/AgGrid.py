@@ -351,6 +351,11 @@ def AgGrid(
     if custom_jscode_for_grid_return is not None:
         custom_jscode_for_grid_return = custom_jscode_for_grid_return.js_code
         allow_unsafe_jscode = True
+    
+    # Process JsCode for should_grid_return
+    if should_grid_return is not None:
+        should_grid_return = should_grid_return.js_code
+        allow_unsafe_jscode = True
 
     # parse data and gridOptions
     data, gridOptions = _parse_data_and_grid_options(

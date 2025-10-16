@@ -75,6 +75,7 @@ def AgGrid(
     custom_jscode_for_grid_return: JsCode = None,
     should_grid_return: JsCode = None,
     use_json_serialization: bool | Literal["auto"] = "auto",
+    server_sync_strategy: Literal["client_wins", "server_wins"] = "client_wins", 
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -243,6 +244,18 @@ def AgGrid(
         Use 'auto' for best user experience, True for consistent JSON behavior,
         or False for strict type checking.
         Defaults to 'auto'.
+
+    server_sync_strategy : Literal['client_wins', 'server_wins'], optional
+        Controls data synchronization behavior between server and client:
+
+        - 'client_wins' (default): After first edit, grid ignores server data updates
+          and maintains local edits. Standard behavior for interactive editing.
+        - 'server_wins': Server data always overwrites the grid, including edited cells.
+          Useful when server data should be the single source of truth.
+
+        When using 'server_wins', consider intercepting grid results with session_state
+        to preserve user edits before re-rendering.
+        Defaults to 'client_wins'.
 
     **default_column_parameters
         Additional parameters passed to gridOptions.defaultColDef.
@@ -491,7 +504,8 @@ def AgGrid(
         theme=themeObj,
         debug=default_column_parameters.pop("debug", False),
         update_on=update_on,
-        use_json_serialization=use_json_serialization
+        use_json_serialization=use_json_serialization,
+        server_sync_strategy=server_sync_strategy
     )
 
     try:

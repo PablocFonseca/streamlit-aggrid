@@ -281,19 +281,19 @@ class AgGrid extends React.Component<ComponentProps, State> {
       })
     }
 
-
     //Check if data changed and updates
 
     const serverSyncStragegy = this.props.args?.server_sync_strategy
-    if (serverSyncStragegy === 'client_wins') {
+    if (serverSyncStragegy === "client_wins") {
       if (!this.state.isRowDataEdited) {
         if (this.props.args.data_hash !== prevProps.args.data_hash) {
           const rowData = parseData(this.props) || []
           this.state.api?.updateGridOptions({ rowData })
         }
       }
-    } else if (serverSyncStragegy === 'server_wins') {
+    } else if (serverSyncStragegy === "server_wins") {
       const rowData = parseData(this.props) || []
+      this.state.api?.stopEditing(true)
       this.state.api?.updateGridOptions({ rowData })
     }
 
@@ -316,6 +316,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
     // eslint-disable-next-line
     this.state.api = event.api
 
+    if (this.state.debug) {
+      this.state.api?.addGlobalListener((eventType, event) =>
+        console.log("GlobalListener", eventType, event)
+      )
+    }
     this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
       this.resizeGridContainer()
     )
@@ -328,10 +333,19 @@ class AgGrid extends React.Component<ComponentProps, State> {
       "gridSizeChanged",
       (e: GridSizeChangedEvent) => this.onGridSizeChanged(e)
     )
-    this.state.api.addEventListener(
-      "cellValueChanged",
-      (e: CellValueChangedEvent) => this.cellValueChanged(e)
-    )
+    if (this.props.args.server_sync_strategy === "client_wins") {
+      this.state.api.addEventListener(
+        "cellValueChanged",
+        (event: CellValueChangedEvent) => {
+            console.warn(
+              "server_sync_strategy is 'client_wins' and Data was edited on Grid. Ignoring further changes from Streamlit server."
+            )
+          
+          let editedRows = new Set(this.state.editedRows).add(event.node.id)
+          this.setState({ isRowDataEdited: true, editedRows: editedRows })
+        }
+      )
+    }
 
     //Attach events
     this.attachStreamlitRerunToEvents(this.state.api)
@@ -351,16 +365,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {
     this.resizeGridContainer()
-  }
-
-  private cellValueChanged(event: CellValueChangedEvent) {
-    if (this.state.debug) {
-      console.log(
-        "Data edited on Grid. Ignoring further changes from Streamlit side data parameter (AgGrid(data=dataframe))"
-      )
-    }
-    let editedRows = new Set(this.state.editedRows).add(event.node.id)
-    this.setState({ isRowDataEdited: true, editedRows: editedRows })
   }
 
   private processPreselection() {

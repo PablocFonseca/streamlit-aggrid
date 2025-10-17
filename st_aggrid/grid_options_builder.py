@@ -1,7 +1,5 @@
 from collections import defaultdict
-import pandas as pd
 from st_aggrid.shared import getAllColumnProps, getAllGridOptions
-
 
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""
@@ -70,7 +68,7 @@ class GridOptionsBuilder:
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
         gb.configure_grid_options(
-            autoSizeStrategy={"type": "fitCellContents", "skipHeader": False}
+            autoSizeStrategy={"type": "fitGridWidth"}
         )
 
         return gb

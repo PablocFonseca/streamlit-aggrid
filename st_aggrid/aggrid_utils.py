@@ -80,6 +80,10 @@ def _parse_data_and_grid_options(
             data = grid_options.pop("rowData")
             data = pd.read_json(StringIO(data))
 
+    #computes rows data types before adding id column
+    column_types = data.dtypes
+
+
     #if rowId is not defined, create an unique row_id as the rows_hash
     if "getRowId" not in grid_options and data is not None:
         data['::auto_unique_id::'] = list(map(str, range(data.shape[0]))) ##pd.util.hash_pandas_object(data).astype(str)
@@ -94,7 +98,7 @@ def _parse_data_and_grid_options(
             grid_options, lambda v: v.js_code if isinstance(v, JsCode) else v
         )
     
-    return data, grid_options
+    return data, grid_options, column_types
 
 def parse_update_mode(update_mode: GridUpdateMode, update_on=None):
     def add_unique_update_event(update_on, event):

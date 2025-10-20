@@ -41,7 +41,7 @@ export function parseData(props: any){
 
         // Handle rowData: use data.table if available, otherwise check gridOptions.rowData
         if (data) {
-    
+
           //Quick fix for bigInt serializations. Python side should avoid sending non-json-serializabe entities.
           const bigintReplacer = (key: any, value: any): any => {
             if (typeof value === "bigint") {
@@ -62,8 +62,22 @@ export function parseData(props: any){
             }
             return value
           }
-    
-          rowData = JSON.parse(JSON.stringify(data.table.toArray(), bigintReplacer))  
+          const arrowTable = data.dataTable || data.table
+
+          // Extract index column names from pandas metadata
+          let indexColumns: string[] = []
+          try {
+            const pandasMeta = JSON.parse(arrowTable?.schema?.metadata?.get('pandas') || '{}')
+            indexColumns = pandasMeta.index_columns || []
+          } catch (e) {}
+
+          // Filter out index columns and select only data fields
+          const dataFields = arrowTable?.schema?.fields
+            ?.map((f: any) => f.name)
+            .filter((name: string) => !indexColumns.includes(name)) || []
+
+          const filteredTable = arrowTable.select(dataFields)
+          rowData = JSON.parse(JSON.stringify(filteredTable.toArray(), bigintReplacer))  
         } 
          // If data is null but gridOptions.rowData contains JSON string, parse it
          else if (gridOptions_rowData && typeof gridOptions_rowData === 'string') {

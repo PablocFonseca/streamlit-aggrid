@@ -75,7 +75,7 @@ def AgGrid(
     custom_jscode_for_grid_return: JsCode = None,
     should_grid_return: JsCode = None,
     use_json_serialization: bool | Literal["auto"] = "auto",
-    server_sync_strategy: Literal["client_wins", "server_wins"] = "client_wins", 
+    server_sync_strategy: Literal["client_wins", "server_wins"] = "client_wins",
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -283,11 +283,15 @@ def AgGrid(
 
     ###Deprecation Warnings
     # Check for deprecated reload_data parameter
-    if 'reload_data' in default_column_parameters:
-        default_column_parameters.pop('reload_data')
+    if "reload_data" in default_column_parameters:
+        default_column_parameters.pop("reload_data")
         warning_key = "reload_data_deprecated"
         if warning_key not in _shown_deprecation_warnings:
-            warnings.warn("The 'reload_data' parameter has been removed and has no effect.", DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The 'reload_data' parameter has been removed and has no effect.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             _shown_deprecation_warnings.add(warning_key)
 
     ##Parses Themes
@@ -366,16 +370,12 @@ def AgGrid(
         allow_unsafe_jscode = True
 
     # parse data and gridOptions
-    data, gridOptions = _parse_data_and_grid_options(
+    data, gridOptions, frame_dtypes = _parse_data_and_grid_options(
         data,
         gridOptions,
         default_column_parameters,
         allow_unsafe_jscode,
         use_json_serialization,
-    )
-
-    frame_dtypes = (
-        [i.kind for i in data.dtypes.values.tolist()] if data is not None else []
     )
 
     if not isinstance(data, pd.DataFrame):
@@ -386,8 +386,11 @@ def AgGrid(
     if height is None:
         gridOptions["domLayout"] = "autoHeight"
 
-    if  default_column_parameters.pop("fit_columns_on_grid_load", False):
-        warnings.warn("fit_columns_on_grid_load is deprecated. Use gridOptions autoSizeStrategy instead.", DeprecationWarning)
+    if default_column_parameters.pop("fit_columns_on_grid_load", False):
+        warnings.warn(
+            "fit_columns_on_grid_load is deprecated. Use gridOptions autoSizeStrategy instead.",
+            DeprecationWarning,
+        )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
     # Create collector based solely on data_return_mode
@@ -407,6 +410,7 @@ def AgGrid(
             data_return_mode=data_return_mode,
             try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
             conversion_errors=conversion_errors,
+            frame_dtypes=frame_dtypes,
         )
 
     # Create initial response object that callbacks can safely reference
@@ -421,6 +425,8 @@ def AgGrid(
     response = collector.create_initial_response(
         original_data=original_data,
         grid_options=gridOptions,
+        try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
+        conversion_errors=conversion_errors,
     )
 
     if callback and not key:
@@ -429,16 +435,18 @@ def AgGrid(
     elif key and not callback:
         # This allows the table to keep its state up to date (eg #176)
         def _inner_callback():
-            component_value = st.session_state[key]
-            # Update the existing response object with new component value
-            collector.update_response(response, component_value)
+            component_value = st.session_state.get(key)
+            # Update the existing response object with new component value and store the wrapped response
+            updated_response = collector.update_response(response, component_value)
+            st.session_state[key] = updated_response
 
     elif callback and key:
         # User defined callback
         def _inner_callback():
-            component_value = st.session_state[key]
-            # Update the existing response object with new component value
+            component_value = st.session_state.get(key)
+            # Update the existing response object with new component value and store the wrapped response
             updated_response = collector.update_response(response, component_value)
+            st.session_state[key] = updated_response
             return callback(updated_response)
     else:
         _inner_callback = None
@@ -485,7 +493,7 @@ def AgGrid(
         gridOptions=gridOptions,
         height=height,
         data_return_mode=data_return_mode,
-        frame_dtypes=frame_dtypes,
+        frame_dtypes=str(frame_dtypes),
         allow_unsafe_jscode=allow_unsafe_jscode,
         columns_state=columns_state,
         custom_css=custom_css,
@@ -505,7 +513,7 @@ def AgGrid(
         debug=default_column_parameters.pop("debug", False),
         update_on=update_on,
         use_json_serialization=use_json_serialization,
-        server_sync_strategy=server_sync_strategy
+        server_sync_strategy=server_sync_strategy,
     )
 
     try:
@@ -525,7 +533,7 @@ def AgGrid(
                 f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}"
             )
             # Retry with JSON serialization enabled
-            _component_func_args['use_json_serialization'] = True
+            _component_func_args["use_json_serialization"] = True
             return AgGrid(**_component_func_args)
         elif not use_json_serialization and data is not None and is_pyarrow_error:
             # User explicitly disabled JSON serialization, raise the PyArrow error

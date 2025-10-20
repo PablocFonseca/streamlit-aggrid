@@ -316,11 +316,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
     // eslint-disable-next-line
     this.state.api = event.api
 
-    if (this.state.debug) {
-      this.state.api?.addGlobalListener((eventType, event) =>
-        console.log("GlobalListener", eventType, event)
-      )
-    }
+    // if (this.state.debug ) {
+    //   this.state.api?.addGlobalListener((eventType, event) =>
+    //     console.log("GlobalListener", eventType, event)
+    //   )
+    // }
     this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
       this.resizeGridContainer()
     )
@@ -337,10 +337,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
       this.state.api.addEventListener(
         "cellValueChanged",
         (event: CellValueChangedEvent) => {
-            console.warn(
-              "server_sync_strategy is 'client_wins' and Data was edited on Grid. Ignoring further changes from Streamlit server."
-            )
-          
+          console.warn(
+            "server_sync_strategy is 'client_wins' and Data was edited on Grid. Ignoring further changes from Streamlit server."
+          )
+
           let editedRows = new Set(this.state.editedRows).add(event.node.id)
           this.setState({ isRowDataEdited: true, editedRows: editedRows })
         }

@@ -16,6 +16,7 @@ class LegacyCollector(BaseCollector):
     
     def __init__(
         self,
+        frame_dtypes=None,
         data_return_mode: DataReturnMode = DataReturnMode.AS_INPUT,
         try_to_convert_back_to_original_types: bool = True,
         conversion_errors: str = "coerce"
@@ -33,8 +34,9 @@ class LegacyCollector(BaseCollector):
             How to handle conversion errors
         """
         self.data_return_mode = data_return_mode
-        self.try_to_convert_back_to_original_types = try_to_convert_back_to_original_types
-        self.conversion_errors = conversion_errors
+        self.frame_dtypes = frame_dtypes
+        self.try_to_convert_back_to_original_types=try_to_convert_back_to_original_types
+        self.conversion_errors=conversion_errors
     
     def create_initial_response(self, original_data: Any, grid_options: Dict, **kwargs) -> AgGridReturn:
         """
@@ -43,10 +45,9 @@ class LegacyCollector(BaseCollector):
         # Create AgGridReturn object with original parameters
         response = AgGridReturn(
             originalData=original_data,
-            gridOptions=grid_options,
             data_return_mode=self.data_return_mode,
-            try_to_convert_back_to_original_types=self.try_to_convert_back_to_original_types,
-            conversion_errors=self.conversion_errors
+            frame_dtypes=self.frame_dtypes,
+            conversion_errors='coerce' if self.try_to_convert_back_to_original_types else 'raise'
         )
         
         # Note: component value is not set yet - will be set by update_response
@@ -64,16 +65,14 @@ class LegacyCollector(BaseCollector):
         """
         Process response using the original AgGrid logic
         
-        This method encapsulates the original response processing from AgGrid.py
-        lines 356-362, creating an AgGridReturn object and setting the component value.
         """
         # Create AgGridReturn object with original parameters
         response = AgGridReturn(
             originalData=original_data,
-            gridOptions=grid_options,
             data_return_mode=self.data_return_mode,
             try_to_convert_back_to_original_types=self.try_to_convert_back_to_original_types,
-            conversion_errors=self.conversion_errors
+            conversion_errors=self.conversion_errors,
+            frame_dtypes=self.frame_dtypes
         )
         
         # Set component value if present (original logic from AgGrid.py)

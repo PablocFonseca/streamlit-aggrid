@@ -59,7 +59,6 @@ def AgGrid(
     enable_enterprise_modules: bool
     | Literal["enterpriseOnly", "enterprise+AgCharts"] = False,
     license_key: str = None,
-    try_to_convert_back_to_original_types: bool = False,
     conversion_errors: str = "coerce",
     columns_state=None,
     theme: str
@@ -294,6 +293,22 @@ def AgGrid(
             )
             _shown_deprecation_warnings.add(warning_key)
 
+    try_to_convert_back_to_original_types: bool = False
+    # Deprecated parameter handling for backward compatibility
+    if "try_to_convert_back_to_original_types" in default_column_parameters:
+        try_to_convert_back_to_original_types = default_column_parameters.pop(
+            "try_to_convert_back_to_original_types"
+        )
+        warning_key = "try_to_convert_back_to_original_types_deprecated"
+        if warning_key not in _shown_deprecation_warnings:
+            warnings.warn(
+                "The 'try_to_convert_back_to_original_types' parameter is deprecated and will be removed in a future version. "
+                "The component now handles type preservation automatically where appropriate.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _shown_deprecation_warnings.add(warning_key)
+
     ##Parses Themes
     if isinstance(theme, (str, AgGridTheme)):
         # Legacy compatibility
@@ -408,7 +423,7 @@ def AgGrid(
 
         collector = LegacyCollector(
             data_return_mode=data_return_mode,
-            try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
+            try_to_convert_back_to_original_types=True,
             conversion_errors=conversion_errors,
             frame_dtypes=frame_dtypes,
         )

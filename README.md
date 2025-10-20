@@ -56,6 +56,7 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 Version 1.2.0
  - Added `server_sync_strategy` parameter to control data synchronization between server and client
+ - Deprecates try_to_convert_back_to_original_types, now grid will always try to keep proper datatypes when editing data.
 
 Version 1.1.9
  - Updates internal grid to 34.2.0

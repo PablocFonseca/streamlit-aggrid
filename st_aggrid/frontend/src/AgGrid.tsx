@@ -312,6 +312,16 @@ class AgGrid extends React.Component<ComponentProps, State> {
             result.data
           )
         }
+        // Check shouldGridReturn before sending value back to Python
+        if (this.shouldGridReturn) {
+          const shouldReturn = this.shouldGridReturn({ streamlitRerunEventTriggerName, eventData });
+          if (!shouldReturn) {
+            if (this.state.debug) {
+              console.log(`shouldGridReturn blocked return for event: ${streamlitRerunEventTriggerName}`);
+            }
+            return; // Don't send value back
+          }
+        }
         Streamlit.setComponentValue(result.data)
       } else {
         console.error(`Collector processing failed: ${result.error}`)

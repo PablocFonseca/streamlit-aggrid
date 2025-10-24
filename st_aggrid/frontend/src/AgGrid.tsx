@@ -377,6 +377,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     if (!isEqual(prevGridOptions, currGridOptions)) {
       let go = this.parseGridoptions()
       this.state.api?.updateGridOptions(go)
+      this.processPreselection()
     }
 
     if (!isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
@@ -446,7 +447,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     if (preSelectAllRows) {
       this.state.api?.selectAll()
     } else {
-      var preselectedRows = this.props.args.gridOptions["preSelectedRows"]
+      var preselectedRows = this.props.args.gridOptions["initialState"]["rowSelection"]
       if (preselectedRows || preselectedRows?.length() > 0) {
         for (var idx in preselectedRows) {
           this.state.api

@@ -11,45 +11,50 @@ from pathlib import Path
 def _parse_data_and_grid_options(
     data, grid_options, default_column_parameters, unsafe_allow_jscode, use_json_serialization
 ):
+    column_types = None
 
-    if isinstance(data, (str, Path)):
-        if isinstance(data, Path):
-            data = Path(data).resolve().absolute()
+    if data is not None:
 
-        #if data is a path to a json file. Validate and load it as string.
-        if data.endswith(".json") and os.path.exists(data):
+        if isinstance(data, (str, Path)):
+            if isinstance(data, Path):
+                data = Path(data).resolve().absolute()
+
+            #if data is a path to a json file. Validate and load it as string.
+            if data.endswith(".json") and os.path.exists(data):
+                try:
+                    with open(os.path.abspath(data)) as f:
+                        data = json.dumps(json.load(f))
+                except Exception as ex:
+                    raise Exception(f"Error reading {data}. {ex}")
+                
+            #if data is a json string load is as as data frame
             try:
-                with open(os.path.abspath(data)) as f:
-                    data = json.dumps(json.load(f))
-            except Exception as ex:
-                raise Exception(f"Error reading {data}. {ex}")
-            
-        #if data is a json string load is as as data frame
-        try:
-            data = pd.read_json(StringIO(data))
-        except Exception:
-            raise Exception("Error parsing data parameter as raw json.")
-    
-    #handles the case where dataframe is a polars dataframe without add dependency on polars
-    if (
-        hasattr(data, '__class__') and 
-        data.__class__.__module__ and
-        'polars' in data.__class__.__module__ and
-        data.__class__.__name__ == 'DataFrame'
-    ):
-        data = data.to_pandas(use_pyarrow_extension_array=False)
+                data = pd.read_json(StringIO(data))
+            except Exception:
+                raise Exception("Error parsing data parameter as raw json.")
+        #handles the case where dataframe is a polars dataframe without add dependency on polars
+        if (
+            hasattr(data, '__class__') and 
+            data.__class__.__module__ and
+            'polars' in data.__class__.__module__ and
+            data.__class__.__name__ == 'DataFrame'
+        ):
+            data = data.to_pandas(use_pyarrow_extension_array=False)
 
-    if isinstance(data, pd.DataFrame):
-        #converts date columns to iso format:
-        for c, d in data.dtypes.items():
-            if d.kind == "M":
-                data[c] = data[c].apply(lambda s: s.isoformat())
-    
-    #if there is data and no grid options, create grid options from the data
-    if (data is not None) and (not grid_options):
-        gb = GridOptionsBuilder.from_dataframe(data, **default_column_parameters)
-        grid_options = gb.build()
+        if isinstance(data, pd.DataFrame):
+            #converts date columns to iso format:
+            for c, d in data.dtypes.items():
+                if d.kind == "M":
+                    data[c] = data[c].apply(lambda s: s.isoformat())
+        
+        #if there is data and no grid options, create grid options from the data
+        if (data is not None) and (not grid_options):
+            gb = GridOptionsBuilder.from_dataframe(data, **default_column_parameters)
+            grid_options = gb.build()
 
+        #computes rows data types before adding id column
+        column_types = data.dtypes
+    
     #if grid options is supplied as a dictionary, assume it is valid and use it
     elif isinstance(grid_options, Mapping):
         grid_options = grid_options
@@ -79,9 +84,6 @@ def _parse_data_and_grid_options(
         else:
             data = grid_options.pop("rowData")
             data = pd.read_json(StringIO(data))
-
-    #computes rows data types before adding id column
-    column_types = data.dtypes
 
 
     #if rowId is not defined, create an unique row_id as the rows_hash

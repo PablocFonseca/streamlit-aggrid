@@ -13,7 +13,6 @@ import {
   DetailGridInfo,
   GetRowIdParams,
   GridApi,
-  GridOptions,
   GridReadyEvent,
   GridSizeChangedEvent,
   ModuleRegistry,
@@ -22,15 +21,9 @@ import {
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
 import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
-import { debounce, cloneDeep, every, isEqual } from "lodash"
-
-import { columnFormaters } from "./customColumns"
-import { deepMap } from "./utils"
+import { debounce, isEqual, omit } from "lodash"
 import { ThemeParser } from "./ThemeParser"
-import {
-  CustomCollector,  
-  LegacyCollector,
-} from "./collectors"
+import { CustomCollector, LegacyCollector } from "./collectors"
 import type { CollectorContext } from "./collectors"
 
 import "@fontsource/source-sans-pro"
@@ -45,7 +38,7 @@ import {
 } from "./utils/gridUtils"
 
 import { State } from "./types/AgGridTypes"
-import { ArrowTable } from "streamlit-component-lib"
+import { parseGridOptions, parseData } from "./utils/parsers"
 
 class AgGrid extends React.Component<ComponentProps, State> {
   public state: State
@@ -56,14 +49,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private themeParser: ThemeParser | undefined = undefined
   private shouldGridReturn: Function | undefined = undefined
   private collectGridReturn: Function | undefined = undefined
-  private data: ArrowTable | undefined = undefined
-  private dataReturnMode: String
 
   constructor(props: ComponentProps) {
     super(props)
     this.gridContainerRef = React.createRef()
-
-    this.dataReturnMode = this.props.args.data_return_mode
 
     if (props.args.custom_css) {
       addCustomCSS(props.args.custom_css)
@@ -95,11 +84,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
       ModuleRegistry.registerModules([AllCommunityModule])
     }
 
-    this.isGridAutoHeightOn =
-      this.props.args.gridOptions?.domLayout === "autoHeight"
-
-    var go = this.parseGridoptions()
-
     const StreamlitAgGridPro = (window as any)?.StreamlitAgGridPro
     if (StreamlitAgGridPro) {
       StreamlitAgGridPro.returnGridValue = this.returnGridValue.bind(this)
@@ -116,44 +100,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     }
 
-    this.data = props.args.data
-    
-    // Handle rowData: use data.table if available, otherwise check gridOptions.rowData
-    if (this.data) {
+    this.isGridAutoHeightOn =
+      this.props.args.gridOptions?.domLayout === "autoHeight"
 
-      //Quick fix for bigInt serializations. Python side should avoid sending non-json-serializabe entities.
-      const bigintReplacer = (key: any, value: any): any => {
-        if (typeof value === "bigint") {
-          return Number(value)
-        }
-        if (Array.isArray(value)) {
-          return value.map((item: any) => bigintReplacer(null, item))
-        }
-        if (value && typeof value === "object") {
-          // Recursively handle object properties
-          const replacedObj: any = {}
-          for (const prop in value) {
-        if (Object.prototype.hasOwnProperty.call(value, prop)) {
-          replacedObj[prop] = bigintReplacer(prop, value[prop])
-        }
-          }
-          return replacedObj
-        }
-        return value
-      }
-
-      go.rowData = JSON.parse(JSON.stringify(this.data.table.toArray(), bigintReplacer))  
-    } else if (go.rowData && typeof go.rowData === 'string') {
-      // If data is null but gridOptions.rowData contains JSON string, parse it
-      try {
-        go.rowData = JSON.parse(go.rowData)
-      } catch (e) {
-        console.warn('Failed to parse gridOptions.rowData as JSON:', e)
-        go.rowData = []
-      }
-    } else {
-      go.rowData = go.rowData || []
-    }
+    var go = parseGridOptions(props)
+    go.rowData = parseData(props)
 
     if (!("getRowId" in go)) {
       if (
@@ -189,34 +140,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
   }
 
-  private parseGridoptions() {
-    let gridOptions: GridOptions = cloneDeep(this.props.args.gridOptions)
-
-    if (this.props.args.allow_unsafe_jscode) {
-      console.warn("flag allow_unsafe_jscode is on.")
-      gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ["rowData"])
-    }
-
-    if (!("getRowId" in gridOptions)) {
-      console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
-    }
-
-    //adds custom columnFormatters
-    gridOptions.columnTypes = Object.assign(
-      gridOptions.columnTypes || {},
-      columnFormaters
-    )
-
-    //processTheming
-    this.themeParser = new ThemeParser()
-    let streamlitTheme = this.props.theme
-    let agGridTheme = this.props.args.theme
-
-    gridOptions.theme = this.themeParser.parse(agGridTheme, streamlitTheme)
-
-    return gridOptions
-  }
-
   private attachStreamlitRerunToEvents(api: GridApi) {
     const updateEvents = this.props.args.update_on
 
@@ -250,16 +173,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
     })
   }
 
-  private loadColumnsState() {
-    const columnsState = this.props.args.columns_state
-    if (columnsState != null) {
-      this.state.api?.applyColumnState({
-        state: columnsState,
-        applyOrder: true,
-      })
-    }
-  }
-
   private resizeGridContainer() {
     const renderedGridHeight = this.gridContainerRef.current?.clientHeight
     if (
@@ -278,7 +191,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   ) {
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
-      console.log("dataReturnMode is ", this.dataReturnMode)
+      console.log("dataReturnMode is ", this.props.args.data_return_mode)
     }
 
     // Create collector context
@@ -300,7 +213,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
     try {
       // Determine and create appropriate collector
       const collector =
-        collectorFactory[this.dataReturnMode as keyof typeof collectorFactory]
+        collectorFactory[
+          this.props.args.data_return_mode as keyof typeof collectorFactory
+        ]
 
       // Process response using collector
       const result = await collector.processResponse(context)
@@ -347,17 +262,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
-    const prevGridOptions = prevProps.args.gridOptions
-    const currGridOptions = this.props.args.gridOptions
+    if (this.state.debug) {
+      console.log("********** componentDidUpdate.prevProps")
+      console.log(prevProps)
+      console.log("********** componentDidUpdate.this")
+      console.log(this)
+    }
 
-    if (!this.state.isRowDataEdited) {
-      if (this.props.args.data_hash !== prevProps.args.data_hash) {
-        const newData = this.props.args.data
-        if (newData) {
-          const rowData = newData.table?.toArray() || []
-          this.state.api?.updateGridOptions({ rowData })
-        }
-      }
+    //Check update on grid options. TODO: exclude `initial` options
+    const prevGridOptions = omit(prevProps.args.gridOptions, "rowData")
+    const currGridOptions = omit(this.props.args.gridOptions, "rowData")
+
+    if (!isEqual(prevGridOptions, currGridOptions)) {
+      let go = parseGridOptions(this.props)
+      this.state.api?.updateGridOptions(go)
     }
 
     //Theme object Changes here
@@ -373,14 +291,31 @@ class AgGrid extends React.Component<ComponentProps, State> {
       })
     }
 
-    //const objectDiff = (a: any, b: any) => fromPairs(differenceWith(toPairs(a), toPairs(b), isEqual))
-    if (!isEqual(prevGridOptions, currGridOptions)) {
-      let go = this.parseGridoptions()
-      this.state.api?.updateGridOptions(go)
+    //Check if data changed and updates
+
+    const serverSyncStragegy = this.props.args?.server_sync_strategy
+    if (serverSyncStragegy === "client_wins") {
+      if (!this.state.isRowDataEdited) {
+        if (this.props.args.data_hash !== prevProps.args.data_hash) {
+          const rowData = parseData(this.props) || []
+          this.state.api?.updateGridOptions({ rowData })
+        }
+      }
+    } else if (serverSyncStragegy === "server_wins") {
+      const rowData = parseData(this.props) || []
+      this.state.api?.stopEditing(true)
+      this.state.api?.updateGridOptions({ rowData })
     }
 
+    //check if columnStates changed
     if (!isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
-      this.loadColumnsState()
+      const columnsState = this.props.args.columns_state
+      if (columnsState != null) {
+        this.state.api?.applyColumnState({
+          state: columnsState,
+          applyOrder: true,
+        })
+      }
     }
   }
 
@@ -391,6 +326,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
     // eslint-disable-next-line
     this.state.api = event.api
 
+    // if (this.state.debug ) {
+    //   this.state.api?.addGlobalListener((eventType, event) =>
+    //     console.log("GlobalListener", eventType, event)
+    //   )
+    // }
     this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
       this.resizeGridContainer()
     )
@@ -403,10 +343,19 @@ class AgGrid extends React.Component<ComponentProps, State> {
       "gridSizeChanged",
       (e: GridSizeChangedEvent) => this.onGridSizeChanged(e)
     )
-    this.state.api.addEventListener(
-      "cellValueChanged",
-      (e: CellValueChangedEvent) => this.cellValueChanged(e)
-    )
+    if (this.props.args.server_sync_strategy === "client_wins") {
+      this.state.api.addEventListener(
+        "cellValueChanged",
+        (event: CellValueChangedEvent) => {
+          console.warn(
+            "server_sync_strategy is 'client_wins' and Data was edited on Grid. Ignoring further changes from Streamlit server."
+          )
+
+          let editedRows = new Set(this.state.editedRows).add(event.node.id)
+          this.setState({ isRowDataEdited: true, editedRows: editedRows })
+        }
+      )
+    }
 
     //Attach events
     this.attachStreamlitRerunToEvents(this.state.api)
@@ -426,16 +375,6 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
   private onGridSizeChanged(event: GridSizeChangedEvent) {
     this.resizeGridContainer()
-  }
-
-  private cellValueChanged(event: CellValueChangedEvent) {
-    if (this.state.debug) {
-      console.log(
-        "Data edited on Grid. Ignoring further changes from Streamlit side data parameter (AgGrid(data=dataframe))"
-      )
-    }
-    let editedRows = new Set(this.state.editedRows).add(event.node.id)
-    this.setState({ isRowDataEdited: true, editedRows: editedRows })
   }
 
   private processPreselection() {

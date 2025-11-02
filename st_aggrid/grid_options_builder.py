@@ -1,7 +1,5 @@
 from collections import defaultdict
-import pandas as pd
 from st_aggrid.shared import getAllColumnProps, getAllGridOptions
-
 
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""
@@ -25,6 +23,14 @@ class GridOptionsBuilder:
         Returns:
             GridOptionsBuilder: The instance initialized from the dataframe definition.
         """
+
+        if (
+        hasattr(dataframe, '__class__') and 
+        dataframe.__class__.__module__ and
+        'polars' in dataframe.__class__.__module__ and
+        dataframe.__class__.__name__ == 'DataFrame'
+        ):
+            dataframe = dataframe.to_pandas(use_pyarrow_extension_array=False)
 
         # numpy types: 'biufcmMOSUV' https://numpy.org/doc/stable/reference/generated/numpy.dtype.kind.html
         type_mapper = {
@@ -55,14 +61,14 @@ class GridOptionsBuilder:
             else:
                 print(f"{k} is not a valid gridOption or columnDef.")
 
-        if any("." in col for col in dataframe.columns.map(str)):
+        if any("." in col for col in map(str, dataframe.columns)):
             gb.configure_grid_options(suppressFieldDotNotation=True)
 
-        for col_name, col_type in zip(dataframe.columns.map(str), dataframe.dtypes):
+        for col_name, col_type in zip(map(str, dataframe.columns), dataframe.dtypes):
             gb.configure_column(field=col_name, type=type_mapper.get(col_type.kind, []))
 
         gb.configure_grid_options(
-            autoSizeStrategy={"type": "fitCellContents", "skipHeader": False}
+            autoSizeStrategy={"type": "fitGridWidth"}
         )
 
         return gb

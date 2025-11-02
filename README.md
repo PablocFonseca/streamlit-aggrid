@@ -54,12 +54,15 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 1.2.0
+ - Added `server_sync_strategy` parameter to control data synchronization between server and client
+ - Deprecates try_to_convert_back_to_original_types, now grid will always try to keep proper datatypes when editing data.
+
 Version 1.1.9
  - Updates internal grid to 34.2.0
  - Fixes BigInt serialization bug, caused by the new PyArrow serialization.
 
 Version 1.1.8
-
 - **Major refactor**: Introduced collector-based architecture for grid data return processing
 - Added new `DataReturnMode.CUSTOM` allowing custom JavaScript data collection logic
 - Improved data serialization and handling of complex data types (data is now transfered using Streamlit`s ArrowTable protobuff)

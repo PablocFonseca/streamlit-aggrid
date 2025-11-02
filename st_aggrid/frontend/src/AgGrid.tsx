@@ -21,7 +21,10 @@ import {
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
 import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
-import { debounce, isEqual, omit } from "lodash"
+import debounce from 'lodash/debounce'
+import isEqual from 'lodash/isEqual'
+import omit from 'lodash/omit'
+
 import { ThemeParser } from "./ThemeParser"
 import { CustomCollector, LegacyCollector } from "./collectors"
 import type { CollectorContext } from "./collectors"

@@ -104,10 +104,6 @@ def AgGrid(
         See: https://www.ag-grid.com/react-data-grid/grid-size/#dom-layout
         Defaults to 400.
 
-    fit_columns_on_grid_load : bool, optional
-        DEPRECATED. Use gridOptions autoSizeStrategy instead.
-        See: https://www.ag-grid.com/javascript-data-grid/column-sizing/#auto-sizing-columns
-
     update_mode : GridUpdateMode, optional
         DEPRECATED. Use update_on parameter instead.
         Defines how the grid sends results back to Streamlit.
@@ -135,10 +131,6 @@ def AgGrid(
     license_key : str, optional
         License key for AG Grid Enterprise features.
         Defaults to None.
-
-    try_to_convert_back_to_original_types : bool, optional
-        Attempts to convert grid data back to original DataFrame types.
-        Defaults to False.
 
     conversion_errors : str, optional
         How to handle type conversion errors:
@@ -293,7 +285,7 @@ def AgGrid(
             )
             _shown_deprecation_warnings.add(warning_key)
 
-    try_to_convert_back_to_original_types: bool = False
+    try_to_convert_back_to_original_types: bool = True
     # Deprecated parameter handling for backward compatibility
     if "try_to_convert_back_to_original_types" in default_column_parameters:
         try_to_convert_back_to_original_types = default_column_parameters.pop(

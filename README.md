@@ -19,7 +19,7 @@
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
-Current AgGrid version is [34.2.0](https://www.ag-grid.com/archive/34.2.0/)
+Current AgGrid version is [34.3.1](https://www.ag-grid.com/archive/34.3.1/)
 
 # Install
 
@@ -57,6 +57,7 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 Version 1.2.0
  - Added `server_sync_strategy` parameter to control data synchronization between server and client
  - Deprecates try_to_convert_back_to_original_types, now grid will always try to keep proper datatypes when editing data.
+ - Upgrades internal ag-grid to version 34.3.1
 
 Version 1.1.9
  - Updates internal grid to 34.2.0

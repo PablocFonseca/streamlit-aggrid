@@ -16,7 +16,9 @@ import { themeQuartz,
     iconSetQuartzRegular,
     Part,
 } from 'ag-grid-community';
-import _ from 'lodash';
+
+import isEmpty from 'lodash/isEmpty'
+
 
 import { Theme as StreamlitTheme } from "streamlit-component-lib"
 
@@ -87,11 +89,11 @@ class ThemeParser {
 
         let theme: Theme = this.baseMapper[base]
 
-        if (! _.isEmpty(params)){
+        if (! isEmpty(params)){
             theme = theme.withParams(params)
         }
 
-        if (! _.isEmpty(parts)){
+        if (! isEmpty(parts)){
             theme = parts.reduce((acc, partName) => {const part =  this.partsMapper[partName];  return acc.withPart(part)}, theme)
     
         }

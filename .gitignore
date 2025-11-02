@@ -211,3 +211,5 @@ test/screenshots
 output.txt
 test/issues/*
 test/src_original/*
+st_aggrid/frontend/bundle-analysis.json
+stats.json

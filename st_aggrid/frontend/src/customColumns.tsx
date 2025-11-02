@@ -1,7 +1,6 @@
 import { compareAsc, format, parseISO } from "date-fns"
 
-import { duration } from "moment"
-
+import { formatDuration, intervalToDuration } from "date-fns"
 
 //TODO: mover formaters to gridOptionsBuilder options
 function dateFormatter(isoString: string, formaterString: string): String {
@@ -63,8 +62,11 @@ const columnFormaters = {
       ),
   },
   timedeltaFormat: {
-    valueFormatter: (params: any) => duration(params.value).humanize(true),
+    valueFormatter: (params: any) => {
+      const duration = intervalToDuration({ start: 0, end: params.value })
+      return formatDuration(duration)
+    },
   },
 }
 
-export {columnFormaters}
+export { columnFormaters }

@@ -1,8 +1,7 @@
 import streamlit as st
-import streamlit.components.v1 as components
+import streamlit.components.v2 as components
 import pandas as pd
 import warnings
-import os
 import typing
 import logging
 from decouple import config
@@ -29,18 +28,26 @@ from io import StringIO
 # Track shown deprecation warnings to avoid repetition in Streamlit
 _shown_deprecation_warnings = set()
 
-_RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
+# _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
 
-if not _RELEASE:
-    warnings.warn("WARNING: ST_AGGRID is in development mode.")
-    _component_func = components.declare_component(
-        "agGrid",
-        url="http://localhost:3001",
-    )
-else:
-    parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "frontend", "build")
-    _component_func = components.declare_component("agGrid", path=build_dir)
+# if not _RELEASE:
+#     warnings.warn(
+#         "WARNING: ST_AGGRID is in development mode. "
+#         "Remember to rebuild frontend (npm run build) after making changes."
+#     )
+
+# For v2 components, the asset_dir is declared in pyproject.toml
+# Paths are relative to that asset_dir (st_aggrid/frontend/build)
+# v2 components don't support URL-based development mode like v1 did
+# Component name must match the format: package-name.component-name
+
+# Register the component at module level to avoid double registration
+# The component is declared in st_aggrid/pyproject.toml and registered here
+_component_func = components.component(
+    name="st_aggrid.agGrid",
+    js="index-*.mjs",
+    css="index-*.css"
+)
 
 
 def AgGrid(
@@ -514,7 +521,7 @@ def AgGrid(
         key=key,
         license_key=license_key,
         manual_update=manual_update,
-        on_change=_inner_callback,
+        #on_change=_inner_callback,
         pro_assets=pro_assets,
         show_download_button=show_download_button,
         show_search=show_search,
@@ -529,7 +536,10 @@ def AgGrid(
     )
 
     try:
-        component_value = _component_func(**_component_func_args)
+        component_result = _component_func(data=_component_func_args)
+        # In v2, the result is an object with attributes set via setStateValue
+        # We used setStateValue("grid_response", data) in the frontend
+        component_value = component_result.grid_response if component_result else None
     except Exception as ex:
         # Check if this is a PyArrow conversion error and we should try JSON serialization
         error_msg = str(ex)

@@ -10,7 +10,8 @@
     "st_aggrid/**/frontend*"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach -Avi run build && poetry build",
+    "build": "yarn workspaces foreach -Avi run build",
+    "build_all": "yarn workspaces foreach -Avi run build && poetry build",
     "develop": "yarn workspaces foreach -A -v -j 99 -i -p run start"
   },
   "resolutions": {

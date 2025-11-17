@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@fontsource/source-sans-pro": "^5.2.5",
+    "@streamlit/component-v2-lib": "^0.1.0",
     "ag-charts-enterprise": "^12.3.1",
     "ag-grid-community": "^34.3.1",
     "ag-grid-enterprise": "34.3.1",
@@ -11,121 +12,27 @@
     "date-fns": "^4.1.0",
     "lodash": "^4.17.21",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "streamlit-component-lib": "^2.0.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.0",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
-    "@svgr/webpack": "^8.1.0",
     "@types/lodash": "^4.17.20",
+    "@types/node": "^22.14.1",
     "@types/react": "^18.3.26",
     "@types/react-dom": "^18.3.7",
-    "babel-jest": "^29.7.0",
-    "babel-loader": "^9.2.1",
-    "babel-preset-react-app": "^10.0.1",
-    "bfj": "^9.1.1",
-    "camelcase": "^8.0.0",
-    "case-sensitive-paths-webpack-plugin": "^2.4.0",
-    "css-loader": "^7.1.2",
-    "css-minimizer-webpack-plugin": "^7.0.0",
-    "dotenv": "^16.4.7",
-    "dotenv-expand": "^11.0.7",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-webpack-plugin": "^4.2.0",
-    "file-loader": "^6.2.0",
-    "fs-extra": "^11.2.0",
-    "html-webpack-plugin": "^5.6.3",
-    "jest": "^29.7.0",
-    "mini-css-extract-plugin": "^2.9.2",
-    "postcss": "^8.5.6",
-    "postcss-flexbugs-fixes": "^5.0.2",
-    "postcss-loader": "^8.1.1",
-    "postcss-normalize": "^13.0.1",
-    "postcss-preset-env": "^10.1.2",
-    "react-dev-utils": "^12.0.1",
-    "react-refresh": "^0.14.2",
-    "resolve": "^1.22.8",
-    "resolve-url-loader": "^5.0.0",
-    "sass-loader": "^16.0.4",
-    "source-map-explorer": "^2.5.3",
-    "source-map-loader": "^5.0.0",
-    "style-loader": "^4.0.0",
-    "terser-webpack-plugin": "^5.3.10",
-    "typescript": "5.1.6",
-    "webpack": "^5.97.1",
-    "webpack-dev-server": "^4.15.2",
-    "webpack-manifest-plugin": "^5.0.0",
-    "workbox-webpack-plugin": "^7.3.0"
+    "@vitejs/plugin-react": "^5.1.0",
+    "cross-env": "^10.1.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.12"
   },
   "scripts": {
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "start": "node scripts/start.js",
-    "build": "node scripts/build.js",
-    "test": "node scripts/test.js"
+    "build": "rimraf build && cross-env NODE_ENV=production vite build",
+    "build:frontend:production": "cross-env NODE_ENV=production vite build",
+    "clean": "rimraf build",
+    "dev": "vite",
+    "dev:watch": "cross-env NODE_ENV=development vite build --watch",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"*.config.ts\""
   },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not op_mini all"
-  ],
-  "homepage": ".",
-  "jest": {
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,jsx,ts,tsx}",
-      "!src/**/*.d.ts"
-    ],
-    "setupFiles": [
-      "react-app-polyfill/jsdom"
-    ],
-    "setupFilesAfterEnv": [],
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}"
-    ],
-    "testEnvironment": "jsdom",
-    "transform": {
-      "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "<rootDir>/config/jest/babelTransform.js",
-      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
-      "^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$",
-      "^.+\\.module\\.(css|sass|scss)$"
-    ],
-    "modulePaths": [],
-    "moduleNameMapper": {
-      "^react-native$": "react-native-web",
-      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
-    },
-    "moduleFileExtensions": [
-      "web.js",
-      "js",
-      "web.ts",
-      "ts",
-      "web.tsx",
-      "tsx",
-      "json",
-      "web.jsx",
-      "jsx",
-      "node"
-    ],
-    "watchPlugins": [
-      "jest-watch-typeahead/filename",
-      "jest-watch-typeahead/testname"
-    ],
-    "resetMocks": true
-  },
-  "babel": {
-    "presets": [
-      "react-app"
-    ]
-  }
+  "homepage": "."
 }

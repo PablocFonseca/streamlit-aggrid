@@ -214,7 +214,7 @@ export class LegacyCollector extends BaseCollector {
 
     // Serialize the entire return value to ensure it can be sent via postMessage
     const returnValue = {
-      originalDtypes: props.args.frame_dtypes,
+      originalDtypes: props.data.frame_dtypes,
       nodes: nodes,
       gridState: gridState,
       columnsState: columnsState,

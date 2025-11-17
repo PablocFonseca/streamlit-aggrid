@@ -20,5 +20,4 @@
   position: relative;
   flex: 1; /* Allow the grid to take the remaining space */
   width: 100%;
-  height: calc(100% - 50px); /* Subtract the toolbar height from the total height */
 }

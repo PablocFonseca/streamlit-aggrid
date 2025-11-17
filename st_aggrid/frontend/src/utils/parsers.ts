@@ -7,9 +7,11 @@ import { ThemeParser } from "../ThemeParser"
 
 
 export function parseGridOptions(props: any){
-    let gridOptions: GridOptions = cloneDeep(props.args.gridOptions)
+    console.log("=============")
+    console.log(props)
+    let gridOptions: GridOptions = cloneDeep(props.gridOptions)
 
-    if (props.args.allow_unsafe_jscode) {
+    if (props.allow_unsafe_jscode) {
         console.warn("flag allow_unsafe_jscode is on.")
         gridOptions = deepMap(gridOptions, parseJsCodeFromPython, ["rowData"])
     }
@@ -27,7 +29,7 @@ export function parseGridOptions(props: any){
     //processTheming
     const themeParser = new ThemeParser()
     let streamlitTheme = props.theme
-    let agGridTheme = props.args.theme
+    let agGridTheme = props.theme
     gridOptions.theme = themeParser.parse(agGridTheme, streamlitTheme)
 
     return gridOptions
@@ -35,8 +37,8 @@ export function parseGridOptions(props: any){
 
 export function parseData(props: any){
 
-    var data = props.args.data
-    var gridOptions_rowData = props.args?.gridOptions?.rowData 
+    var data = props.data
+    var gridOptions_rowData = props.gridOptions?.rowData 
     var rowData = []
 
         // Handle rowData: use data.table if available, otherwise check gridOptions.rowData
@@ -62,7 +64,7 @@ export function parseData(props: any){
             }
             return value
           }
-          const arrowTable = data.dataTable || data.table
+          const arrowTable = data //.dataTable || data.table
 
           // Extract index column names from pandas metadata
           let indexColumns: string[] = []
@@ -75,7 +77,7 @@ export function parseData(props: any){
           const dataFields = arrowTable?.schema?.fields
             ?.map((f: any) => f.name)
             .filter((name: string) => !indexColumns.includes(name)) || []
-
+          console.log("+++++++", data)
           const filteredTable = arrowTable.select(dataFields)
           rowData = JSON.parse(JSON.stringify(filteredTable.toArray(), bigintReplacer))  
         } 

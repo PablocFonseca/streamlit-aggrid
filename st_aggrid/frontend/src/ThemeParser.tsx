@@ -19,8 +19,15 @@ import { themeQuartz,
 
 import isEmpty from 'lodash/isEmpty'
 
-
-import { Theme as StreamlitTheme } from "streamlit-component-lib"
+// Define Streamlit theme type locally (compatible with both v1 and v2)
+export interface StreamlitTheme {
+    base?: "light" | "dark"
+    primaryColor?: string
+    backgroundColor?: string
+    secondaryBackgroundColor?: string
+    textColor?: string
+    font?: string
+}
 
 type stAggridThemeOptions = {
     themeName: string,

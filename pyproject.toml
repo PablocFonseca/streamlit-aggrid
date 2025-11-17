@@ -1,19 +1,19 @@
 [project]
 name = "streamlit-aggrid"
-version = "1.2.0-1"
+version = "2.0.0.rc1"
 description = "Streamlit component implementation of ag-grid"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Pablo Fonseca", email = "pablo.fonseca+pip@gmail.com" }]
 keywords = ["streamlit", "ag-grid", "component"]
-dependencies = ["streamlit >=1.2", "pandas >=1.4.0", "python-decouple"]
+dependencies = ["streamlit (>=1.51.0)", "pandas >=1.4.0", "python-decouple"]
 
 [project.urls]
 homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
 
 [tool.poetry]
-packages = [{ include = "st_aggrid/**/*.py" }]
+packages = [{ include = "st_aggrid" }]
 
 #exclude = [{ path = "st_aggrid/frontend/**/*" }]
 include = [
@@ -25,7 +25,10 @@ include = [
         "sdist",
         "wheel",
     ] },
-
+    { path = "st_aggrid/pyproject.toml", format = [
+        "sdist",
+        "wheel",
+    ] },
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

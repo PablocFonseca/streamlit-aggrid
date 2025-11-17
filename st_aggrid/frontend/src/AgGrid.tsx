@@ -1,11 +1,15 @@
 import { AgGridReact } from "ag-grid-react"
 import React, { ReactNode } from "react"
+import ReactDOM from "react-dom/client"
+import type { Root } from "react-dom/client"
 
-import {
-  ComponentProps,
-  Streamlit,
-  withStreamlitConnection,
-} from "streamlit-component-lib"
+// import {
+//   ComponentProps,
+//   Streamlit,
+//   withStreamlitConnection,
+// } from "streamlit-component-lib"
+
+import { ComponentArgs } from '@streamlit/component-v2-lib';
 
 import {
   AllCommunityModule,
@@ -43,7 +47,41 @@ import {
 import { State } from "./types/AgGridTypes"
 import { parseGridOptions, parseData } from "./utils/parsers"
 
-class AgGrid extends React.Component<ComponentProps, State> {
+type CSSDict = { [key: string]: { [key: string]: string } }
+
+// Handle the possibility of multiple instances of the component to keep track
+// of the React roots for each component instance.
+const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root> = new WeakMap()
+
+interface AgGridData {
+  custom_css?: CSSDict
+  pro_assets?: any[]
+  enable_enterprise_modules?: any
+  license_key?: string
+  gridOptions?: any
+  height?: number
+  update_on?: any[]
+  data_return_mode?: string
+  debug?: boolean
+  theme?: any
+  data_hash?: string
+  server_sync_strategy?: string
+  columns_state?: any
+  manual_update?: boolean
+  show_toolbar?: boolean
+  show_search?: boolean
+  show_download_button?: boolean
+  should_grid_return?: any
+  custom_jscode_for_grid_return?: any
+  [key: string]: any
+}
+
+interface AgGridProps extends Omit<ComponentArgs<any, AgGridData>, 'key'> {
+  width?: number
+  theme?: any
+}
+
+class AgGrid extends React.Component<AgGridProps, State> {
   public state: State
 
   private gridContainerRef: React.RefObject<HTMLDivElement>
@@ -53,35 +91,37 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private shouldGridReturn: Function | undefined = undefined
   private collectGridReturn: Function | undefined = undefined
 
-  constructor(props: ComponentProps) {
+  constructor(props: AgGridProps) {
     super(props)
     this.gridContainerRef = React.createRef()
-
-    if (props.args.custom_css) {
-      addCustomCSS(props.args.custom_css)
+    console.log("===========PROPS===========")
+    // Handle custom CSS if provided
+    if (props.data?.custom_css) {
+      addCustomCSS(props.data.custom_css)
     }
 
-    if (props.args.pro_assets && Array.isArray(props.args.pro_assets)) {
-      props.args.pro_assets.forEach((asset: any) => {
-        //console.log(asset);
+    // Handle pro assets if provided
+    if (props.data?.pro_assets && Array.isArray(props.data.pro_assets)) {
+      props.data.pro_assets.forEach((asset: any) => {
         injectProAssets(asset?.js, asset?.css)
       })
     }
-    const enableEnterpriseModules = props.args.enable_enterprise_modules
+
+    const enableEnterpriseModules = props.data?.enable_enterprise_modules
     if (enableEnterpriseModules === "enterprise+AgCharts") {
       ModuleRegistry.registerModules([
         AllEnterpriseModule.with(AgChartsEnterpriseModule),
       ])
-      if ("license_key" in props.args) {
-        LicenseManager.setLicenseKey(props.args["license_key"])
+      if (props.data.license_key) {
+        LicenseManager.setLicenseKey(props.data.license_key)
       }
     } else if (
       enableEnterpriseModules === true ||
       enableEnterpriseModules === "enterpriseOnly"
     ) {
       ModuleRegistry.registerModules([AllEnterpriseModule])
-      if ("license_key" in props.args) {
-        LicenseManager.setLicenseKey(props.args["license_key"])
+      if (props.data.license_key) {
+        LicenseManager.setLicenseKey(props.data.license_key)
       }
     } else {
       ModuleRegistry.registerModules([AllCommunityModule])
@@ -104,12 +144,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     this.isGridAutoHeightOn =
-      this.props.args.gridOptions?.domLayout === "autoHeight"
+      this.props.data.gridOptions?.domLayout === "autoHeight"
 
-    var go = parseGridOptions(props)
-    go.rowData = parseData(props)
+    var go = parseGridOptions(props.data)
+    go.rowData = parseData(props.data)
 
-    if (!("getRowId" in go)) {
+    if (go && "getRowId" in go === false) {
       if (
         Array.isArray(go.rowData) &&
         go.rowData.length > 0 &&
@@ -120,20 +160,20 @@ class AgGrid extends React.Component<ComponentProps, State> {
       }
     }
 
-    this.shouldGridReturn = props.args.should_grid_return
-      ? parseJsCodeFromPython(props.args.should_grid_return)
+    this.shouldGridReturn = props.data?.should_grid_return
+      ? parseJsCodeFromPython(props.data.should_grid_return)
       : null
-    this.collectGridReturn = props.args.custom_jscode_for_grid_return
-      ? parseJsCodeFromPython(props.args.custom_jscode_for_grid_return)
+    this.collectGridReturn = props.data?.custom_jscode_for_grid_return
+      ? parseJsCodeFromPython(props.data.custom_jscode_for_grid_return)
       : null
 
     this.state = {
-      gridHeight: this.props.args.height,
+      gridHeight: this.props.data?.height || 400,
       gridOptions: go,
       isRowDataEdited: false,
       api: undefined,
-      enterprise_features_enabled: props.args.enable_enterprise_modules,
-      debug: props.args.debug || false,
+      enterprise_features_enabled: props.data?.enable_enterprise_modules || false,
+      debug: props.data?.debug || false,
       editedRows: new Set(),
     } as State
 
@@ -144,9 +184,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   private attachStreamlitRerunToEvents(api: GridApi) {
-    const updateEvents = this.props.args.update_on
+    const updateEvents = this.props.data?.update_on
 
-    updateEvents.forEach((element: any) => {
+    updateEvents?.forEach((element: any) => {
       if (Array.isArray(element)) {
         // If element is a tuple (eventName, timeout), apply debounce for the timeout duration
         const [eventName, timeout] = element
@@ -184,7 +224,9 @@ class AgGrid extends React.Component<ComponentProps, State> {
       renderedGridHeight !== this.renderedGridHeightPrevious
     ) {
       this.renderedGridHeightPrevious = renderedGridHeight
-      Streamlit.setFrameHeight(renderedGridHeight)
+      if (this.props.parentElement instanceof HTMLElement) {
+        this.props.parentElement.style.height = `${renderedGridHeight}px`
+      }
     }
   }
 
@@ -194,7 +236,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   ) {
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
-      console.log("dataReturnMode is ", this.props.args.data_return_mode)
+      console.log("dataReturnMode is ", this.props.data.data_return_mode)
     }
 
     // Create collector context
@@ -217,7 +259,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       // Determine and create appropriate collector
       const collector =
         collectorFactory[
-          this.props.args.data_return_mode as keyof typeof collectorFactory
+          this.props.data.data_return_mode as keyof typeof collectorFactory
         ]
 
       // Process response using collector
@@ -240,7 +282,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
             return; // Don't send value back
           }
         }
-        Streamlit.setComponentValue(result.data)
+        this.props.setStateValue("grid_response", result.data)
       } else {
         console.error(`Collector processing failed: ${result.error}`)
         // Fallback to no return to avoid breaking the UI
@@ -259,7 +301,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
     } else {
       return {
         width: this.props.width,
-        height: this.props.args.height,
+        height: this.props.data?.height || 400,
       }
     }
   }
@@ -272,9 +314,30 @@ class AgGrid extends React.Component<ComponentProps, State> {
       console.log(this)
     }
 
+    // Handle case where data arrives for the first time
+    if (!prevProps.data && this.props.data) {
+      console.log("Data arrived for the first time, reinitializing grid")
+      // Data arrived for the first time, update grid options and row data
+      let go = parseGridOptions(this.props)
+      go.rowData = parseData(this.props)
+
+      this.setState({
+        gridOptions: go,
+        gridHeight: this.props.data.height || 400,
+        enterprise_features_enabled: this.props.data.enable_enterprise_modules || false,
+        debug: this.props.data.debug || false,
+      })
+      return
+    }
+
+    // If we still don't have data, nothing to update
+    if (!this.props.data) {
+      return
+    }
+
     //Check update on grid options. TODO: exclude `initial` options
-    const prevGridOptions = omit(prevProps.args.gridOptions, "rowData")
-    const currGridOptions = omit(this.props.args.gridOptions, "rowData")
+    const prevGridOptions = omit(prevProps.data?.gridOptions, "rowData")
+    const currGridOptions = omit(this.props.data?.gridOptions, "rowData")
 
     if (!isEqual(prevGridOptions, currGridOptions)) {
       let go = parseGridOptions(this.props)
@@ -284,10 +347,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
     //Theme object Changes here
     if (
       !isEqual(prevProps.theme, this.props.theme) ||
-      !isEqual(this.props.args.theme, prevProps.args.theme)
+      !isEqual(this.props.data?.theme, prevProps.data?.theme)
     ) {
       let streamlitTheme = this.props.theme
-      let agGridTheme = this.props.args.theme
+      let agGridTheme = this.props.data.theme
 
       this.state.api?.updateGridOptions({
         theme: this.themeParser?.parse(agGridTheme, streamlitTheme),
@@ -296,10 +359,10 @@ class AgGrid extends React.Component<ComponentProps, State> {
 
     //Check if data changed and updates
 
-    const serverSyncStragegy = this.props.args?.server_sync_strategy
+    const serverSyncStragegy = this.props.data?.server_sync_strategy
     if (serverSyncStragegy === "client_wins") {
       if (!this.state.isRowDataEdited) {
-        if (this.props.args.data_hash !== prevProps.args.data_hash) {
+        if (this.props.data?.data_hash !== prevProps.data?.data_hash) {
           const rowData = parseData(this.props) || []
           this.state.api?.updateGridOptions({ rowData })
         }
@@ -311,8 +374,8 @@ class AgGrid extends React.Component<ComponentProps, State> {
     }
 
     //check if columnStates changed
-    if (!isEqual(prevProps.args.columns_state, this.props.args.columns_state)) {
-      const columnsState = this.props.args.columns_state
+    if (!isEqual(prevProps.data?.columns_state, this.props.data?.columns_state)) {
+      const columnsState = this.props.data.columns_state
       if (columnsState != null) {
         this.state.api?.applyColumnState({
           state: columnsState,
@@ -346,7 +409,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
       "gridSizeChanged",
       (e: GridSizeChangedEvent) => this.onGridSizeChanged(e)
     )
-    if (this.props.args.server_sync_strategy === "client_wins") {
+    if (this.props.data?.server_sync_strategy === "client_wins") {
       this.state.api.addEventListener(
         "cellValueChanged",
         (event: CellValueChangedEvent) => {
@@ -383,12 +446,12 @@ class AgGrid extends React.Component<ComponentProps, State> {
   private processPreselection() {
     //TODO: do not pass grid Options that doesn't exist in aggrid (preSelectAllRows,  preSelectedRows)
     var preSelectAllRows =
-      this.props.args.gridOptions["preSelectAllRows"] || false
+      this.props.data?.gridOptions?.["preSelectAllRows"] || false
 
     if (preSelectAllRows) {
       this.state.api?.selectAll()
     } else {
-      var preselectedRows = this.props.args.gridOptions["preSelectedRows"]
+      var preselectedRows = this.props.data?.gridOptions?.["preSelectedRows"]
       if (preselectedRows || preselectedRows?.length() > 0) {
         for (var idx in preselectedRows) {
           this.state.api
@@ -400,7 +463,7 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 
   public render = (): ReactNode => {
-    let manualUpdate = this.props.args.manual_update === true
+    let manualUpdate = this.props.data?.manual_update === true
 
     return (
       <div
@@ -409,10 +472,11 @@ class AgGrid extends React.Component<ComponentProps, State> {
         style={this.defineContainerHeight()}
       >
         <GridToolBar
+          gridContainerRef={this.gridContainerRef}
           showManualUpdateButton={manualUpdate}
-          enabled={this.props.args.show_toolbar ?? true}
-          showSearch={this.props.args.show_search ?? true}
-          showDownloadButton={this.props.args.show_download_button ?? true}
+          enabled={this.props.data?.show_toolbar ?? true}
+          showSearch={this.props.data?.show_search ?? true}
+          showDownloadButton={this.props.data?.show_download_button ?? true}
           onQuickSearchChange={(value) => {
             this.state.api?.setGridOption("quickFilterText", value)
             this.state.api?.hideOverlay() // Hide any overlay if present
@@ -435,4 +499,35 @@ class AgGrid extends React.Component<ComponentProps, State> {
   }
 }
 
-export default withStreamlitConnection(AgGrid)
+const AgGridComponent = (componentArgs: ComponentArgs<any, AgGridData>) => {
+  const { parentElement, key, ...restArgs } = componentArgs
+
+  // Check to see if we already have a React root for this component instance.
+  let reactRoot = reactRoots.get(parentElement)
+  if (!reactRoot) {
+    // If we don't, create a new root for the React application using the React
+    // DOM API.
+    reactRoot = ReactDOM.createRoot(parentElement)
+    reactRoots.set(parentElement, reactRoot)
+  }
+
+  // Render/re-render the React application into the root using the React DOM API.
+  reactRoot.render(
+    <React.StrictMode>
+      <AgGrid parentElement={parentElement} {...restArgs} />
+    </React.StrictMode>
+  )
+
+  // Return a function to cleanup the React application in the Streamlit
+  // component lifecycle.
+  return () => {
+    const reactRoot = reactRoots.get(parentElement)
+
+    if (reactRoot) {
+      reactRoot.unmount()
+      reactRoots.delete(parentElement)
+    }
+  }
+}
+
+export default AgGridComponent

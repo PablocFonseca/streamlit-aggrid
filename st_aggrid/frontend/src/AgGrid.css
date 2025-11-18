@@ -21,3 +21,15 @@
   flex: 1; /* Allow the grid to take the remaining space */
   width: 100%;
 }
+
+#gridContainer.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1000000;
+  background-color: white;
+  padding-top: 3.5rem;
+  box-sizing: border-box;
+}

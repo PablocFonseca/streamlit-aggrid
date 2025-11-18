@@ -3,7 +3,7 @@
     position: absolute;
     top: -32px;
     right: 4px;
-    z-index: 1000;
+    z-index: 1000001;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -15,6 +15,14 @@
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+/* Ensure toolbar is positioned correctly in maximized mode */
+#gridContainer.maximized .grid-toolbar {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 1000002;
 }
 
 /* Show toolbar when hovering over the grid container OR the toolbar itself */

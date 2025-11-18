@@ -11,6 +11,8 @@ interface GridToolBarProps {
   showDownloadButton?: boolean;
   showSearch?: boolean;
   showManualUpdateButton?: boolean;
+  isMaximized?: boolean;
+  onMaximizeToggle?: () => void;
 }
 
 const GridToolBar: React.FC<GridToolBarProps> = ({
@@ -23,6 +25,8 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
   showDownloadButton = true,
   showSearch = true,
   showManualUpdateButton = false,
+  isMaximized = false,
+  onMaximizeToggle,
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -97,56 +101,36 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
         </button>
       )}
 
-      {/* Fullscreen Button */}
+      {/* Maximize Button */}
       {showFullscreenButton && (
         <button
-          className="toolbar-button fullscreen-button"
-          onClick={async () => {
-            try {
-              const gridContainer = gridContainerRef?.current;
-              if (!gridContainer) {
-                console.error("Grid container ref not found");
-                return;
-              }
-
-              if (!document.fullscreenElement) {
-                // Try to enter fullscreen
-                if (gridContainer.requestFullscreen) {
-                  await gridContainer.requestFullscreen();
-                } else if ((gridContainer as any).webkitRequestFullscreen) {
-                  // Safari
-                  (gridContainer as any).webkitRequestFullscreen();
-                } else if ((gridContainer as any).msRequestFullscreen) {
-                  // IE11
-                  (gridContainer as any).msRequestFullscreen();
-                }
-              } else {
-                // Exit fullscreen
-                if (document.exitFullscreen) {
-                  await document.exitFullscreen();
-                } else if ((document as any).webkitExitFullscreen) {
-                  // Safari
-                  (document as any).webkitExitFullscreen();
-                } else if ((document as any).msExitFullscreen) {
-                  // IE11
-                  (document as any).msExitFullscreen();
-                }
-              }
-            } catch (error) {
-              console.error("Fullscreen error:", error);
-            }
-          }}
-          title="Toggle Fullscreen"
+          className="toolbar-button maximize-button"
+          onClick={onMaximizeToggle}
+          title={isMaximized ? "Exit Fullscreen" : "Fullscreen"}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="12"
-            height="12"
-            fill="currentColor"
-          >
-            <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zm6 12v6h-6v-2h4v-4h2zm-12 6H3v-6h2v4h4v2z" />
-          </svg>
+          {isMaximized ? (
+            // Compress icon (exit maximize)
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              fill="currentColor"
+            >
+              <path d="M8 3v2H4v4H2V3h6zm10 0h6v6h-2V5h-4V3zM8 21H2v-6h2v4h4v2zm10 0v-2h4v-4h2v6h-6z" />
+            </svg>
+          ) : (
+            // Expand icon (enter maximize)
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              fill="currentColor"
+            >
+              <path d="M3 3h6v2H5v4H3V3zm12 0h6v6h-2V5h-4V3zm6 12v6h-6v-2h4v-4h2zm-12 6H3v-6h2v4h4v2z" />
+            </svg>
+          )}
         </button>
       )}
 

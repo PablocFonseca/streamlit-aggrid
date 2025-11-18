@@ -1,4 +1,4 @@
-import { GridApi, GridOptions } from "ag-grid-community"
+import { GridApi, GridOptions, ColumnState } from "ag-grid-community"
 
 export interface State {
   gridHeight: number
@@ -8,4 +8,6 @@ export interface State {
   enterprise_features_enabled: boolean
   debug: boolean
   editedRows: Set<any>;
+  isMaximized: boolean;
+  savedColumnState?: ColumnState[];
 }

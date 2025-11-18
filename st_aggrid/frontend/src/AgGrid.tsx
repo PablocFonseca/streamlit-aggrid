@@ -175,6 +175,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
       enterprise_features_enabled: props.data?.enable_enterprise_modules || false,
       debug: props.data?.debug || false,
       editedRows: new Set(),
+      isMaximized: false,
     } as State
 
     if (this.state.debug) {
@@ -293,8 +294,40 @@ class AgGrid extends React.Component<AgGridProps, State> {
     }
   }
 
+  private toggleMaximize = () => {
+    const willMaximize = !this.state.isMaximized
+
+    if (willMaximize) {
+      // Save current column state before maximizing
+      const columnState = this.state.api?.getColumnState()
+      this.setState({ isMaximized: true, savedColumnState: columnState }, () => {
+        // Apply sizeColumnsToFit after state update to fill viewport
+        setTimeout(() => {
+          this.state.api?.sizeColumnsToFit()
+        }, 0)
+      })
+    } else {
+      // Restore saved column state when exiting maximize
+      this.setState({ isMaximized: false }, () => {
+        if (this.state.savedColumnState) {
+          setTimeout(() => {
+            this.state.api?.applyColumnState({
+              state: this.state.savedColumnState!,
+              applyOrder: true,
+            })
+          }, 0)
+        }
+      })
+    }
+  }
+
   private defineContainerHeight() {
-    if (this.isGridAutoHeightOn) {
+    if (this.state.isMaximized) {
+      return {
+        width: '100vw',
+        height: '100vh',
+      }
+    } else if (this.isGridAutoHeightOn) {
       return {
         width: this.props.width,
       }
@@ -469,6 +502,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
       <div
         id="gridContainer"
         ref={this.gridContainerRef}
+        className={this.state.isMaximized ? 'maximized' : ''}
         style={this.defineContainerHeight()}
       >
         <GridToolBar
@@ -477,6 +511,8 @@ class AgGrid extends React.Component<AgGridProps, State> {
           enabled={this.props.data?.show_toolbar ?? true}
           showSearch={this.props.data?.show_search ?? true}
           showDownloadButton={this.props.data?.show_download_button ?? true}
+          isMaximized={this.state.isMaximized}
+          onMaximizeToggle={this.toggleMaximize}
           onQuickSearchChange={(value) => {
             this.state.api?.setGridOption("quickFilterText", value)
             this.state.api?.hideOverlay() // Hide any overlay if present

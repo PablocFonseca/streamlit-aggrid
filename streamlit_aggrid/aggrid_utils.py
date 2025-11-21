@@ -3,8 +3,8 @@ import json
 import pandas as pd
 
 from typing import Any, Mapping, Tuple
-from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import JsCode, walk_gridOptions, GridUpdateMode
+from streamlit_aggrid.grid_options_builder import GridOptionsBuilder
+from streamlit_aggrid.shared import JsCode, walk_gridOptions, GridUpdateMode
 from io import StringIO
 from pathlib import Path
 

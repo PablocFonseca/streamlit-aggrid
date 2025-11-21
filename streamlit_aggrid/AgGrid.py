@@ -11,18 +11,18 @@ try:
     import pyarrow.lib
 except ImportError:
     pyarrow = None
-from st_aggrid.shared import (
+from streamlit_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
     JsCode,
     StAggridTheme,
     AgGridTheme,
 )
-from st_aggrid.aggrid_utils import (
+from streamlit_aggrid.aggrid_utils import (
     parse_update_mode,
     _parse_data_and_grid_options,
 )
-from st_aggrid.AgGridReturn import AgGridReturn
+from streamlit_aggrid.AgGridReturn import AgGridReturn
 from io import StringIO
 
 # Track shown deprecation warnings to avoid repetition in Streamlit
@@ -44,7 +44,7 @@ _shown_deprecation_warnings = set()
 # Register the component at module level to avoid double registration
 # The component is declared in st_aggrid/pyproject.toml and registered here
 _component_func = components.component(
-    name="st_aggrid.agGrid",
+    name="streamlit-aggrid.agGrid",
     js="index-*.mjs",
     css="index-*.css"
 )

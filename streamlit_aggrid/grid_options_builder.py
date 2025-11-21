@@ -1,5 +1,5 @@
 from collections import defaultdict
-from st_aggrid.shared import getAllColumnProps, getAllGridOptions
+from streamlit_aggrid.shared import getAllColumnProps, getAllGridOptions
 
 class GridOptionsBuilder:
     """Builder for gridOptions dictionary"""

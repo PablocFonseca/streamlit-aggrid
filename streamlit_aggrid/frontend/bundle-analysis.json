@@ -1,0 +1,560 @@
+{
+  "results": [
+    {
+      "bundleName": "build/static/js/main.393790ec.js",
+      "totalBytes": 4768298,
+      "mappedBytes": 4768142,
+      "unmappedBytes": 113,
+      "eolBytes": 2,
+      "sourceMapCommentBytes": 41,
+      "files": {
+        "../../../node_modules/react-dom/client.js": {
+          "size": 39
+        },
+        "[no source]": {
+          "size": 6345
+        },
+        "../../../node_modules/react/cjs/react.production.min.js": {
+          "size": 6401
+        },
+        "../../../node_modules/streamlit-component-lib/node_modules/react/index.js": {
+          "size": 16
+        },
+        "../../../node_modules/moment/moment.js": {
+          "size": 61046
+        },
+        "../../../node_modules/react-is/cjs/react-is.production.min.js": {
+          "size": 2115
+        },
+        "../../../node_modules/react/index.js": {
+          "size": 15
+        },
+        "../../../node_modules/react-dom/index.js": {
+          "size": 222
+        },
+        "../../../node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.min.js": {
+          "size": 3802
+        },
+        "../../../node_modules/object-assign/index.js": {
+          "size": 915
+        },
+        "../../../node_modules/lodash/lodash.js": {
+          "size": 71292
+        },
+        "../../../node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js": {
+          "size": 951
+        },
+        "../../../node_modules/react-is/index.js": {
+          "size": 16
+        },
+        "../../../node_modules/react/cjs/react-jsx-runtime.production.min.js": {
+          "size": 547
+        },
+        "../../../node_modules/streamlit-component-lib/node_modules/react/cjs/react.production.min.js": {
+          "size": 6177
+        },
+        "../../../node_modules/react-dom/node_modules/scheduler/index.js": {
+          "size": 16
+        },
+        "../../../node_modules/react/jsx-runtime.js": {
+          "size": 16
+        },
+        "../../../node_modules/react-dom/cjs/react-dom.production.min.js": {
+          "size": 129456
+        },
+        "../webpack/bootstrap": {
+          "size": 164
+        },
+        "../webpack/runtime/compat get default export": {
+          "size": 73
+        },
+        "../webpack/runtime/define property getters": {
+          "size": 101
+        },
+        "../webpack/runtime/global": {
+          "size": 167
+        },
+        "../webpack/runtime/hasOwnProperty shorthand": {
+          "size": 53
+        },
+        "../webpack/runtime/node module decorator": {
+          "size": 52
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js": {
+          "size": 228
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js": {
+          "size": 139
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/typeof.js": {
+          "size": 230
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/toPropertyKey.js": {
+          "size": 61
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/toPrimitive.js": {
+          "size": 250
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/defineProperty.js": {
+          "size": 125
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/objectSpread2.js": {
+          "size": 569
+        },
+        "../../../node_modules/ag-grid-community/dist/package/main.esm.mjs": {
+          "size": 1207415
+        },
+        "../../../node_modules/ag-grid-react/dist/package/index.esm.mjs": {
+          "size": 54259
+        },
+        "../../../node_modules/apache-arrow/src/enum.ts": {
+          "size": 2277
+        },
+        "../../../node_modules/apache-arrow/src/util/pretty.ts": {
+          "size": 487
+        },
+        "../../../node_modules/tslib/tslib.es6.mjs": {
+          "size": 2150
+        },
+        "../../../node_modules/apache-arrow/src/util/utf8.ts": {
+          "size": 86
+        },
+        "../../../node_modules/apache-arrow/src/util/compat.ts": {
+          "size": 1524
+        },
+        "../../../node_modules/apache-arrow/src/util/buffer.ts": {
+          "size": 2640
+        },
+        "../../../node_modules/apache-arrow/src/util/bn.ts": {
+          "size": 2795
+        },
+        "../../../node_modules/apache-arrow/src/type.ts": {
+          "size": 10056
+        },
+        "../../../node_modules/apache-arrow/src/visitor.ts": {
+          "size": 6206
+        },
+        "../../../node_modules/apache-arrow/src/util/math.ts": {
+          "size": 582
+        },
+        "../../../node_modules/apache-arrow/src/visitor/set.ts": {
+          "size": 4702
+        },
+        "../../../node_modules/apache-arrow/src/row/struct.ts": {
+          "size": 1862
+        },
+        "../../../node_modules/apache-arrow/src/visitor/get.ts": {
+          "size": 4112
+        },
+        "../../../node_modules/apache-arrow/src/row/map.ts": {
+          "size": 1644
+        },
+        "../../../node_modules/apache-arrow/src/util/vector.ts": {
+          "size": 1867
+        },
+        "../../../node_modules/apache-arrow/src/util/chunk.ts": {
+          "size": 1612
+        },
+        "../../../node_modules/apache-arrow/src/util/bit.ts": {
+          "size": 1401
+        },
+        "../../../node_modules/apache-arrow/src/visitor/indexof.ts": {
+          "size": 1854
+        },
+        "../../../node_modules/apache-arrow/src/visitor/iterator.ts": {
+          "size": 1963
+        },
+        "../../../node_modules/apache-arrow/src/visitor/bytelength.ts": {
+          "size": 1625
+        },
+        "../../../node_modules/apache-arrow/src/vector.ts": {
+          "size": 4083
+        },
+        "../../../node_modules/apache-arrow/src/data.ts": {
+          "size": 6645
+        },
+        "../../../node_modules/apache-arrow/src/schema.ts": {
+          "size": 2608
+        },
+        "../../../node_modules/apache-arrow/src/visitor/typecomparator.ts": {
+          "size": 3171
+        },
+        "../../../node_modules/apache-arrow/src/recordbatch.ts": {
+          "size": 3969
+        },
+        "../../../node_modules/apache-arrow/src/util/recordbatch.ts": {
+          "size": 921
+        },
+        "../../../node_modules/apache-arrow/src/table.ts": {
+          "size": 3845
+        },
+        "../../../node_modules/apache-arrow/src/fb/block.ts": {
+          "size": 399
+        },
+        "../../../node_modules/flatbuffers/mjs/constants.js": {
+          "size": 148
+        },
+        "../../../node_modules/flatbuffers/mjs/utils.js": {
+          "size": 139
+        },
+        "../../../node_modules/flatbuffers/mjs/long.js": {
+          "size": 237
+        },
+        "../../../node_modules/flatbuffers/mjs/encoding.js": {
+          "size": 99
+        },
+        "../../../node_modules/apache-arrow/src/fb/metadata-version.ts": {
+          "size": 104
+        },
+        "../../../node_modules/apache-arrow/src/fb/endianness.ts": {
+          "size": 69
+        },
+        "../../../node_modules/apache-arrow/src/fb/dictionary-kind.ts": {
+          "size": 60
+        },
+        "../../../node_modules/apache-arrow/src/fb/type.ts": {
+          "size": 591
+        },
+        "../../../node_modules/flatbuffers/mjs/byte-buffer.js": {
+          "size": 3042
+        },
+        "../../../node_modules/flatbuffers/mjs/builder.js": {
+          "size": 5603
+        },
+        "../../../node_modules/apache-arrow/src/fb/key-value.ts": {
+          "size": 803
+        },
+        "../../../node_modules/apache-arrow/src/fb/int.ts": {
+          "size": 780
+        },
+        "../../../node_modules/apache-arrow/src/fb/dictionary-encoding.ts": {
+          "size": 1127
+        },
+        "../../../node_modules/apache-arrow/src/fb/field.ts": {
+          "size": 2169
+        },
+        "../../../node_modules/apache-arrow/src/fb/schema.ts": {
+          "size": 2306
+        },
+        "../../../node_modules/apache-arrow/src/fb/footer.ts": {
+          "size": 2071
+        },
+        "../../../node_modules/apache-arrow/src/ipc/metadata/file.ts": {
+          "size": 2197
+        },
+        "../../../node_modules/apache-arrow/src/io/adapters.ts": {
+          "size": 3233
+        },
+        "../../../node_modules/apache-arrow/src/io/interfaces.ts": {
+          "size": 1996
+        },
+        "../../../node_modules/apache-arrow/src/io/stream.ts": {
+          "size": 2606
+        },
+        "../../../node_modules/apache-arrow/src/io/file.ts": {
+          "size": 1887
+        },
+        "../../../node_modules/apache-arrow/src/util/int.ts": {
+          "size": 6117
+        },
+        "../../../node_modules/apache-arrow/src/visitor/vectorloader.ts": {
+          "size": 6403
+        },
+        "../../../node_modules/apache-arrow/src/fb/body-compression-method.ts": {
+          "size": 56
+        },
+        "../../../node_modules/apache-arrow/src/fb/compression-type.ts": {
+          "size": 77
+        },
+        "../../../node_modules/apache-arrow/src/fb/precision.ts": {
+          "size": 94
+        },
+        "../../../node_modules/apache-arrow/src/fb/date-unit.ts": {
+          "size": 79
+        },
+        "../../../node_modules/apache-arrow/src/fb/time-unit.ts": {
+          "size": 149
+        },
+        "../../../node_modules/apache-arrow/src/fb/interval-unit.ts": {
+          "size": 126
+        },
+        "../../../node_modules/apache-arrow/src/fb/union-mode.ts": {
+          "size": 73
+        },
+        "../../../node_modules/apache-arrow/src/fb/message-header.ts": {
+          "size": 204
+        },
+        "../../../node_modules/apache-arrow/src/fb/body-compression.ts": {
+          "size": 882
+        },
+        "../../../node_modules/apache-arrow/src/fb/buffer.ts": {
+          "size": 311
+        },
+        "../../../node_modules/apache-arrow/src/fb/field-node.ts": {
+          "size": 317
+        },
+        "../../../node_modules/apache-arrow/src/fb/record-batch.ts": {
+          "size": 1449
+        },
+        "../../../node_modules/apache-arrow/src/fb/dictionary-batch.ts": {
+          "size": 922
+        },
+        "../../../node_modules/apache-arrow/src/fb/floating-point.ts": {
+          "size": 700
+        },
+        "../../../node_modules/apache-arrow/src/fb/decimal.ts": {
+          "size": 970
+        },
+        "../../../node_modules/apache-arrow/src/fb/date.ts": {
+          "size": 637
+        },
+        "../../../node_modules/apache-arrow/src/fb/time.ts": {
+          "size": 802
+        },
+        "../../../node_modules/apache-arrow/src/fb/timestamp.ts": {
+          "size": 832
+        },
+        "../../../node_modules/apache-arrow/src/fb/interval.ts": {
+          "size": 663
+        },
+        "../../../node_modules/apache-arrow/src/fb/union.ts": {
+          "size": 1304
+        },
+        "../../../node_modules/apache-arrow/src/fb/fixed-size-binary.ts": {
+          "size": 702
+        },
+        "../../../node_modules/apache-arrow/src/fb/fixed-size-list.ts": {
+          "size": 685
+        },
+        "../../../node_modules/apache-arrow/src/fb/map.ts": {
+          "size": 623
+        },
+        "../../../node_modules/apache-arrow/src/fb/message.ts": {
+          "size": 1858
+        },
+        "../../../node_modules/apache-arrow/src/fb/null.ts": {
+          "size": 458
+        },
+        "../../../node_modules/apache-arrow/src/fb/binary.ts": {
+          "size": 472
+        },
+        "../../../node_modules/apache-arrow/src/fb/bool.ts": {
+          "size": 458
+        },
+        "../../../node_modules/apache-arrow/src/fb/utf8.ts": {
+          "size": 458
+        },
+        "../../../node_modules/apache-arrow/src/fb/list.ts": {
+          "size": 458
+        },
+        "../../../node_modules/apache-arrow/src/fb/struct_.ts": {
+          "size": 479
+        },
+        "../../../node_modules/apache-arrow/src/visitor/typeassembler.ts": {
+          "size": 1911
+        },
+        "../../../node_modules/apache-arrow/src/ipc/metadata/json.ts": {
+          "size": 2448
+        },
+        "../../../node_modules/apache-arrow/src/ipc/metadata/message.ts": {
+          "size": 7936
+        },
+        "../../../node_modules/apache-arrow/src/ipc/message.ts": {
+          "size": 4163
+        },
+        "../../../node_modules/apache-arrow/src/ipc/reader.ts": {
+          "size": 10708
+        },
+        "../../../node_modules/apache-arrow/src/visitor/vectorassembler.ts": {
+          "size": 2721
+        },
+        "../../../node_modules/apache-arrow/src/ipc/writer.ts": {
+          "size": 4968
+        },
+        "../../../node_modules/apache-arrow/src/ipc/serialization.ts": {
+          "size": 262
+        },
+        "../../../node_modules/streamlit-component-lib/dist/ArrowTable.js": {
+          "size": 3054
+        },
+        "../../../node_modules/streamlit-component-lib/dist/streamlit.js": {
+          "size": 2794
+        },
+        "../../../node_modules/streamlit-component-lib/dist/StreamlitReact.js": {
+          "size": 1706
+        },
+        "../../../node_modules/ag-charts-core/dist/package/main.esm.mjs": {
+          "size": 43644
+        },
+        "../../../node_modules/ag-charts-community/dist/package/main.esm.mjs": {
+          "size": 1057084
+        },
+        "../../../node_modules/@babel/runtime/helpers/esm/objectDestructuringEmpty.js": {
+          "size": 68
+        },
+        "../../../node_modules/ag-charts-enterprise/dist/package/main.esm.mjs": {
+          "size": 830911
+        },
+        "../../../node_modules/ag-grid-enterprise/dist/package/main.esm.mjs": {
+          "size": 1058014
+        },
+        "collectors/BaseCollector.ts": {
+          "size": 256
+        },
+        "collectors/LegacyCollector.ts": {
+          "size": 2443
+        },
+        "collectors/CustomCollector.ts": {
+          "size": 1134
+        },
+        "components/GridToolBar.tsx": {
+          "size": 3928
+        },
+        "utils/gridUtils.ts": {
+          "size": 603
+        },
+        "utils.js": {
+          "size": 301
+        },
+        "../../../node_modules/date-fns/constants.js": {
+          "size": 91
+        },
+        "../../../node_modules/date-fns/constructFrom.js": {
+          "size": 145
+        },
+        "../../../node_modules/date-fns/toDate.js": {
+          "size": 37
+        },
+        "../../../node_modules/date-fns/parseISO.js": {
+          "size": 2800
+        },
+        "../../../node_modules/date-fns/locale/en-US/_lib/formatDistance.js": {
+          "size": 1108
+        },
+        "../../../node_modules/date-fns/locale/_lib/buildFormatLongFn.js": {
+          "size": 193
+        },
+        "../../../node_modules/date-fns/locale/en-US/_lib/formatLong.js": {
+          "size": 411
+        },
+        "../../../node_modules/date-fns/locale/en-US/_lib/formatRelative.js": {
+          "size": 164
+        },
+        "../../../node_modules/date-fns/locale/_lib/buildLocalizeFn.js": {
+          "size": 458
+        },
+        "../../../node_modules/date-fns/locale/en-US/_lib/localize.js": {
+          "size": 1962
+        },
+        "../../../node_modules/date-fns/locale/_lib/buildMatchFn.js": {
+          "size": 629
+        },
+        "../../../node_modules/date-fns/locale/en-US/_lib/match.js": {
+          "size": 1799
+        },
+        "../../../node_modules/date-fns/locale/_lib/buildMatchPatternFn.js": {
+          "size": 333
+        },
+        "../../../node_modules/date-fns/locale/en-US.js": {
+          "size": 142
+        },
+        "../../../node_modules/date-fns/_lib/defaultOptions.js": {
+          "size": 37
+        },
+        "../../../node_modules/date-fns/_lib/getTimezoneOffsetInMilliseconds.js": {
+          "size": 204
+        },
+        "../../../node_modules/date-fns/startOfDay.js": {
+          "size": 95
+        },
+        "../../../node_modules/date-fns/differenceInCalendarDays.js": {
+          "size": 137
+        },
+        "../../../node_modules/date-fns/_lib/normalizeDates.js": {
+          "size": 167
+        },
+        "../../../node_modules/date-fns/startOfYear.js": {
+          "size": 130
+        },
+        "../../../node_modules/date-fns/getDayOfYear.js": {
+          "size": 89
+        },
+        "../../../node_modules/date-fns/startOfWeek.js": {
+          "size": 533
+        },
+        "../../../node_modules/date-fns/startOfISOWeek.js": {
+          "size": 63
+        },
+        "../../../node_modules/date-fns/getISOWeekYear.js": {
+          "size": 287
+        },
+        "../../../node_modules/date-fns/startOfISOWeekYear.js": {
+          "size": 137
+        },
+        "../../../node_modules/date-fns/getISOWeek.js": {
+          "size": 111
+        },
+        "../../../node_modules/date-fns/getWeekYear.js": {
+          "size": 746
+        },
+        "../../../node_modules/date-fns/startOfWeekYear.js": {
+          "size": 559
+        },
+        "../../../node_modules/date-fns/getWeek.js": {
+          "size": 115
+        },
+        "../../../node_modules/date-fns/_lib/addLeadingZeros.js": {
+          "size": 76
+        },
+        "../../../node_modules/date-fns/_lib/format/lightFormatters.js": {
+          "size": 625
+        },
+        "../../../node_modules/date-fns/_lib/format/formatters.js": {
+          "size": 7038
+        },
+        "../../../node_modules/date-fns/_lib/format/longFormatters.js": {
+          "size": 717
+        },
+        "../../../node_modules/date-fns/_lib/protectedTokens.js": {
+          "size": 490
+        },
+        "../../../node_modules/date-fns/isDate.js": {
+          "size": 115
+        },
+        "../../../node_modules/date-fns/isValid.js": {
+          "size": 76
+        },
+        "../../../node_modules/date-fns/format.js": {
+          "size": 2005
+        },
+        "../../../node_modules/date-fns/compareAsc.js": {
+          "size": 64
+        },
+        "customColumns.tsx": {
+          "size": 825
+        },
+        "ThemeParser.tsx": {
+          "size": 1410
+        },
+        "utils/parsers.ts": {
+          "size": 1332
+        },
+        "AgGrid.tsx": {
+          "size": 7101
+        },
+        "index.tsx": {
+          "size": 85
+        },
+        "[sourceMappingURL]": {
+          "size": 41
+        },
+        "[unmapped]": {
+          "size": 113
+        },
+        "[EOLs]": {
+          "size": 2
+        }
+      }
+    }
+  ]
+}

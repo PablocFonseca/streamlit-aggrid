@@ -49,3 +49,7 @@ pytest-cov = "^6.2.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[[tool.streamlit.component.components]]
+name = "agGrid"
+asset_dir = "frontend/build"

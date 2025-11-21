@@ -1,5 +1,5 @@
 from typing import Mapping
-from st_aggrid.shared import DataReturnMode
+from streamlit_aggrid.shared import DataReturnMode
 
 import json
 import pandas as pd

@@ -16,22 +16,28 @@ def _parse_data_and_grid_options(
     if data is not None:
 
         if isinstance(data, (str, Path)):
+
+            #data is a string path to a json file
+            if isinstance(data, str) and Path(data).suffix == ".json":
+                data = Path(data).resolve.absolute()
+
+            #data is a Path object
             if isinstance(data, Path):
                 data = Path(data).resolve().absolute()
-
-            #if data is a path to a json file. Validate and load it as string.
-            if data.endswith(".json") and os.path.exists(data):
-                try:
-                    with open(os.path.abspath(data)) as f:
-                        data = json.dumps(json.load(f))
-                except Exception as ex:
-                    raise Exception(f"Error reading {data}. {ex}")
+                if not (data.exists() and data.suffix == ".json"):
+                    raise Exception(f"Path {data} is not a valid json.")
                 
+                try:
+                    data = json.dumps(json.loads(data.read_text()))
+                except Exception as ex:
+                        raise Exception(f"Error reading {data}. {ex}")
+        
             #if data is a json string load is as as data frame
             try:
                 data = pd.read_json(StringIO(data))
-            except Exception:
-                raise Exception("Error parsing data parameter as raw json.")
+            except Exception as ex:
+                raise Exception(f"Error parsing data parameter as raw json. {ex}")
+            
         #handles the case where dataframe is a polars dataframe without add dependency on polars
         if (
             hasattr(data, '__class__') and 

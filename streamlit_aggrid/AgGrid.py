@@ -41,12 +41,11 @@ _shown_deprecation_warnings = set()
 # v2 components don't support URL-based development mode like v1 did
 # Component name must match the format: package-name.component-name
 
-# Register the component at module level to avoid double registration
-# The component is declared in st_aggrid/pyproject.toml and registered here
+# Register the component at module level
+# The component is declared in pyproject.toml
+# Streamlit v2 handles re-registration warnings automatically
 _component_func = components.component(
-    name="streamlit-aggrid.agGrid",
-    js="index-*.mjs",
-    css="index-*.css"
+    name="streamlit-aggrid.agGrid", js="index-*.mjs", css="index-*.css"
 )
 
 
@@ -382,7 +381,7 @@ def AgGrid(
     if custom_jscode_for_grid_return is not None:
         custom_jscode_for_grid_return = custom_jscode_for_grid_return.js_code
         allow_unsafe_jscode = True
-    
+
     # Process JsCode for should_grid_return
     if should_grid_return is not None:
         should_grid_return = should_grid_return.js_code
@@ -506,7 +505,9 @@ def AgGrid(
 
     data_hash = _compute_data_hash(data)
 
-    _component_func_args = dict(
+    # Prepare data payload for the component
+    # In v2, 'key' is a direct parameter, not part of data
+    _component_data = dict(
         data=data,
         data_hash=data_hash,
         gridOptions=gridOptions,
@@ -518,10 +519,9 @@ def AgGrid(
         custom_css=custom_css,
         default=None,
         enable_enterprise_modules=enable_enterprise_modules,
-        key=key,
         license_key=license_key,
         manual_update=manual_update,
-        #on_change=_inner_callback,
+        # on_change=_inner_callback,
         pro_assets=pro_assets,
         show_download_button=show_download_button,
         show_search=show_search,
@@ -536,7 +536,8 @@ def AgGrid(
     )
 
     try:
-        component_result = _component_func(data=_component_func_args)
+        # Pass key as a direct parameter, data as payload
+        component_result = _component_func(key=key, data=_component_data)
         # In v2, the result is an object with attributes set via setStateValue
         # We used setStateValue("grid_response", data) in the frontend
         component_value = component_result.grid_response if component_result else None
@@ -555,8 +556,32 @@ def AgGrid(
                 f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}"
             )
             # Retry with JSON serialization enabled
-            _component_func_args["use_json_serialization"] = True
-            return AgGrid(**_component_func_args)
+            # Reconstruct AgGrid call with use_json_serialization=True
+            return AgGrid(
+                data=data,
+                gridOptions=gridOptions,
+                height=height,
+                update_mode=update_mode,
+                data_return_mode=data_return_mode,
+                allow_unsafe_jscode=allow_unsafe_jscode,
+                enable_enterprise_modules=enable_enterprise_modules,
+                license_key=license_key,
+                conversion_errors=conversion_errors,
+                columns_state=columns_state,
+                theme=theme,
+                custom_css=custom_css,
+                key=key,
+                update_on=update_on,
+                callback=callback,
+                show_toolbar=show_toolbar,
+                show_search=show_search,
+                show_download_button=show_download_button,
+                custom_jscode_for_grid_return=original_custom_jscode_for_grid_return,
+                should_grid_return=should_grid_return,
+                use_json_serialization=True,
+                server_sync_strategy=server_sync_strategy,
+                **default_column_parameters,
+            )
         elif not use_json_serialization and data is not None and is_pyarrow_error:
             # User explicitly disabled JSON serialization, raise the PyArrow error
             raise ex

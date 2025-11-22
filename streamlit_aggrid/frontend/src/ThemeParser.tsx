@@ -66,10 +66,10 @@ class ThemeParser {
         const fontFamily = [font, {googleFont: font}]
 
         theme = theme.withParams({
-            accentColor: streamlitTheme?.primaryColor,
-            fontFamily: fontFamily,
-            foregroundColor: streamlitTheme.textColor,
-            backgroundColor: streamlitTheme.backgroundColor
+            accentColor: "var(--st-primary-color)",
+            fontFamily: "var(--st-font)",
+            foregroundColor: "var(--st-text-color)",
+            backgroundColor: "var(--st-background-color)",
         }).withPart(iconSetQuartzLight)
         .withPart(this.partsMapper.iconSetQuartzRegular)
         if (streamlitTheme?.base === 'dark'){
@@ -80,7 +80,12 @@ class ThemeParser {
     }
 
     alpineRecipe() {
-        return themeAlpine
+        return themeAlpine.withParams({
+            accentColor: "var(--st-primary-color)",
+            fontFamily: "var(--st-font)",
+            foregroundColor: "var(--st-text-color)",
+            backgroundColor: "var(--st-background-color)"
+        })
     }
 
     balhamRecipe() {

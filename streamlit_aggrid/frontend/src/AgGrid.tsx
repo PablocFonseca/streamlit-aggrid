@@ -76,7 +76,10 @@ interface AgGridData {
   [key: string]: any
 }
 
-interface AgGridProps extends Omit<ComponentArgs<any, AgGridData>, 'key'> {
+interface AgGridProps {
+  parentElement: HTMLElement | ShadowRoot
+  setStateValue: (key: string, value: any) => void
+  data?: AgGridData
   width?: number
   theme?: any
 }
@@ -84,7 +87,7 @@ interface AgGridProps extends Omit<ComponentArgs<any, AgGridData>, 'key'> {
 class AgGrid extends React.Component<AgGridProps, State> {
   public state: State
 
-  private gridContainerRef: React.RefObject<HTMLDivElement>
+  private gridContainerRef: React.RefObject<HTMLDivElement> = React.createRef()
   private isGridAutoHeightOn: boolean
   private renderedGridHeightPrevious: number = 0
   private themeParser: ThemeParser | undefined = undefined
@@ -93,8 +96,9 @@ class AgGrid extends React.Component<AgGridProps, State> {
 
   constructor(props: AgGridProps) {
     super(props)
-    this.gridContainerRef = React.createRef()
-    console.log("===========PROPS===========")
+    //console.log(props)
+
+    this.themeParser = new ThemeParser()
     // Handle custom CSS if provided
     if (props.data?.custom_css) {
       addCustomCSS(props.data.custom_css)
@@ -112,7 +116,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
       ModuleRegistry.registerModules([
         AllEnterpriseModule.with(AgChartsEnterpriseModule),
       ])
-      if (props.data.license_key) {
+      if (props.data?.license_key) {
         LicenseManager.setLicenseKey(props.data.license_key)
       }
     } else if (
@@ -120,7 +124,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
       enableEnterpriseModules === "enterpriseOnly"
     ) {
       ModuleRegistry.registerModules([AllEnterpriseModule])
-      if (props.data.license_key) {
+      if (props.data?.license_key) {
         LicenseManager.setLicenseKey(props.data.license_key)
       }
     } else {
@@ -144,10 +148,10 @@ class AgGrid extends React.Component<AgGridProps, State> {
     }
 
     this.isGridAutoHeightOn =
-      this.props.data.gridOptions?.domLayout === "autoHeight"
+      this.props.data?.gridOptions?.domLayout === "autoHeight"
 
-    var go = parseGridOptions(props.data)
-    go.rowData = parseData(props.data)
+    var go = parseGridOptions(props.data || {})
+    go.rowData = parseData(props.data || {})
 
     if (go && "getRowId" in go === false) {
       if (
@@ -237,7 +241,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
   ) {
     if (this.state.debug) {
       console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
-      console.log("dataReturnMode is ", this.props.data.data_return_mode)
+      console.log("dataReturnMode is ", this.props.data?.data_return_mode)
     }
 
     // Create collector context
@@ -258,9 +262,10 @@ class AgGrid extends React.Component<AgGridProps, State> {
 
     try {
       // Determine and create appropriate collector
+      const dataReturnMode = this.props.data?.data_return_mode || 'AS_INPUT'
       const collector =
         collectorFactory[
-          this.props.data.data_return_mode as keyof typeof collectorFactory
+          dataReturnMode as keyof typeof collectorFactory
         ]
 
       // Process response using collector
@@ -537,7 +542,7 @@ class AgGrid extends React.Component<AgGridProps, State> {
 
 const AgGridComponent = (componentArgs: ComponentArgs<any, AgGridData>) => {
   const { parentElement, key, ...restArgs } = componentArgs
-
+  console.log("=== componentArgs ===", componentArgs)
   // Check to see if we already have a React root for this component instance.
   let reactRoot = reactRoots.get(parentElement)
   if (!reactRoot) {

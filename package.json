@@ -7,12 +7,12 @@
   "author": "Pablo Fonseca",
   "private": true,
   "workspaces": [
-    "st_aggrid/**/frontend*"
+    "streamlit_aggrid/frontend"
   ],
   "scripts": {
     "build": "yarn workspaces foreach -Avi run build",
     "build_all": "yarn workspaces foreach -Avi run build && poetry build",
-    "develop": "yarn workspaces foreach -A -v -j 99 -i -p run start"
+    "develop": "yarn workspaces foreach -R -v -j 99 -i -p run dev:watch"
   },
   "resolutions": {
     "streamlit-component-lib/apache-arrow": "9.0.0"

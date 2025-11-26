@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import ReactDOM from "react-dom/client"
 import type { Root } from "react-dom/client"
 
-import { ComponentArgs } from '@streamlit/component-v2-lib'
+import { Component, ComponentArgs } from '@streamlit/component-v2-lib'
 
 import {
   AllCommunityModule,
@@ -14,6 +14,7 @@ import {
   GridReadyEvent,
   ModuleRegistry,
   ColumnState,
+  GridState,
 } from "ag-grid-community"
 
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
@@ -42,7 +43,10 @@ import { parseGridOptions, parseData } from "./utils/parsers"
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
-const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root> = new WeakMap()
+type stAggridStateShape = {
+  gridState: GridState,
+  grid_response: any
+}
 
 interface AgGridData {
   custom_css?: CSSDict
@@ -67,13 +71,11 @@ interface AgGridData {
   [key: string]: any
 }
 
-interface AgGridProps {
-  parentElement: HTMLElement | ShadowRoot
-  setStateValue: (key: string, value: any) => void
-  data?: AgGridData
-  width?: number
-  theme?: any
-}
+type AgGridProps = Pick<
+  ComponentArgs<stAggridStateShape, AgGridData>,
+  "setStateValue"
+> &
+  AgGridData;
 
 const AgGrid: React.FC<AgGridProps> = (props) => {
 
@@ -124,7 +126,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
   const [isMaximized, setIsMaximized] = useState(false)
   const [savedColumnState, setSavedColumnState] = useState<ColumnState[] | undefined>()
   const [dataHash, setDataHash] = useState(props.data?.data_hash)
-  const [api, setApi] = useState<GridApi | undefined>()
+  const apiRef = useRef<GridApi | undefined>(undefined)
 
   // Derived values
   const debug = props.data?.debug || false
@@ -141,7 +143,6 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
         isMaximized,
         savedColumnState,
         dataHash,
-        api,
       })
     }
 
@@ -177,12 +178,12 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     const prevGridOptions = omit(gridOptions, "rowData")
     const currGridOptions = omit(props.data.gridOptions, "rowData")
     if (!isEqual(prevGridOptions, currGridOptions)) {
-      api?.updateGridOptions(parseGridOptions(props.data))
+      apiRef.current?.updateGridOptions(parseGridOptions(props.data))
     }
 
     // Update theme if changed
     if (!isEqual(props.theme, themeParserRef.current) || !isEqual(props.data.theme, gridOptions?.theme)) {
-      api?.updateGridOptions({
+      apiRef.current?.updateGridOptions({
         theme: themeParserRef.current?.parse(props.data.theme, props.theme),
       })
     }
@@ -190,18 +191,18 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     // Handle data sync strategy
     const serverSyncStrategy = props.data.server_sync_strategy
     if (serverSyncStrategy === "client_wins" && !isRowDataEdited && props.data.data_hash !== dataHash) {
-      api?.updateGridOptions({ rowData: parseData(props.data) || [] })
+      apiRef.current?.updateGridOptions({ rowData: parseData(props.data) || [] })
       setDataHash(props.data.data_hash)
     } else if (serverSyncStrategy === "server_wins") {
-      api?.stopEditing(true)
-      api?.updateGridOptions({ rowData: parseData(props.data) || [] })
+      apiRef.current?.stopEditing(true)
+      apiRef.current?.updateGridOptions({ rowData: parseData(props.data) || [] })
     }
 
     // Update column state if changed
     if (!isEqual(gridOptions?.columnState, props.data.columns_state) && props.data.columns_state) {
-      api?.applyColumnState({ state: props.data.columns_state, applyOrder: true })
+      apiRef.current?.applyColumnState({ state: props.data.columns_state, applyOrder: true })
     }
-  }, [props.data, props.theme, api, dataHash, isRowDataEdited, gridOptions, debug])
+  }, [props.data, props.theme, dataHash, isRowDataEdited, gridOptions, debug])
 
   const resizeGridContainer = useCallback(() => {
     const renderedGridHeight = gridContainerRef.current?.clientHeight
@@ -222,9 +223,9 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
       console.log(`Refreshing grid from ${streamlitRerunEventTriggerName}, mode: ${props.data?.data_return_mode}`)
     }
 
-    const context: CollectorContext = {
-      state: { gridOptions, isRowDataEdited, api, enterprise_features_enabled, debug, editedRows, isMaximized, savedColumnState, gridHeight: props.data?.height || 400 },
-      props,
+    let context: CollectorContext = {
+      state: { gridOptions, isRowDataEdited, api: apiRef.current, enterprise_features_enabled, debug, editedRows, isMaximized, savedColumnState, gridHeight: props.data?.height || 400 },
+      props: {data: props.data},
       eventData,
       streamlitRerunEventTriggerName,
     }
@@ -256,7 +257,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     } catch (error) {
       console.error("Error in returnGridValue collector processing:", error)
     }
-  }, [debug, props, gridOptions, isRowDataEdited, api, enterprise_features_enabled, editedRows, isMaximized, savedColumnState])
+  }, [debug, props, gridOptions, isRowDataEdited, enterprise_features_enabled, editedRows, isMaximized, savedColumnState])
 
   const attachStreamlitRerunToEvents = useCallback((gridApi: GridApi) => {
     props.data?.update_on?.forEach((element: any) => {
@@ -273,17 +274,17 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
   const toggleMaximize = useCallback(() => {
     setIsMaximized(prev => {
       if (!prev) {
-        setSavedColumnState(api?.getColumnState())
-        setTimeout(() => api?.sizeColumnsToFit(), 0)
+        setSavedColumnState(apiRef.current?.getColumnState())
+        setTimeout(() => apiRef.current?.sizeColumnsToFit(), 0)
       } else if (savedColumnState) {
-        setTimeout(() => api?.applyColumnState({ state: savedColumnState, applyOrder: true }), 0)
+        setTimeout(() => apiRef.current?.applyColumnState({ state: savedColumnState, applyOrder: true }), 0)
       }
       return !prev
     })
-  }, [api, savedColumnState])
+  }, [savedColumnState])
 
   const onGridReady = useCallback((event: GridReadyEvent) => {
-    setApi(event.api)
+    apiRef.current = event.api
 
     // Attach resize listeners
     event.api.addEventListener("rowGroupOpened", resizeGridContainer)
@@ -346,11 +347,11 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
         isMaximized={isMaximized}
         onMaximizeToggle={toggleMaximize}
         onQuickSearchChange={(value) => {
-          api?.setGridOption("quickFilterText", value)
-          api?.hideOverlay()
+          apiRef.current?.setGridOption("quickFilterText", value)
+          apiRef.current?.hideOverlay()
         }}
         onDownloadClick={() => {
-          api?.exportDataAsCsv()
+          apiRef.current?.exportDataAsCsv()
         }}
         onManualUpdateClick={() => {
           if (debug) {
@@ -366,7 +367,9 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
   )
 }
 
-export default (componentArgs: ComponentArgs<any, AgGridData>) => {
+const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root> = new WeakMap()
+
+export default (componentArgs: ComponentArgs<stAggridStateShape, AgGridData>) : Component<stAggridStateShape, AgGridProps> => {
   const { parentElement, ...restArgs } = componentArgs
 
   let reactRoot = reactRoots.get(parentElement)

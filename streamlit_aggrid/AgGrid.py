@@ -7,10 +7,6 @@ import logging
 from decouple import config
 from typing import Union, Literal
 
-try:
-    import pyarrow.lib
-except ImportError:
-    pyarrow = None
 from streamlit_aggrid.shared import (
     GridUpdateMode,
     DataReturnMode,
@@ -28,26 +24,9 @@ from io import StringIO
 # Track shown deprecation warnings to avoid repetition in Streamlit
 _shown_deprecation_warnings = set()
 
-# _RELEASE = config("AGGRID_RELEASE", default=True, cast=bool)
-
-# if not _RELEASE:
-#     warnings.warn(
-#         "WARNING: ST_AGGRID is in development mode. "
-#         "Remember to rebuild frontend (npm run build) after making changes."
-#     )
-
-# For v2 components, the asset_dir is declared in pyproject.toml
-# Paths are relative to that asset_dir (st_aggrid/frontend/build)
-# v2 components don't support URL-based development mode like v1 did
-# Component name must match the format: package-name.component-name
-
-# Register the component at module level
-# The component is declared in pyproject.toml
-# Streamlit v2 handles re-registration warnings automatically
 _component_func = components.component(
     name="streamlit-aggrid.agGrid", js="index-*.mjs", css="index-*.css"
 )
-
 
 def AgGrid(
     data: Union[pd.DataFrame, str] = None,
@@ -81,6 +60,7 @@ def AgGrid(
     should_grid_return: JsCode = None,
     use_json_serialization: bool | Literal["auto"] = "auto",
     server_sync_strategy: Literal["client_wins", "server_wins"] = "client_wins",
+    isolate_styles=True,
     **default_column_parameters,
 ) -> AgGridReturn:
     """Renders a DataFrame using AgGrid.
@@ -537,7 +517,7 @@ def AgGrid(
 
     try:
         # Pass key as a direct parameter, data as payload
-        component_result = _component_func(key=key, data=_component_data, isolate_styles=False)
+        component_result = _component_func(key=key, data=_component_data, isolate_styles=isolate_styles, on_grid_response_change=lambda: None)
         # In v2, the result is an object with attributes set via setStateValue
         # We used setStateValue("grid_response", data) in the frontend
         component_value = component_result.grid_response if component_result else None

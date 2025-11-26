@@ -158,37 +158,96 @@ class GridOptionsBuilder:
 
     def configure_columns(self, column_names=[], **props):
         """Batch configures columns. Key-pair values from props dict will be merged
-        to colDefs which field property is in column_names list.
+        to colDefs which colId (or field name) is in column_names list.
 
         Args:
             column_names (list, optional):
-                columns field properties. If any of colDefs matches **props dict is merged.
-                Defaults to [].
+                List of colIds (usually field names) to configure.
+                If any colId matches, **props dict is merged. Defaults to [].
+            **props: Properties to apply to the specified columns.
         """
-        for k in self.__grid_options["columnDefs"]:
-            if k in column_names:
-                self.__grid_options["columnDefs"][k].update(props)
+        for col_id in self.__grid_options.get("columnDefs", {}):
+            if col_id in column_names:
+                self.__grid_options["columnDefs"][col_id].update(props)
 
-    def configure_column(self, field, header_name=None, **other_column_properties):
-        """Configures an individual column
-        check https://www.ag-grid.com/javascript-grid-column-properties/ for more information.
+    def configure_column(self, field=None, header_name=None, col_id=None, children=None, **other_column_properties):
+        """Configures a column (regular, virtual, or group).
+
+        This method can configure three types of columns:
+        1. Regular columns: Have a 'field' that maps to data
+        2. Virtual columns: No 'field', use 'valueGetter' to compute values
+        3. Column groups: No 'field', have 'children' list to group other columns
+
+        Check https://www.ag-grid.com/javascript-grid-column-properties/ for more information.
 
         Args:
-            field (String): field name, usually equals the column header.
-            header_name (String, optional): [description]. Defaults to None.
+            field (str, optional): Field name from data. Omit for virtual columns and groups.
+            header_name (str, optional): Display name in column header.
+            col_id (str, optional): Explicit unique identifier. Auto-generated if not provided.
+            children (list, optional): List of colIds (field names) to group. Makes this a column group.
+            **other_column_properties: Any AG Grid column properties (width, pinned, valueGetter, etc.)
+
+        Examples:
+            # Regular column
+            gb.configure_column('athlete', header_name='Athlete Name', minWidth=150)
+
+            # Virtual column (no field, has valueGetter)
+            gb.configure_column(
+                header_name='Total Medals',
+                valueGetter='Number(data.gold) + Number(data.silver)'
+            )
+
+            # Column group (no field, has children)
+            gb.configure_column(
+                header_name='Medal Counts',
+                children=['gold', 'silver', 'bronze'],
+                headerClass='medal-header'
+            )
         """
+        # Generate colId if not provided
+        if col_id is None:
+            if children is not None:
+                # Column group: prefix with __group__
+                if header_name:
+                    col_id = f"__group__{header_name.lower().replace(' ', '_')}"
+                else:
+                    raise ValueError("Column groups require header_name")
+            elif field is not None:
+                # Regular column: colId defaults to field name
+                col_id = field
+            elif header_name is not None:
+                # Virtual column: generate colId from header_name
+                col_id = header_name.lower().replace(' ', '_').replace('/', '_')
+            else:
+                raise ValueError("Must provide field, header_name, or col_id")
+
+        # Initialize columnDefs if needed
         if not self.__grid_options.get("columnDefs", None):
             self.__grid_options["columnDefs"] = defaultdict(dict)
 
-        colDef = {
-            "headerName": field if header_name is None else header_name,
-            "field": field,
-        }
+        # Build column definition
+        colDef = {"colId": col_id}
 
+        # Add field only if provided (not for virtual columns or groups)
+        if field is not None:
+            colDef["field"] = field
+
+        # Add header name
+        if header_name is not None:
+            colDef["headerName"] = header_name
+        elif field is not None:
+            colDef["headerName"] = field  # Default to field name
+
+        # Add children if it's a group
+        if children is not None:
+            colDef["children"] = children
+
+        # Add any other properties
         if other_column_properties:
-            colDef = {**colDef, **other_column_properties}
+            colDef.update(other_column_properties)
 
-        self.__grid_options["columnDefs"][field].update(colDef)
+        # Store using colId as key
+        self.__grid_options["columnDefs"][col_id].update(colDef)
 
     def configure_side_bar(
         self, filters_panel=True, columns_panel=True, defaultToolPanel=""
@@ -361,6 +420,24 @@ class GridOptionsBuilder:
         """
         Configures the first column definition to look as an index column.
 
+        .. deprecated::
+            This method is deprecated. Use `configure_column()` directly instead:
+
+            Instead of:
+                gb.configure_first_column_as_index(headerText="Index")
+
+            Use:
+                first_field = list(df.columns)[0]
+                gb.configure_column(
+                    first_field,
+                    header_name="Index",
+                    minWidth=0,
+                    cellStyle={"color": "white", "background-color": "gray"},
+                    pinned="left",
+                    suppressMovable=True,
+                    suppressMenu=True
+                )
+
         Args:
             suppressMenu (bool, optional): Suppresses the header menu for the index col. Defaults to True.
             headerText (str, optional): Header for the index column. Defaults to empty string.
@@ -368,6 +445,13 @@ class GridOptionsBuilder:
             sortable (bool, optional): Make index column sortable. Defaults to True.
 
         """
+        import warnings
+        warnings.warn(
+            "configure_first_column_as_index() is deprecated. "
+            "Use configure_column() directly with the desired column field name.",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
         index_options = {
             "minWidth": 0,
@@ -379,18 +463,76 @@ class GridOptionsBuilder:
             "suppressMenu": suppressMenu,
             "menuTabs": ["filterMenuTab"],
         }
-        first_col_def = next(iter(self.__grid_options["columnDefs"]))
 
-        self.configure_column(first_col_def, headerText, **index_options)
+        # Get the first colId
+        first_col_id = next(iter(self.__grid_options["columnDefs"]))
+
+        # Get the column definition to check if it has a field
+        first_col_def = self.__grid_options["columnDefs"][first_col_id]
+        field_name = first_col_def.get("field")
+
+        if field_name:
+            # Regular column with field
+            self.configure_column(field_name, headerText, **index_options)
+        else:
+            # Virtual column without field - use colId
+            self.configure_column(col_id=first_col_id, header_name=headerText, **index_options)
 
     def build(self):
-        """Builds the gridOptions dictionary
+        """Builds the gridOptions dictionary with support for regular, virtual, and grouped columns.
 
         Returns:
-            dict: Returns a dicionary containing the configured grid options
+            dict: Returns a dictionary containing the configured grid options
         """
-        self.__grid_options["columnDefs"] = list(
-            self.__grid_options["columnDefs"].values()
-        )
+        column_defs_dict = self.__grid_options.get("columnDefs", {})
 
+        if not column_defs_dict:
+            self.__grid_options["columnDefs"] = []
+            return self.__grid_options
+
+        # Separate groups from regular columns
+        groups = []
+        regular_columns = {}
+
+        for col_id, col_def in column_defs_dict.items():
+            if "children" in col_def:
+                groups.append(col_def)
+            else:
+                regular_columns[col_id] = col_def
+
+        # Build final columnDefs structure
+        final_column_defs = []
+        grouped_col_ids = set()
+
+        # Process groups first
+        for group_def in groups:
+            group_copy = group_def.copy()
+
+            # Replace child colIds with actual column definitions
+            children_defs = []
+            for child_col_id in group_def["children"]:
+                if child_col_id in regular_columns:
+                    child_def = regular_columns[child_col_id].copy()
+                    # Remove colId from final output (AG Grid doesn't need it)
+                    child_def.pop("colId", None)
+                    children_defs.append(child_def)
+                    grouped_col_ids.add(child_col_id)
+                else:
+                    print(f"Warning: Column '{child_col_id}' in group '{group_def.get('headerName')}' was not configured")
+
+            group_copy["children"] = children_defs
+            # Remove colId from group definition
+            group_copy.pop("colId", None)
+
+            final_column_defs.append(group_copy)
+
+        # Add ungrouped columns
+        for col_id, col_def in regular_columns.items():
+            if col_id not in grouped_col_ids:
+                col_def_copy = col_def.copy()
+                # Remove colId (AG Grid doesn't need it if field exists)
+                col_def_copy.pop("colId", None)
+                final_column_defs.append(col_def_copy)
+
+        self.__grid_options["columnDefs"] = final_column_defs
         return self.__grid_options

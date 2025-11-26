@@ -1,15 +1,9 @@
 import { AgGridReact } from "ag-grid-react"
-import React, { ReactNode } from "react"
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import ReactDOM from "react-dom/client"
 import type { Root } from "react-dom/client"
 
-// import {
-//   ComponentProps,
-//   Streamlit,
-//   withStreamlitConnection,
-// } from "streamlit-component-lib"
-
-import { ComponentArgs } from '@streamlit/component-v2-lib';
+import { ComponentArgs } from '@streamlit/component-v2-lib'
 
 import {
   AllCommunityModule,
@@ -18,8 +12,8 @@ import {
   GetRowIdParams,
   GridApi,
   GridReadyEvent,
-  GridSizeChangedEvent,
   ModuleRegistry,
+  ColumnState,
 } from "ag-grid-community"
 
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
@@ -44,13 +38,10 @@ import {
   parseJsCodeFromPython,
 } from "./utils/gridUtils"
 
-import { State } from "./types/AgGridTypes"
 import { parseGridOptions, parseData } from "./utils/parsers"
 
 type CSSDict = { [key: string]: { [key: string]: string } }
 
-// Handle the possibility of multiple instances of the component to keep track
-// of the React roots for each component instance.
 const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root> = new WeakMap()
 
 interface AgGridData {
@@ -84,491 +75,317 @@ interface AgGridProps {
   theme?: any
 }
 
-class AgGrid extends React.Component<AgGridProps, State> {
-  public state: State
+const AgGrid: React.FC<AgGridProps> = (props) => {
 
-  private gridContainerRef: React.RefObject<HTMLDivElement> = React.createRef()
-  private isGridAutoHeightOn: boolean
-  private renderedGridHeightPrevious: number = 0
-  private themeParser: ThemeParser | undefined = undefined
-  private shouldGridReturn: Function | undefined = undefined
-  private collectGridReturn: Function | undefined = undefined
+  // Register AG Grid modules
+  const enableEnterpriseModules = props.data?.enable_enterprise_modules
+  if (enableEnterpriseModules === "enterprise+AgCharts") {
+    ModuleRegistry.registerModules([
+      AllEnterpriseModule.with(AgChartsEnterpriseModule),
+    ])
+    if (props.data?.license_key) {
+      LicenseManager.setLicenseKey(props.data.license_key)
+    }
+  } else if (
+    enableEnterpriseModules === true ||
+    enableEnterpriseModules === "enterpriseOnly"
+  ) {
+    ModuleRegistry.registerModules([AllEnterpriseModule])
+    if (props.data?.license_key) {
+      LicenseManager.setLicenseKey(props.data.license_key)
+    }
+  } else {
+    ModuleRegistry.registerModules([AllCommunityModule])
+  }
 
-  constructor(props: AgGridProps) {
-    super(props)
-    //console.log(props)
 
-    this.themeParser = new ThemeParser()
-    // Handle custom CSS if provided
-    if (props.data?.custom_css) {
-      addCustomCSS(props.data.custom_css)
+  // Refs (non-reactive values)
+  const gridContainerRef = useRef<HTMLDivElement>(null)
+  const renderedGridHeightPrevious = useRef(0)
+  const themeParserRef = useRef<ThemeParser>(new ThemeParser())
+  const shouldGridReturnRef = useRef<Function | undefined>(undefined)
+  const collectGridReturnRef = useRef<Function | undefined>(undefined)
+  const isGridAutoHeightOnRef = useRef(false)
+
+  // State
+  const [gridOptions, setGridOptions] = useState<any>(() => {
+    const go = parseGridOptions(props.data || {})
+    go.rowData = parseData(props.data || {})
+
+    // Auto-generate getRowId if not provided and data has unique IDs
+    if (!("getRowId" in go) && go.rowData?.[0]?.["::auto_unique_id::"]) {
+      go.getRowId = (params: GetRowIdParams) => params.data["::auto_unique_id::"]
     }
 
-    // Handle pro assets if provided
-    if (props.data?.pro_assets && Array.isArray(props.data.pro_assets)) {
-      props.data.pro_assets.forEach((asset: any) => {
-        injectProAssets(asset?.js, asset?.css)
+    return go
+  })
+
+  const [editedRows, setEditedRows] = useState<Set<any>>(new Set())
+  const [isMaximized, setIsMaximized] = useState(false)
+  const [savedColumnState, setSavedColumnState] = useState<ColumnState[] | undefined>()
+  const [dataHash, setDataHash] = useState(props.data?.data_hash)
+  const [api, setApi] = useState<GridApi | undefined>()
+
+  // Derived values
+  const debug = props.data?.debug || false
+  const enterprise_features_enabled = props.data?.enable_enterprise_modules || false
+  const isRowDataEdited = editedRows.size > 0
+
+  // One-time initialization
+  useEffect(() => {
+    if (debug) {
+      console.log("***Received Props", props)
+      console.log("*** Processed Initial State", {
+        gridOptions,
+        editedRows,
+        isMaximized,
+        savedColumnState,
+        dataHash,
+        api,
       })
     }
 
-    const enableEnterpriseModules = props.data?.enable_enterprise_modules
-    if (enableEnterpriseModules === "enterprise+AgCharts") {
-      ModuleRegistry.registerModules([
-        AllEnterpriseModule.with(AgChartsEnterpriseModule),
-      ])
-      if (props.data?.license_key) {
-        LicenseManager.setLicenseKey(props.data.license_key)
-      }
-    } else if (
-      enableEnterpriseModules === true ||
-      enableEnterpriseModules === "enterpriseOnly"
-    ) {
-      ModuleRegistry.registerModules([AllEnterpriseModule])
-      if (props.data?.license_key) {
-        LicenseManager.setLicenseKey(props.data.license_key)
-      }
-    } else {
-      ModuleRegistry.registerModules([AllCommunityModule])
-    }
+    // Handle custom CSS
+    props.data?.custom_css && addCustomCSS(props.data.custom_css)
 
+    // Handle pro assets
+    props.data?.pro_assets?.forEach((asset: any) => injectProAssets(asset?.js, asset?.css))
+
+    // Handle StreamlitAgGridPro extension
     const StreamlitAgGridPro = (window as any)?.StreamlitAgGridPro
     if (StreamlitAgGridPro) {
-      StreamlitAgGridPro.returnGridValue = this.returnGridValue.bind(this)
-
-      if (
-        StreamlitAgGridPro.extenders &&
-        Array.isArray(StreamlitAgGridPro.extenders)
-      ) {
-        StreamlitAgGridPro.extenders.forEach((extender: (go: any) => void) => {
-          if (typeof extender === "function") {
-            extender(go)
-          }
-        })
-      }
+      StreamlitAgGridPro.returnGridValue = returnGridValue
+      StreamlitAgGridPro.extenders?.forEach((extender: Function) => extender(gridOptions))
     }
 
-    this.isGridAutoHeightOn =
-      this.props.data?.gridOptions?.domLayout === "autoHeight"
-
-    var go = parseGridOptions(props.data || {})
-    go.rowData = parseData(props.data || {})
-
-    if (go && "getRowId" in go === false) {
-      if (
-        Array.isArray(go.rowData) &&
-        go.rowData.length > 0 &&
-        go.rowData[0].hasOwnProperty("::auto_unique_id::")
-      ) {
-        go.getRowId = (params: GetRowIdParams) =>
-          params.data["::auto_unique_id::"] as string
-      }
-    }
-
-    this.shouldGridReturn = props.data?.should_grid_return
+    isGridAutoHeightOnRef.current = props.data?.gridOptions?.domLayout === "autoHeight"
+    shouldGridReturnRef.current = props.data?.should_grid_return
       ? parseJsCodeFromPython(props.data.should_grid_return)
-      : null
-    this.collectGridReturn = props.data?.custom_jscode_for_grid_return
+      : undefined
+    collectGridReturnRef.current = props.data?.custom_jscode_for_grid_return
       ? parseJsCodeFromPython(props.data.custom_jscode_for_grid_return)
-      : null
+      : undefined
+  }, []) // Only run once on mount
 
-    this.state = {
-      gridHeight: this.props.data?.height || 400,
-      gridOptions: go,
-      isRowDataEdited: false,
-      api: undefined,
-      enterprise_features_enabled: props.data?.enable_enterprise_modules || false,
-      debug: props.data?.debug || false,
-      editedRows: new Set(),
-      isMaximized: false,
-    } as State
+  // Handle prop updates
+  useEffect(() => {
+    if (!props.data) return
 
-    if (this.state.debug) {
-      console.log("***Received Props", props)
-      console.log("*** Processed State", this.state)
+    debug && console.log("********** Props updated", props)
+
+    // Update grid options if changed (excluding rowData)
+    const prevGridOptions = omit(gridOptions, "rowData")
+    const currGridOptions = omit(props.data.gridOptions, "rowData")
+    if (!isEqual(prevGridOptions, currGridOptions)) {
+      api?.updateGridOptions(parseGridOptions(props.data))
     }
-  }
 
-  private attachStreamlitRerunToEvents(api: GridApi) {
-    const updateEvents = this.props.data?.update_on
+    // Update theme if changed
+    if (!isEqual(props.theme, themeParserRef.current) || !isEqual(props.data.theme, gridOptions?.theme)) {
+      api?.updateGridOptions({
+        theme: themeParserRef.current?.parse(props.data.theme, props.theme),
+      })
+    }
 
-    updateEvents?.forEach((element: any) => {
-      if (Array.isArray(element)) {
-        // If element is a tuple (eventName, timeout), apply debounce for the timeout duration
-        const [eventName, timeout] = element
-        api.addEventListener(
-          eventName,
-          debounce(
-            (e: any) => {
-              this.returnGridValue(e, eventName)
-            },
-            timeout,
-            {
-              leading: false,
-              trailing: true,
-              maxWait: timeout,
-            }
-          )
-        )
-      } else {
-        // Attach event listener for non-tuple events
-        api.addEventListener(element, (e: any) => {
-          this.returnGridValue(e, element)
-        })
-      }
-      if (this.state.debug) {
-        console.log(`Attached grid return event: ${element}`)
-      }
-    })
-  }
+    // Handle data sync strategy
+    const serverSyncStrategy = props.data.server_sync_strategy
+    if (serverSyncStrategy === "client_wins" && !isRowDataEdited && props.data.data_hash !== dataHash) {
+      api?.updateGridOptions({ rowData: parseData(props.data) || [] })
+      setDataHash(props.data.data_hash)
+    } else if (serverSyncStrategy === "server_wins") {
+      api?.stopEditing(true)
+      api?.updateGridOptions({ rowData: parseData(props.data) || [] })
+    }
 
-  private resizeGridContainer() {
-    const renderedGridHeight = this.gridContainerRef.current?.clientHeight
+    // Update column state if changed
+    if (!isEqual(gridOptions?.columnState, props.data.columns_state) && props.data.columns_state) {
+      api?.applyColumnState({ state: props.data.columns_state, applyOrder: true })
+    }
+  }, [props.data, props.theme, api, dataHash, isRowDataEdited, gridOptions, debug])
+
+  const resizeGridContainer = useCallback(() => {
+    const renderedGridHeight = gridContainerRef.current?.clientHeight
     if (
       renderedGridHeight &&
       renderedGridHeight > 0 &&
-      renderedGridHeight !== this.renderedGridHeightPrevious
+      renderedGridHeight !== renderedGridHeightPrevious.current
     ) {
-      this.renderedGridHeightPrevious = renderedGridHeight
-      if (this.props.parentElement instanceof HTMLElement) {
-        this.props.parentElement.style.height = `${renderedGridHeight}px`
+      renderedGridHeightPrevious.current = renderedGridHeight
+      if (props.parentElement instanceof HTMLElement) {
+        props.parentElement.style.height = `${renderedGridHeight}px`
       }
     }
-  }
+  }, [props.parentElement])
 
-  private async returnGridValue(
-    eventData: any,
-    streamlitRerunEventTriggerName: string
-  ) {
-    if (this.state.debug) {
-      console.log(`refreshing grid from ${streamlitRerunEventTriggerName}`)
-      console.log("dataReturnMode is ", this.props.data?.data_return_mode)
+  const returnGridValue = useCallback(async (eventData: any, streamlitRerunEventTriggerName: string) => {
+    if (debug) {
+      console.log(`Refreshing grid from ${streamlitRerunEventTriggerName}, mode: ${props.data?.data_return_mode}`)
     }
 
-    // Create collector context
     const context: CollectorContext = {
-      state: this.state,
-      props: this.props,
-      eventData: eventData,
-      streamlitRerunEventTriggerName: streamlitRerunEventTriggerName,
+      state: { gridOptions, isRowDataEdited, api, enterprise_features_enabled, debug, editedRows, isMaximized, savedColumnState, gridHeight: props.data?.height || 400 },
+      props,
+      eventData,
+      streamlitRerunEventTriggerName,
     }
 
-    const collectorFactory = {
+    const collectors = {
       AS_INPUT: new LegacyCollector(),
       FILTERED: new LegacyCollector(),
       FILTERED_AND_SORTED: new LegacyCollector(),
       MINIMAL: new LegacyCollector(),
-      CUSTOM: new CustomCollector(this.collectGridReturn || (() => {})),
+      CUSTOM: new CustomCollector(collectGridReturnRef.current || (() => {})),
     }
 
     try {
-      // Determine and create appropriate collector
-      const dataReturnMode = this.props.data?.data_return_mode || 'AS_INPUT'
-      const collector =
-        collectorFactory[
-          dataReturnMode as keyof typeof collectorFactory
-        ]
-
-      // Process response using collector
+      const collector = collectors[props.data?.data_return_mode as keyof typeof collectors || 'AS_INPUT']
       const result = await collector.processResponse(context)
 
       if (result.success) {
-        if (this.state.debug) {
-          console.log(
-            `Grid response processed by ${collector.getCollectorType()}:`,
-            result.data
-          )
+        debug && console.log(`Grid response processed by ${collector.getCollectorType()}:`, result.data)
+
+        if (shouldGridReturnRef.current?.({ streamlitRerunEventTriggerName, eventData }) === false) {
+          debug && console.log(`shouldGridReturn blocked return for event: ${streamlitRerunEventTriggerName}`)
+          return
         }
-        // Check shouldGridReturn before sending value back to Python
-        if (this.shouldGridReturn) {
-          const shouldReturn = this.shouldGridReturn({ streamlitRerunEventTriggerName, eventData });
-          if (!shouldReturn) {
-            if (this.state.debug) {
-              console.log(`shouldGridReturn blocked return for event: ${streamlitRerunEventTriggerName}`);
-            }
-            return; // Don't send value back
-          }
-        }
-        this.props.setStateValue("grid_response", result.data)
+
+        props.setStateValue("grid_response", result.data)
       } else {
         console.error(`Collector processing failed: ${result.error}`)
-        // Fallback to no return to avoid breaking the UI
       }
     } catch (error) {
       console.error("Error in returnGridValue collector processing:", error)
-      // Fallback to no return to avoid breaking the UI
     }
-  }
+  }, [debug, props, gridOptions, isRowDataEdited, api, enterprise_features_enabled, editedRows, isMaximized, savedColumnState])
 
-  private toggleMaximize = () => {
-    const willMaximize = !this.state.isMaximized
+  const attachStreamlitRerunToEvents = useCallback((gridApi: GridApi) => {
+    props.data?.update_on?.forEach((element: any) => {
+      const [eventName, timeout] = Array.isArray(element) ? element : [element, 0]
+      const handler = timeout > 0
+        ? debounce((e: any) => returnGridValue(e, eventName), timeout, { leading: false, trailing: true, maxWait: timeout })
+        : (e: any) => returnGridValue(e, eventName)
 
-    if (willMaximize) {
-      // Save current column state before maximizing
-      const columnState = this.state.api?.getColumnState()
-      this.setState({ isMaximized: true, savedColumnState: columnState }, () => {
-        // Apply sizeColumnsToFit after state update to fill viewport
-        setTimeout(() => {
-          this.state.api?.sizeColumnsToFit()
-        }, 0)
-      })
-    } else {
-      // Restore saved column state when exiting maximize
-      this.setState({ isMaximized: false }, () => {
-        if (this.state.savedColumnState) {
-          setTimeout(() => {
-            this.state.api?.applyColumnState({
-              state: this.state.savedColumnState!,
-              applyOrder: true,
-            })
-          }, 0)
-        }
+      gridApi.addEventListener(eventName, handler)
+      debug && console.log(`Attached grid return event: ${eventName}${timeout ? ` (debounced ${timeout}ms)` : ''}`)
+    })
+  }, [props.data?.update_on, debug, returnGridValue])
+
+  const toggleMaximize = useCallback(() => {
+    setIsMaximized(prev => {
+      if (!prev) {
+        setSavedColumnState(api?.getColumnState())
+        setTimeout(() => api?.sizeColumnsToFit(), 0)
+      } else if (savedColumnState) {
+        setTimeout(() => api?.applyColumnState({ state: savedColumnState, applyOrder: true }), 0)
+      }
+      return !prev
+    })
+  }, [api, savedColumnState])
+
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    setApi(event.api)
+
+    // Attach resize listeners
+    event.api.addEventListener("rowGroupOpened", resizeGridContainer)
+    event.api.addEventListener("firstDataRendered", resizeGridContainer)
+    event.api.addEventListener("gridSizeChanged", resizeGridContainer)
+
+    // Handle client_wins strategy
+    if (props.data?.server_sync_strategy === "client_wins") {
+      event.api.addEventListener("cellValueChanged", (e: CellValueChangedEvent) => {
+        console.warn("server_sync_strategy is 'client_wins' - Data edited on Grid. Ignoring server updates.")
+        setEditedRows(prev => new Set(prev).add(e.node.id))
       })
     }
-  }
 
-  private defineContainerHeight() {
-    if (this.state.isMaximized) {
+    // Attach custom events
+    attachStreamlitRerunToEvents(event.api)
+
+    // Attach events to detail grids (enterprise)
+    enterprise_features_enabled && event.api.forEachDetailGridInfo((i: DetailGridInfo) =>
+      i.api && attachStreamlitRerunToEvents(i.api)
+    )
+
+    // Call user's onGridReady if provided
+    gridOptions.onGridReady?.(event)
+  }, [props.data?.server_sync_strategy, enterprise_features_enabled, gridOptions, attachStreamlitRerunToEvents, resizeGridContainer])
+
+  const defineContainerHeight = useMemo(() => {
+    if (isMaximized) {
       return {
         width: '100vw',
         height: '100vh',
       }
-    } else if (this.isGridAutoHeightOn) {
+    } else if (isGridAutoHeightOnRef.current) {
       return {
-        width: this.props.width,
+        width: props.width,
       }
     } else {
       return {
-        width: this.props.width,
-        height: this.props.data?.height || 400,
+        width: props.width,
+        height: props.data?.height || 400,
       }
     }
-  }
+  }, [isMaximized, props.width, props.data?.height])
 
-  public componentDidUpdate(prevProps: any, prevState: State, snapshot?: any) {
-    if (this.state.debug) {
-      console.log("********** componentDidUpdate.prevProps")
-      console.log(prevProps)
-      console.log("********** componentDidUpdate.this")
-      console.log(this)
-    }
+  const manualUpdate = props.data?.manual_update === true
 
-    // Handle case where data arrives for the first time
-    if (!prevProps.data && this.props.data) {
-      console.log("Data arrived for the first time, reinitializing grid")
-      // Data arrived for the first time, update grid options and row data
-      let go = parseGridOptions(this.props)
-      go.rowData = parseData(this.props)
-
-      this.setState({
-        gridOptions: go,
-        gridHeight: this.props.data.height || 400,
-        enterprise_features_enabled: this.props.data.enable_enterprise_modules || false,
-        debug: this.props.data.debug || false,
-      })
-      return
-    }
-
-    // If we still don't have data, nothing to update
-    if (!this.props.data) {
-      return
-    }
-
-    //Check update on grid options. TODO: exclude `initial` options
-    const prevGridOptions = omit(prevProps.data?.gridOptions, "rowData")
-    const currGridOptions = omit(this.props.data?.gridOptions, "rowData")
-
-    if (!isEqual(prevGridOptions, currGridOptions)) {
-      let go = parseGridOptions(this.props)
-      this.state.api?.updateGridOptions(go)
-    }
-
-    //Theme object Changes here
-    if (
-      !isEqual(prevProps.theme, this.props.theme) ||
-      !isEqual(this.props.data?.theme, prevProps.data?.theme)
-    ) {
-      let streamlitTheme = this.props.theme
-      let agGridTheme = this.props.data.theme
-
-      this.state.api?.updateGridOptions({
-        theme: this.themeParser?.parse(agGridTheme, streamlitTheme),
-      })
-    }
-
-    //Check if data changed and updates
-
-    const serverSyncStragegy = this.props.data?.server_sync_strategy
-    if (serverSyncStragegy === "client_wins") {
-      if (!this.state.isRowDataEdited) {
-        if (this.props.data?.data_hash !== prevProps.data?.data_hash) {
-          const rowData = parseData(this.props) || []
-          this.state.api?.updateGridOptions({ rowData })
-        }
-      }
-    } else if (serverSyncStragegy === "server_wins") {
-      const rowData = parseData(this.props) || []
-      this.state.api?.stopEditing(true)
-      this.state.api?.updateGridOptions({ rowData })
-    }
-
-    //check if columnStates changed
-    if (!isEqual(prevProps.data?.columns_state, this.props.data?.columns_state)) {
-      const columnsState = this.props.data.columns_state
-      if (columnsState != null) {
-        this.state.api?.applyColumnState({
-          state: columnsState,
-          applyOrder: true,
-        })
-      }
-    }
-  }
-
-  private onGridReady(event: GridReadyEvent) {
-    this.setState({ api: event.api })
-
-    //Is it ugly? Yes. Does it work? Yes. Why? IDK
-    // eslint-disable-next-line
-    this.state.api = event.api
-
-    // if (this.state.debug ) {
-    //   this.state.api?.addGlobalListener((eventType, event) =>
-    //     console.log("GlobalListener", eventType, event)
-    //   )
-    // }
-    this.state.api?.addEventListener("rowGroupOpened", (e: any) =>
-      this.resizeGridContainer()
-    )
-
-    this.state.api?.addEventListener("firstDataRendered", (e: any) => {
-      this.resizeGridContainer()
-    })
-
-    this.state.api.addEventListener(
-      "gridSizeChanged",
-      (e: GridSizeChangedEvent) => this.onGridSizeChanged(e)
-    )
-    if (this.props.data?.server_sync_strategy === "client_wins") {
-      this.state.api.addEventListener(
-        "cellValueChanged",
-        (event: CellValueChangedEvent) => {
-          console.warn(
-            "server_sync_strategy is 'client_wins' and Data was edited on Grid. Ignoring further changes from Streamlit server."
-          )
-
-          let editedRows = new Set(this.state.editedRows).add(event.node.id)
-          this.setState({ isRowDataEdited: true, editedRows: editedRows })
-        }
-      )
-    }
-
-    //Attach events
-    this.attachStreamlitRerunToEvents(this.state.api)
-
-    if (this.state.enterprise_features_enabled) {
-      this.state.api?.forEachDetailGridInfo((i: DetailGridInfo) => {
-        if (i.api !== undefined) {
-          this.attachStreamlitRerunToEvents(i.api)
-        }
-      })
-    }
-
-    //If there is any event onGridReady in gridOptions, fire it
-    let { onGridReady } = this.state.gridOptions
-    onGridReady && onGridReady(event)
-  }
-
-  private onGridSizeChanged(event: GridSizeChangedEvent) {
-    this.resizeGridContainer()
-  }
-
-  private processPreselection() {
-    //TODO: do not pass grid Options that doesn't exist in aggrid (preSelectAllRows,  preSelectedRows)
-    var preSelectAllRows =
-      this.props.data?.gridOptions?.["preSelectAllRows"] || false
-
-    if (preSelectAllRows) {
-      this.state.api?.selectAll()
-    } else {
-      var preselectedRows = this.props.data?.gridOptions?.["preSelectedRows"]
-      if (preselectedRows || preselectedRows?.length() > 0) {
-        for (var idx in preselectedRows) {
-          this.state.api
-            ?.getRowNode(preselectedRows[idx])
-            ?.setSelected(true, false)
-        }
-      }
-    }
-  }
-
-  public render = (): ReactNode => {
-    let manualUpdate = this.props.data?.manual_update === true
-
-    return (
-      <div
-        id="gridContainer"
-        ref={this.gridContainerRef}
-        className={this.state.isMaximized ? 'maximized' : ''}
-        style={this.defineContainerHeight()}
-      >
-        <GridToolBar
-          gridContainerRef={this.gridContainerRef}
-          showManualUpdateButton={manualUpdate}
-          enabled={this.props.data?.show_toolbar ?? true}
-          showSearch={this.props.data?.show_search ?? true}
-          showDownloadButton={this.props.data?.show_download_button ?? true}
-          isMaximized={this.state.isMaximized}
-          onMaximizeToggle={this.toggleMaximize}
-          onQuickSearchChange={(value) => {
-            this.state.api?.setGridOption("quickFilterText", value)
-            this.state.api?.hideOverlay() // Hide any overlay if present
-          }}
-          onDownloadClick={() => {
-            this.state.api?.exportDataAsCsv()
-          }}
-          onManualUpdateClick={() => {
-            if (this.state.debug) {
-              console.log("Manual update triggered")
-            }
-          }}
-        />
-        <AgGridReact
-          onGridReady={(e: GridReadyEvent<any, any>) => this.onGridReady(e)}
-          gridOptions={this.state.gridOptions}
-        ></AgGridReact>
-      </div>
-    )
-  }
+  return (
+    <div
+      id="gridContainer"
+      ref={gridContainerRef}
+      className={isMaximized ? 'maximized' : ''}
+      style={defineContainerHeight}
+    >
+      <GridToolBar
+        gridContainerRef={gridContainerRef}
+        showManualUpdateButton={manualUpdate}
+        enabled={props.data?.show_toolbar ?? true}
+        showSearch={props.data?.show_search ?? true}
+        showDownloadButton={props.data?.show_download_button ?? true}
+        isMaximized={isMaximized}
+        onMaximizeToggle={toggleMaximize}
+        onQuickSearchChange={(value) => {
+          api?.setGridOption("quickFilterText", value)
+          api?.hideOverlay()
+        }}
+        onDownloadClick={() => {
+          api?.exportDataAsCsv()
+        }}
+        onManualUpdateClick={() => {
+          if (debug) {
+            console.log("Manual update triggered")
+          }
+        }}
+      />
+      <AgGridReact
+        onGridReady={onGridReady}
+        gridOptions={gridOptions}
+      ></AgGridReact>
+    </div>
+  )
 }
 
-const AgGridComponent = (componentArgs: ComponentArgs<any, AgGridData>) => {
-  const { parentElement, key, ...restArgs } = componentArgs
-  console.log("=== componentArgs ===", componentArgs)
-  // Check to see if we already have a React root for this component instance.
+export default (componentArgs: ComponentArgs<any, AgGridData>) => {
+  const { parentElement, ...restArgs } = componentArgs
+
   let reactRoot = reactRoots.get(parentElement)
   if (!reactRoot) {
-    // If we don't, create a new root for the React application using the React
-    // DOM API.
     reactRoot = ReactDOM.createRoot(parentElement)
     reactRoots.set(parentElement, reactRoot)
   }
 
-  // Render/re-render the React application into the root using the React DOM API.
   reactRoot.render(
     <React.StrictMode>
       <AgGrid parentElement={parentElement} {...restArgs} />
     </React.StrictMode>
   )
 
-  // Return a function to cleanup the React application in the Streamlit
-  // component lifecycle.
   return () => {
-    const reactRoot = reactRoots.get(parentElement)
-
-    if (reactRoot) {
-      reactRoot.unmount()
+    const root = reactRoots.get(parentElement)
+    if (root) {
+      root.unmount()
       reactRoots.delete(parentElement)
     }
   }
 }
-
-export default AgGridComponent

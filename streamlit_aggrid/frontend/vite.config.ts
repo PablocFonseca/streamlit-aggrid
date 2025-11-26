@@ -23,7 +23,8 @@ export default defineConfig(() => {
     build: {
       minify: isDev ? false : "esbuild",
       outDir: "build",
-      sourcemap: isDev,
+      // Always generate source maps for debugging (use 'hidden' in prod to not expose in browser)
+      sourcemap: isDev ? true : "hidden",
       // Inline CSS into the JS bundle for Streamlit components
       cssCodeSplit: false,
       // Enable watch mode for development

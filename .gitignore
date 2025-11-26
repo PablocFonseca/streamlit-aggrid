@@ -178,6 +178,7 @@ package-lock.json
 # VSCode
 ########################################################################
 .vscode/
+.chrome-debug-profile/
 
 st_aggrid/frontend/node_modules/
 st_aggrid/frontend/.eslintcache
@@ -213,3 +214,8 @@ test/issues/*
 test/src_original/*
 st_aggrid/frontend/bundle-analysis.json
 stats.json
+
+########################################################################
+# Claude Code
+########################################################################
+.claude/*

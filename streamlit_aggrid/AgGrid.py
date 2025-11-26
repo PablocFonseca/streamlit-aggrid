@@ -537,7 +537,7 @@ def AgGrid(
 
     try:
         # Pass key as a direct parameter, data as payload
-        component_result = _component_func(key=key, data=_component_data)
+        component_result = _component_func(key=key, data=_component_data, isolate_styles=False)
         # In v2, the result is an object with attributes set via setStateValue
         # We used setStateValue("grid_response", data) in the frontend
         component_value = component_result.grid_response if component_result else None

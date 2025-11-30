@@ -379,6 +379,15 @@ def AgGrid(
     if not isinstance(data, pd.DataFrame):
         try_to_convert_back_to_original_types = False
 
+    # Deprecate custom_css parameter (not needed in Components V2)
+    if custom_css is not None:
+        warnings.warn(
+            "The 'custom_css' parameter is deprecated in Components V2. "
+            "Use st.markdown() and isolate_styles=False to inject CSS instead. "
+            "See streamlit_aggrid.styles module for helper functions like get_hide_expanders_css().",
+            DeprecationWarning,
+            stacklevel=2
+        )
     custom_css = custom_css or dict()
 
     if height is None:

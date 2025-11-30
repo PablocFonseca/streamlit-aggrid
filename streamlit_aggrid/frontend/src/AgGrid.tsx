@@ -15,6 +15,8 @@ import {
   ModuleRegistry,
   ColumnState,
   GridState,
+  DateEditorModule,
+  LargeTextEditorModule
 } from "ag-grid-community"
 
 import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
@@ -97,7 +99,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
       LicenseManager.setLicenseKey(props.data.license_key)
     }
   } else {
-    ModuleRegistry.registerModules([AllCommunityModule])
+    ModuleRegistry.registerModules([AllCommunityModule, DateEditorModule, LargeTextEditorModule])
   }
 
 
@@ -111,8 +113,17 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
 
   // State
   const [gridOptions, setGridOptions] = useState<any>(() => {
-    const go = parseGridOptions(props.data || {})
-    go.rowData = parseData(props.data || {})
+    // Guard against undefined props.data during initial render
+    if (!props.data) {
+      return {}
+    }
+
+    const go = parseGridOptions(
+      props.data.gridOptions,
+      props.data.allow_unsafe_jscode,
+      props.data.theme
+    )
+    go.rowData = parseData(props.data.data, props.data.gridOptions?.rowData)
 
     // Auto-generate getRowId if not provided and data has unique IDs
     if (!("getRowId" in go) && go.rowData?.[0]?.["::auto_unique_id::"]) {
@@ -178,7 +189,13 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     const prevGridOptions = omit(gridOptions, "rowData")
     const currGridOptions = omit(props.data.gridOptions, "rowData")
     if (!isEqual(prevGridOptions, currGridOptions)) {
-      apiRef.current?.updateGridOptions(parseGridOptions(props.data))
+      apiRef.current?.updateGridOptions(
+        parseGridOptions(
+          props.data.gridOptions,
+          props.data.allow_unsafe_jscode,
+          props.data.theme
+        )
+      )
     }
 
     // Update theme if changed
@@ -191,11 +208,15 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     // Handle data sync strategy
     const serverSyncStrategy = props.data.server_sync_strategy
     if (serverSyncStrategy === "client_wins" && !isRowDataEdited && props.data.data_hash !== dataHash) {
-      apiRef.current?.updateGridOptions({ rowData: parseData(props.data) || [] })
+      apiRef.current?.updateGridOptions({
+        rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
+      })
       setDataHash(props.data.data_hash)
     } else if (serverSyncStrategy === "server_wins") {
       apiRef.current?.stopEditing(true)
-      apiRef.current?.updateGridOptions({ rowData: parseData(props.data) || [] })
+      apiRef.current?.updateGridOptions({
+        rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
+      })
     }
 
     // Update column state if changed
@@ -371,7 +392,7 @@ const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root>
 
 export default (componentArgs: ComponentArgs<stAggridStateShape, AgGridData>) : Component<stAggridStateShape, AgGridProps> => {
   const { parentElement, ...restArgs } = componentArgs
-
+  
   let reactRoot = reactRoots.get(parentElement)
   if (!reactRoot) {
     reactRoot = ReactDOM.createRoot(parentElement)
@@ -380,7 +401,7 @@ export default (componentArgs: ComponentArgs<stAggridStateShape, AgGridData>) : 
 
   reactRoot.render(
     <React.StrictMode>
-      <AgGrid parentElement={parentElement} {...restArgs} />
+      <AgGrid parentElement={parentElement} {...omit(restArgs, 'key')}/>
     </React.StrictMode>
   )
 

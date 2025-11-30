@@ -18,7 +18,10 @@
     "streamlit-component-lib/apache-arrow": "9.0.0"
   },
   "devDependencies": {
-    "webpack-bundle-analyzer": "^4.10.2",
-    "webpack-cli": "^6.0.1"
+    "webpack-bundle-analyzer": "^4.10.2"
+  },
+  "dependencies": {
+    "ag-grid-community": "^34.3.1",
+    "ag-grid-enterprise": "^34.3.1"
   }
 }

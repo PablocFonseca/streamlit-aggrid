@@ -33,3 +33,18 @@
   padding-top: 3.5rem;
   box-sizing: border-box;
 }
+
+/* Ensure date/time inputs have a background for mix-blend-mode to work */
+#gridContainer input[type="date"],
+#gridContainer input[type="time"],
+#gridContainer input[type="datetime-local"] {
+  background-color: var(--ag-background-color, transparent);
+}
+
+/* Fix calendar icon visibility - use difference blend mode to auto-adapt */
+#gridContainer input[type="date"]::-webkit-calendar-picker-indicator,
+#gridContainer input[type="time"]::-webkit-calendar-picker-indicator,
+#gridContainer input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.5);
+}

@@ -115,7 +115,7 @@ class ThemeParser {
 
 
     parse(gridOptionsTheme: stAggridThemeOptions, streamlitTheme?: StreamlitTheme) : Theme {
-        const { themeName } = gridOptionsTheme;
+        const themeName = gridOptionsTheme?.themeName;
 
         const recipeMapper: { [key: string]: () => Theme } = {
             streamlit: () => this.streamlitRecipe(streamlitTheme!),

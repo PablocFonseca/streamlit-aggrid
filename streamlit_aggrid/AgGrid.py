@@ -1,32 +1,46 @@
+import logging
+import typing
+import warnings
+from typing import Literal, Union
+
+import pandas as pd
 import streamlit as st
 import streamlit.components.v2 as components
-import pandas as pd
-import warnings
-import typing
-import logging
-from decouple import config
-from typing import Union, Literal
 
+from streamlit_aggrid.AgGridReturn import AgGridReturn
+from streamlit_aggrid.aggrid_utils import (
+    _parse_data_and_grid_options,
+    compute_data_hash,
+    parse_update_mode,
+)
 from streamlit_aggrid.shared import (
-    GridUpdateMode,
+    AgGridTheme,
     DataReturnMode,
+    GridUpdateMode,
     JsCode,
     StAggridTheme,
-    AgGridTheme,
 )
-from streamlit_aggrid.aggrid_utils import (
-    parse_update_mode,
-    _parse_data_and_grid_options,
-)
-from streamlit_aggrid.AgGridReturn import AgGridReturn
-from io import StringIO
 
 # Track shown deprecation warnings to avoid repetition in Streamlit
 _shown_deprecation_warnings = set()
 
-_component_func = components.component(
-    name="streamlit-aggrid.agGrid", js="index-*.mjs", css="index-*.css"
-)
+# Registered lazily on the first AgGrid() call: registration validates the
+# component manifest against Streamlit's runtime registry, which only exists
+# inside a running Streamlit app. Importing this module from plain Python
+# (e.g. unit tests) must not fail.
+_component_funcs = {}
+
+
+def _get_component_func(isolate_styles=True):
+    if isolate_styles not in _component_funcs:
+        _component_funcs[isolate_styles] = components.component(
+            name="streamlit-aggrid.agGrid",
+            js="index-*.mjs",
+            css="index-*.css",
+            isolate_styles=isolate_styles,
+        )
+    return _component_funcs[isolate_styles]
+
 
 def AgGrid(
     data: Union[pd.DataFrame, str] = None,
@@ -36,7 +50,7 @@ def AgGrid(
     | Literal[
         "MANUAL", "MODEL_CHANGED", "VALUE_CHANGED", "SELECTION_CHANGED", "GRID_CHANGED"
     ] = GridUpdateMode.NO_UPDATE,
-    data_return_mode: DataReturnMode
+    data_return_mode: str | DataReturnMode
     | Literal[
         "AS_INPUT", "FILTERED", "FILTERED_AND_SORTED", "MINIMAL", "CUSTOM"
     ] = DataReturnMode.FILTERED_AND_SORTED,
@@ -44,7 +58,6 @@ def AgGrid(
     enable_enterprise_modules: bool
     | Literal["enterpriseOnly", "enterprise+AgCharts"] = False,
     license_key: str = None,
-    conversion_errors: str = "coerce",
     columns_state=None,
     theme: str
     | StAggridTheme
@@ -53,7 +66,7 @@ def AgGrid(
     key: typing.Any = None,
     update_on=["cellValueChanged", "selectionChanged", "filterChanged", "sortChanged"],
     callback=None,
-    show_toolbar: bool = False,
+    show_toolbar: bool = True,
     show_search: bool = True,
     show_download_button: bool = True,
     custom_jscode_for_grid_return: JsCode = None,
@@ -95,12 +108,12 @@ def AgGrid(
         Defines how the grid sends results back to Streamlit.
         Defaults to GridUpdateMode.NO_UPDATE.
 
-    data_return_mode : DataReturnMode, optional
-        How data is retrieved from the grid:
-            - AS_INPUT: Returns data as originally provided, includes edits
-            - FILTERED: Returns filtered data in original order
-            - FILTERED_AND_SORTED: Returns filtered and sorted data
-            - CUSTOM: Returns CustomResponse with user-defined data structure (requires custom_jscode_for_grid_return set)
+    data_return_mode : str | DataReturnMode, optional
+        Defines how the data property of the grid return behaves:
+            - 'AS_INPUT': data in the same order as supplied
+            - 'FILTERED': respects the grid filters
+            - 'FILTERED_AND_SORTED': respects the grid filters and sorting
+            - 'CUSTOM': the grid return is built by custom_jscode_for_grid_return
         Defaults to DataReturnMode.FILTERED_AND_SORTED.
 
     allow_unsafe_jscode : bool, optional
@@ -118,13 +131,6 @@ def AgGrid(
         License key for AG Grid Enterprise features.
         Defaults to None.
 
-    conversion_errors : str, optional
-        How to handle type conversion errors:
-            - 'raise': Raises exception on conversion failure
-            - 'coerce': Sets invalid values to NaT/NaN
-            - 'ignore': Returns input unchanged on failure
-        Defaults to 'coerce'.
-
     columns_state : dict, optional
         Initial column state (visibility, order, width, etc.).
         Format follows https://www.ag-grid.com/javascript-data-grid/column-state/#reference-state-applyColumnState
@@ -141,7 +147,9 @@ def AgGrid(
         Defaults to 'streamlit'.
 
     custom_css : dict, optional
-        Custom CSS rules injected into the component iframe.
+        DEPRECATED. Not needed in Components V2.
+        Use st.markdown() and isolate_styles=False to inject CSS instead.
+        See streamlit_aggrid.styles for ready-made helpers.
         Defaults to None.
 
     update_on : list[str | tuple[str, int]], optional
@@ -153,13 +161,14 @@ def AgGrid(
         Defaults to ['cellValueChanged', 'selectionChanged', 'filterChanged', 'sortChanged'].
 
     callback : callable, optional
-        Function called when grid data changes. Receives AgGridReturn object.
+        Function called when the grid returns data to Streamlit. Receives the
+        AgGridReturn object as its single argument.
         Requires key parameter to be set.
         Defaults to None.
 
     show_toolbar : bool, optional
         Show toolbar above the grid.
-        Defaults to False.
+        Defaults to True.
 
     show_search : bool, optional
         Show search bar in toolbar.
@@ -170,9 +179,10 @@ def AgGrid(
         Defaults to True.
 
     custom_jscode_for_grid_return : JsCode, optional
-        JavaScript function for custom data collection when using DataReturnMode.CUSTOM.
+        JavaScript function for custom data collection. When set, data_return_mode
+        becomes DataReturnMode.CUSTOM and the function's return value is available
+        in AgGridReturn.grid_response.
         Receives: {streamlitRerunEventTriggerName, eventData}
-        Required when data_return_mode is DataReturnMode.CUSTOM.
 
         Example:
             JsCode('''
@@ -234,87 +244,54 @@ def AgGrid(
         to preserve user edits before re-rendering.
         Defaults to 'client_wins'.
 
+    isolate_styles : bool, optional
+        Whether to sandbox the component styles in a shadow root.
+        Set to False to allow CSS injected with st.markdown() to style the grid.
+        Defaults to True.
+
     **default_column_parameters
         Additional parameters passed to gridOptions.defaultColDef.
 
     Returns
     -------
-    AgGridReturn | CustomResponse
-        The return type depends on the data_return_mode:
-
-        - AS_INPUT, FILTERED, FILTERED_AND_SORTED: Returns AgGridReturn object with full grid data
-        - MINIMAL: Returns MinimalResponse object with lightweight access to raw data
-        - CUSTOM: Returns CustomResponse object with user-defined data structure
-
-        AgGridReturn provides properties like:
-            - .data: DataFrame with grid data
-            - .selected_data: DataFrame with selected rows
-            - .grid_state: Grid state information
-            - .columns_state: Column configuration state
-
-        CustomResponse provides safe access methods:
-            - .raw_data: Access to the raw returned data
-            - .get(key, default): Safe key access with default value
-            - Standard dictionary access with helpful error messages
+    AgGridReturn
+        Object with the grid response. Main properties:
+            - .data: grid data (with edits applied), shaped by data_return_mode
+            - .selected_data: selected rows (alias: .selected_rows)
+            - .dataGroups / .selected_dataGroups: grouped data as {group_key_tuple: DataFrame}
+            - .grid_state: grid state (for use with gridOptions initialState)
+            - .columns_state: column configuration state
+            - .event_data: event that triggered the response
+            - .grid_response: raw response from the component (with
+              data_return_mode=CUSTOM, holds the custom JsCode return value)
     """
 
-    ###Deprecation Warnings
-    # Check for deprecated reload_data parameter
-    if "reload_data" in default_column_parameters:
-        default_column_parameters.pop("reload_data")
-        warning_key = "reload_data_deprecated"
-        if warning_key not in _shown_deprecation_warnings:
-            warnings.warn(
-                "The 'reload_data' parameter has been removed and has no effect.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            _shown_deprecation_warnings.add(warning_key)
-
-    try_to_convert_back_to_original_types: bool = True
-    # Deprecated parameter handling for backward compatibility
-    if "try_to_convert_back_to_original_types" in default_column_parameters:
-        try_to_convert_back_to_original_types = default_column_parameters.pop(
-            "try_to_convert_back_to_original_types"
-        )
-        warning_key = "try_to_convert_back_to_original_types_deprecated"
-        if warning_key not in _shown_deprecation_warnings:
-            warnings.warn(
-                "The 'try_to_convert_back_to_original_types' parameter is deprecated and will be removed in a future version. "
-                "The component now handles type preservation automatically where appropriate.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            _shown_deprecation_warnings.add(warning_key)
-
-    ##Parses Themes
-    if isinstance(theme, (str, AgGridTheme)):
-        # Legacy compatibility
-        themeObj: StAggridTheme = StAggridTheme(None)
-        themeObj["themeName"] = theme if isinstance(theme, str) else theme.value
-
-    elif isinstance(theme, StAggridTheme):
+    # Parse theme
+    if isinstance(theme, StAggridTheme):
         themeObj = theme
-
-    elif theme is None:
-        themeObj = "streamlit"
+    elif isinstance(theme, (str, AgGridTheme)) or theme is None:
+        themeObj = StAggridTheme(None)
+        if isinstance(theme, AgGridTheme):
+            themeObj["themeName"] = theme.value
+        else:
+            themeObj["themeName"] = theme or "streamlit"
     else:
         raise ValueError(
             f"{theme} is not valid. Available options: {AgGridTheme.__members__}"
         )
 
-    # Parse return Mode
-    if not isinstance(data_return_mode, (str, DataReturnMode)):
-        raise ValueError(
-            "DataReturnMode should be either a DataReturnMode enum value or a string."
-        )
-    elif isinstance(data_return_mode, str):
+    # Parse data return mode
+    if isinstance(data_return_mode, str):
         try:
-            data_return_mode = DataReturnMode[data_return_mode.upper()]
-        except Exception:
-            raise ValueError(f"{data_return_mode} is not valid.")
+            data_return_mode = DataReturnMode(data_return_mode.upper())
+        except ValueError:
+            raise ValueError(f"{data_return_mode} is not a valid DataReturnMode.")
+    elif not isinstance(data_return_mode, DataReturnMode):
+        raise ValueError(
+            "data_return_mode should be either a valid DataReturnMode enum value or string"
+        )
 
-    # Parse update Mode
+    # Parse update mode (deprecated)
     if not isinstance(update_mode, (str, GridUpdateMode)):
         raise ValueError(
             "GridUpdateMode should be either a valid GridUpdateMode enum value or string"
@@ -325,7 +302,6 @@ def AgGrid(
         except Exception:
             raise ValueError(f"{update_mode} is not valid.")
 
-    # Add deprecation warning for GridUpdateMode
     if update_mode != GridUpdateMode.NO_UPDATE:
         warning_key = "GridUpdateMode_deprecated"
         if warning_key not in _shown_deprecation_warnings:
@@ -337,47 +313,44 @@ def AgGrid(
             )
             _shown_deprecation_warnings.add(warning_key)
 
-    if update_mode:
-        update_on = list(update_on)
-        if update_mode == GridUpdateMode.MANUAL:
-            manual_update = True
-        else:
-            manual_update = False
-            update_on.extend(parse_update_mode(update_mode))
+    update_on = list(update_on)
+    manual_update = update_mode == GridUpdateMode.MANUAL
+    if not manual_update:
+        update_on.extend(parse_update_mode(update_mode))
 
-    # Validate CUSTOM mode parameters
-    if data_return_mode == DataReturnMode.CUSTOM:
-        if custom_jscode_for_grid_return is None:
-            raise ValueError(
-                "custom_jscode_for_grid_return parameter is required when using DataReturnMode.CUSTOM"
-            )
-        if not isinstance(custom_jscode_for_grid_return, JsCode):
-            raise ValueError(
-                "custom_jscode_for_grid_return must be a JsCode object when using DataReturnMode.CUSTOM"
-            )
-
-    # Process JsCode for CUSTOM mode
-    original_custom_jscode_for_grid_return = custom_jscode_for_grid_return
+    # Process JsCode for the CUSTOM return mode
     if custom_jscode_for_grid_return is not None:
-        custom_jscode_for_grid_return = custom_jscode_for_grid_return.js_code
+        custom_jscode_for_grid_return_str = custom_jscode_for_grid_return.js_code
         allow_unsafe_jscode = True
+        data_return_mode = DataReturnMode.CUSTOM
+    else:
+        custom_jscode_for_grid_return_str = None
+        if data_return_mode == DataReturnMode.CUSTOM:
+            raise ValueError(
+                "data_return_mode=CUSTOM requires custom_jscode_for_grid_return to be set."
+            )
 
-    # Process JsCode for should_grid_return
     if should_grid_return is not None:
-        should_grid_return = should_grid_return.js_code
+        should_grid_return_str = should_grid_return.js_code
         allow_unsafe_jscode = True
+    else:
+        should_grid_return_str = None
 
-    # parse data and gridOptions
-    data, gridOptions, frame_dtypes = _parse_data_and_grid_options(
+    # Pop options that travel outside defaultColDef before building grid options
+    pro_assets = default_column_parameters.pop("pro_assets", None)
+    debug = default_column_parameters.pop("debug", False)
+    fit_columns_on_grid_load = default_column_parameters.pop(
+        "fit_columns_on_grid_load", False
+    )
+
+    # Parse data and gridOptions
+    data, gridOptions = _parse_data_and_grid_options(
         data,
         gridOptions,
         default_column_parameters,
         allow_unsafe_jscode,
         use_json_serialization,
     )
-
-    if not isinstance(data, pd.DataFrame):
-        try_to_convert_back_to_original_types = False
 
     # Deprecate custom_css parameter (not needed in Components V2)
     if custom_css is not None:
@@ -386,152 +359,89 @@ def AgGrid(
             "Use st.markdown() and isolate_styles=False to inject CSS instead. "
             "See streamlit_aggrid.styles module for helper functions like get_hide_expanders_css().",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
     custom_css = custom_css or dict()
 
     if height is None:
         gridOptions["domLayout"] = "autoHeight"
 
-    if default_column_parameters.pop("fit_columns_on_grid_load", False):
+    if fit_columns_on_grid_load:
         warnings.warn(
             "fit_columns_on_grid_load is deprecated. Use gridOptions autoSizeStrategy instead.",
             DeprecationWarning,
         )
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
-    # Create collector based solely on data_return_mode
-    if data_return_mode == DataReturnMode.MINIMAL:
-        from .collectors.minimal import MinimalCollector
-
-        collector = MinimalCollector()
-    elif data_return_mode == DataReturnMode.CUSTOM:
-        from .collectors.custom import CustomCollector
-
-        collector = CustomCollector(original_custom_jscode_for_grid_return.js_code)
-    else:
-        # Use LegacyCollector for AS_INPUT, FILTERED, FILTERED_AND_SORTED
-        from .collectors.legacy import LegacyCollector
-
-        collector = LegacyCollector(
-            data_return_mode=data_return_mode,
-            try_to_convert_back_to_original_types=True,
-            conversion_errors=conversion_errors,
-            frame_dtypes=frame_dtypes,
-        )
-
-    # Create initial response object that callbacks can safely reference
-    original_data = None
-    if data is not None:
-        original_data = (
-            data.drop("::auto_unique_id::", axis="columns")
-            if "::auto_unique_id::" in data.columns
-            else data
-        )
-
-    response = collector.create_initial_response(
-        original_data=original_data,
-        grid_options=gridOptions,
-        try_to_convert_back_to_original_types=try_to_convert_back_to_original_types,
-        conversion_errors=conversion_errors,
-    )
-
-    if callback and not key:
+    # Wire the user callback through the Components V2 state-change callback
+    if callback is not None and key is None:
         raise ValueError("Component key must be set to use a callback.")
 
-    elif key and not callback:
-        # This allows the table to keep its state up to date (eg #176)
-        def _inner_callback():
-            component_value = st.session_state.get(key)
-            # Update the existing response object with new component value and store the wrapped response
-            updated_response = collector.update_response(response, component_value)
-            st.session_state[key] = updated_response
+    if callback is not None:
 
-    elif callback and key:
-        # User defined callback
-        def _inner_callback():
-            component_value = st.session_state.get(key)
-            # Update the existing response object with new component value and store the wrapped response
-            updated_response = collector.update_response(response, component_value)
-            st.session_state[key] = updated_response
-            return callback(updated_response)
-    else:
-        _inner_callback = None
-
-    pro_assets = default_column_parameters.pop("pro_assets", None)
-
-    def _compute_data_hash(df):
-        if df is None:
-            return ""
-
-        try:
-            return str(pd.util.hash_pandas_object(df).sum())
-        except TypeError:
-            import logging
-
-            logging.warning(
-                "DataFrame contains non-hashable data, attempting type conversion..."
-            )
-
-            try:
-                df_copy = df.copy()
-                for col in df_copy.columns:
-                    df_copy[col] = df_copy[col].apply(
-                        lambda x: tuple(x)
-                        if isinstance(x, list)
-                        else frozenset(x)
-                        if isinstance(x, set)
-                        else frozenset(x.items())
-                        if isinstance(x, dict)
-                        else x
-                    )
-                return str(pd.util.hash_pandas_object(df_copy).sum())
-            except (TypeError, ValueError, AttributeError) as e:
-                logging.warning(
-                    f"Type conversion failed ({e}), falling back to string-based hashing..."
+        def _on_grid_response_change():
+            callback(
+                AgGridReturn(
+                    grid_response=st.session_state.get(key),
+                    data_return_mode=data_return_mode,
                 )
-                return str(hash(df.to_string()))
+            )
+    else:
 
-    data_hash = _compute_data_hash(data)
+        def _on_grid_response_change():
+            return None
 
-    # Prepare data payload for the component
-    # In v2, 'key' is a direct parameter, not part of data
+    # streamlit >= 1.59 silently coerces Arrow-incompatible frames instead of
+    # raising, corrupting the whole component payload. Detect it up front and
+    # send the data as JSON rowData when use_json_serialization is "auto".
+    if use_json_serialization == "auto" and isinstance(data, pd.DataFrame):
+        try:
+            import pyarrow as pa
+
+            pa.Table.from_pandas(data)
+        except Exception:
+            gridOptions["rowData"] = data.to_json(orient="records")
+            data = None
+            use_json_serialization = True
+
+    # Prepare data payload for the component.
+    # In Components V2, 'key' is a direct parameter, not part of data.
     _component_data = dict(
         data=data,
-        data_hash=data_hash,
+        data_hash=compute_data_hash(data),
         gridOptions=gridOptions,
         height=height,
-        data_return_mode=data_return_mode,
-        frame_dtypes=str(frame_dtypes),
         allow_unsafe_jscode=allow_unsafe_jscode,
         columns_state=columns_state,
         custom_css=custom_css,
-        default=None,
+        data_return_mode=data_return_mode.value,
         enable_enterprise_modules=enable_enterprise_modules,
         license_key=license_key,
         manual_update=manual_update,
-        # on_change=_inner_callback,
         pro_assets=pro_assets,
         show_download_button=show_download_button,
         show_search=show_search,
         show_toolbar=show_toolbar,
-        custom_jscode_for_grid_return=custom_jscode_for_grid_return,
-        should_grid_return=should_grid_return,
+        custom_jscode_for_grid_return=custom_jscode_for_grid_return_str,
+        should_grid_return=should_grid_return_str,
         theme=themeObj,
-        debug=default_column_parameters.pop("debug", False),
+        debug=debug,
         update_on=update_on,
         use_json_serialization=use_json_serialization,
         server_sync_strategy=server_sync_strategy,
     )
 
+    def _call_component():
+        return _get_component_func(isolate_styles)(
+            key=key,
+            data=_component_data,
+            on_grid_response_change=_on_grid_response_change,
+            default=dict(grid_response={}),
+        )
+
     try:
-        # Pass key as a direct parameter, data as payload
-        component_result = _component_func(key=key, data=_component_data, isolate_styles=isolate_styles, on_grid_response_change=lambda: None)
-        # In v2, the result is an object with attributes set via setStateValue
-        # We used setStateValue("grid_response", data) in the frontend
-        component_value = component_result.grid_response if component_result else None
+        component_result = _call_component()
     except Exception as ex:
-        # Check if this is a PyArrow conversion error and we should try JSON serialization
         error_msg = str(ex)
         is_pyarrow_error = (
             "Could not convert" in error_msg
@@ -540,59 +450,31 @@ def AgGrid(
             or "Conversion failed" in error_msg
         )
 
-        if use_json_serialization == "auto" and data is not None and is_pyarrow_error:
+        if is_pyarrow_error and data is not None and use_json_serialization == "auto":
             logging.warning(
-                f"PyArrow conversion failed, automatically retrying with JSON serialization: {error_msg}"
+                "PyArrow conversion failed, automatically retrying with JSON "
+                f"serialization: {error_msg}"
             )
-            # Retry with JSON serialization enabled
-            # Reconstruct AgGrid call with use_json_serialization=True
-            return AgGrid(
-                data=data,
-                gridOptions=gridOptions,
-                height=height,
-                update_mode=update_mode,
-                data_return_mode=data_return_mode,
-                allow_unsafe_jscode=allow_unsafe_jscode,
-                enable_enterprise_modules=enable_enterprise_modules,
-                license_key=license_key,
-                conversion_errors=conversion_errors,
-                columns_state=columns_state,
-                theme=theme,
-                custom_css=custom_css,
-                key=key,
-                update_on=update_on,
-                callback=callback,
-                show_toolbar=show_toolbar,
-                show_search=show_search,
-                show_download_button=show_download_button,
-                custom_jscode_for_grid_return=original_custom_jscode_for_grid_return,
-                should_grid_return=should_grid_return,
-                use_json_serialization=True,
-                server_sync_strategy=server_sync_strategy,
-                **default_column_parameters,
+            # Retry once, sending data as a JSON string inside gridOptions.rowData
+            # (same shape produced by use_json_serialization=True).
+            gridOptions["rowData"] = data.to_json(orient="records")
+            _component_data.update(
+                data=None, gridOptions=gridOptions, use_json_serialization=True
             )
-        elif not use_json_serialization and data is not None and is_pyarrow_error:
+            component_result = _call_component()
+        elif is_pyarrow_error and data is not None:
             # User explicitly disabled JSON serialization, raise the PyArrow error
-            raise ex
+            raise
         else:
-            # For other exceptions, add the original error message enhancement
-            args = list(ex.args)
-            args[0] += (
-                ". If you're using custom JsCode objects on gridOptions, ensure that allow_unsafe_jscode is True."
-            )
-            raise type(ex)(*args)
+            if ex.args and isinstance(ex.args[0], str):
+                args = list(ex.args)
+                args[0] += (
+                    ". If you're using custom JsCode objects on gridOptions, "
+                    "ensure that allow_unsafe_jscode is True."
+                )
+                raise type(ex)(*args) from ex
+            raise
 
-    # Update the response object with final component data
-    try:
-        response = collector.update_response(response, component_value)
-    except Exception as ex:
-        # Enhanced error message for collector issues
-        args = list(ex.args)
-        args[0] += f". Error in {collector.__class__.__name__} processing."
-        if data_return_mode == DataReturnMode.CUSTOM:
-            args[0] += (
-                " Check your custom_jscode_for_grid_return JsCode implementation."
-            )
-        raise type(ex)(*args)
-
-    return response
+    return AgGridReturn(
+        grid_response=component_result, data_return_mode=data_return_mode
+    )

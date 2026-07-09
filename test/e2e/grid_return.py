@@ -50,7 +50,7 @@ def make_grid():
     st.html(f"""
     <span>
     <h1> Returned Grid Data </h1>
-    <pre data-testid='returned-grid-data'>{r.data.to_string()}</pre>
+    <pre data-testid='returned-grid-data'>{r.data.to_string() if r.data is not None else 'No data'}</pre>
     </span>
     """)
 
@@ -129,7 +129,7 @@ def make_grid2():
     st.html(f"""
     <span>
     <h1> Custom Grid Return Data (only column names) </h1>
-    <pre data-testid='custom-grid-return-data'>{str(r)}</pre>
+    <pre data-testid='custom-grid-return-data'>{str(r.grid_response or None)}</pre>
     </span>
     """)
 
@@ -170,10 +170,11 @@ def make_grid3():
         enable_enterprise_modules=True,
     )
 
+    groups = list(r.dataGroups.items())[:5]
     st.html(f"""
     <span>
     <h1> Grouped Data Groups (first 5) </h1>
-    <pre data-testid='grouped-data-groups'>{"".join([f"<h4 data-testid='grouped-data-groups-header'>{k}</h4><pre data-testid='grouped-data-groups-data'>{e[k].to_string()}</pre>" for e in r.dataGroups[:5] for k in e])}</pre>
+    <pre data-testid='grouped-data-groups'>{"".join([f"<h4 data-testid='grouped-data-groups-header'>{k}</h4><pre data-testid='grouped-data-groups-data'>{df.to_string()}</pre>" for k, df in groups])}</pre>
     </span>
     """)
 
@@ -198,10 +199,11 @@ def make_grid3():
     </span>
     """)
 
+    selected_groups = list(r.selected_dataGroups.items())[:5]
     st.html(f"""
     <span>
     <h1> Selected Grouped Data Groups (first 5) </h1>
-    <pre data-testid='selected-grouped-data-groups'>{"".join([f"<h4 data-testid='selected-grouped-data-groups-header'>{k}</h4><pre data-testid='selected-grouped-data-groups-data'>{e[k].to_string()}</pre>" for e in r.selected_dataGroups[:5] for k in e])}</pre>
+    <pre data-testid='selected-grouped-data-groups'>{"".join([f"<h4 data-testid='selected-grouped-data-groups-header'>{k}</h4><pre data-testid='selected-grouped-data-groups-data'>{df.to_string()}</pre>" for k, df in selected_groups])}</pre>
     </span>
     """)
 
@@ -235,7 +237,7 @@ def make_grid4():
     st.html(f"""
     <span>
     <h1> Selection Test Grid Data </h1>
-    <pre data-testid='selection-grid-data'>{r.data.to_string()}</pre>
+    <pre data-testid='selection-grid-data'>{r.data.to_string() if r.data is not None else 'No data'}</pre>
     </span>
     """)
 

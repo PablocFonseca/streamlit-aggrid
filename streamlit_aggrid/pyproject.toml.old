@@ -1,8 +1,0 @@
-# Ship a minimal metadata file that can be picked up by Streamlit at runtime.
-[project]
-name = "streamlit-aggrid"
-version = "2.0.0.rc1"
-
-[[tool.streamlit.component.components]]
-name = "streamlit_aggrid.agGrid"
-asset_dir = "../frontend/build"

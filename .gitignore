@@ -214,8 +214,11 @@ test/issues/*
 test/src_original/*
 st_aggrid/frontend/bundle-analysis.json
 stats.json
+*.old
 
 ########################################################################
 # Claude Code
 ########################################################################
 .claude/*
+.agents/skills/developing-with-streamlit/
+.claude/skills/developing-with-streamlit/

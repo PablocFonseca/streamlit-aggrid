@@ -6,9 +6,11 @@ from playwright.sync_api import Page, expect
 
 from e2e_utils import StreamlitRunner
 
-ROOT_DIRECTORY = Path(__file__).parent.parent.absolute()
-GRID_RETURN_FILE = ROOT_DIRECTORY / "test" / "grid_return.py"
-SCREENSHOT_DIRECTORY = ROOT_DIRECTORY / "test" / "screen_shots"
+pytestmark = pytest.mark.e2e
+
+HERE = Path(__file__).parent.absolute()
+GRID_RETURN_FILE = HERE / "grid_return.py"
+SCREENSHOT_DIRECTORY = HERE / "screen_shots"
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -30,7 +32,7 @@ def test_grid_return_test_1(page: Page):
     radio_option_1.click()
     
     # Wait for the grid to load
-    frame0 = page.locator(".st-key-event_return_grid").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-event_return_grid")
     expect(frame0.locator(".ag-root")).to_be_visible()
     
     # Verify the grid headers
@@ -75,7 +77,7 @@ def test_grid_return_third_row_checkbox(page: Page):
     radio_option_1.click()
     
     # Wait for the grid to load
-    frame0 = page.locator(".st-key-event_return_grid").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-event_return_grid")
     expect(frame0.locator(".ag-root")).to_be_visible()
     
     # Wait for data to be loaded
@@ -129,7 +131,7 @@ def test_grid_return_test_2_custom_return(page: Page):
     radio_option_2.click()
     
     # Wait for the grid to load
-    frame1 = page.locator(".st-key-custom_event_return_grid").frame_locator("iframe").nth(0)
+    frame1 = page.locator(".st-key-custom_event_return_grid")
     expect(frame1.locator(".ag-root")).to_be_visible()
     
     # Verify that data is loaded by checking for at least one row
@@ -161,7 +163,7 @@ def test_grid_return_test_3_grouped_data(page: Page):
     radio_option_3.click()
     
     # Wait for the grid to load
-    frame2 = page.locator(".st-key-grouped_data_grid").frame_locator("iframe").nth(0)
+    frame2 = page.locator(".st-key-grouped_data_grid")
     expect(frame2.locator(".ag-root")).to_be_visible()
     
     # Wait for grouped data to be processed
@@ -187,7 +189,7 @@ def test_grid_return_test_4_selection_functionality(page: Page):
     radio_option_4.click()
     
     # Wait for the grid to load
-    frame3 = page.locator(".st-key-selection_test_grid").frame_locator("iframe").nth(0)
+    frame3 = page.locator(".st-key-selection_test_grid")
     expect(frame3.locator(".ag-root")).to_be_visible()
     
     # Wait for data to be loaded
@@ -257,7 +259,7 @@ def test_grid_return_test_4_header_checkbox_select_all(page: Page):
     radio_option_4.click()
     
     # Wait for the grid to load
-    frame3 = page.locator(".st-key-selection_test_grid").frame_locator("iframe").nth(0)
+    frame3 = page.locator(".st-key-selection_test_grid")
     expect(frame3.locator(".ag-root")).to_be_visible()
     
     # Wait for data to be loaded
@@ -311,7 +313,7 @@ def test_grid_return_test_4_pagination_selection(page: Page):
     radio_option_4.click()
     
     # Wait for the grid to load
-    frame3 = page.locator(".st-key-selection_test_grid").frame_locator("iframe").nth(0)
+    frame3 = page.locator(".st-key-selection_test_grid")
     expect(frame3.locator(".ag-root")).to_be_visible()
     
     # Wait for data to be loaded
@@ -370,7 +372,7 @@ def test_grid_return_test_3_grouped_data_selection(page: Page):
     radio_option_3.click()
     
     # Wait for the grid to load
-    frame2 = page.locator(".st-key-grouped_data_grid").frame_locator("iframe").nth(0)
+    frame2 = page.locator(".st-key-grouped_data_grid")
     expect(frame2.locator(".ag-root")).to_be_visible()
     
     # Wait for grouped data to be processed
@@ -433,7 +435,7 @@ def test_grid_return_test_3_grouped_data_group_selection(page: Page):
     radio_option_3.click()
     
     # Wait for the grid to load
-    frame2 = page.locator(".st-key-grouped_data_grid").frame_locator("iframe").nth(0)
+    frame2 = page.locator(".st-key-grouped_data_grid")
     expect(frame2.locator(".ag-root")).to_be_visible()
     
     # Wait for grouped data to be processed
@@ -500,7 +502,7 @@ def test_grid_return_test_3_grouped_data_header_checkbox(page: Page):
     radio_option_3.click()
     
     # Wait for the grid to load
-    frame2 = page.locator(".st-key-grouped_data_grid").frame_locator("iframe").nth(0)
+    frame2 = page.locator(".st-key-grouped_data_grid")
     expect(frame2.locator(".ag-root")).to_be_visible()
     
     # Wait for grouped data to be processed
@@ -566,7 +568,7 @@ def test_grid_return_test_3_selected_grouped_data_groups_section(page: Page):
     radio_option_3.click()
     
     # Wait for the grid to load
-    frame2 = page.locator(".st-key-grouped_data_grid").frame_locator("iframe").nth(0)
+    frame2 = page.locator(".st-key-grouped_data_grid")
     expect(frame2.locator(".ag-root")).to_be_visible()
     
     # Wait for grouped data to be processed

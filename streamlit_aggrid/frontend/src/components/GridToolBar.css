@@ -1,111 +1,111 @@
 /* Minimalist toolbar matching Streamlit's native dataframe style */
 .grid-toolbar {
-    position: absolute;
-    top: -32px;
-    right: 4px;
-    z-index: 1000001;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 2px;
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 6px;
-    padding: 2px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  position: absolute;
+  top: -32px;
+  right: 4px;
+  z-index: 1000001;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  background-color: var(--st-background-color);
+  border-radius: 6px;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 
 /* Ensure toolbar is positioned correctly in maximized mode */
 #gridContainer.maximized .grid-toolbar {
-    position: fixed;
-    top: 8px;
-    right: 8px;
-    z-index: 1000002;
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 1000002;
 }
 
 /* Show toolbar when hovering over the grid container OR the toolbar itself */
 #gridContainer:hover .grid-toolbar,
 .grid-toolbar:hover {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 /* Minimal button styling - just icons */
 .toolbar-button {
-    background-color: transparent;
-    color: rgba(49, 51, 63, 0.6);
-    border: none;
-    border-radius: 4px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-    padding: 0;
+  background-color: transparent;
+  color: var(--st-text-color);
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: 0;
 }
 
 .toolbar-button:hover {
-    background-color: rgba(49, 51, 63, 0.08);
-    color: rgba(49, 51, 63, 0.9);
+  background-color: var(--st-secondary-background-color);
+  color: var(--st-text-color);
 }
 
 .toolbar-button:active {
-    transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 .toolbar-button svg {
-    width: 12px;
-    height: 12px;
+  width: 12px;
+  height: 12px;
 }
 
 /* Search component */
 .toolbar-search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 .toolbar-search .search-button {
-    /* Button styles inherited from .toolbar-button */
+  /* Button styles inherited from .toolbar-button */
 }
 
 .toolbar-search input {
-    border: none;
-    outline: none;
-    background-color: rgba(255, 255, 255, 0.95);
-    color: rgba(49, 51, 63, 0.9);
-    font-size: 12px;
-    padding: 0;
-    border-radius: 4px;
-    margin-left: 0;
-    border: 1px solid rgba(49, 51, 63, 0.1);
-    font-family: inherit;
-    max-width: 0;
-    opacity: 0;
-    overflow: hidden;
-    display: inline-block;
-    transition: max-width 0.3s ease-in-out, opacity 0.2s ease-in-out,
-                margin 0.3s ease-in-out, padding 0.3s ease-in-out;
+  border: none;
+  outline: none;
+  background-color: var(--st-background-color);
+  color: var(--st-text-color);
+  font-size: 12px;
+  padding: 0;
+  border-radius: 4px;
+  margin-left: 0;
+  border: 1px solid var(--st-border-color);
+  font-family: inherit;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: inline-block;
+  transition: max-width 0.3s ease-in-out, opacity 0.2s ease-in-out,
+        margin 0.3s ease-in-out, padding 0.3s ease-in-out;
 }
 
 .toolbar-search input::placeholder {
-    color: rgba(49, 51, 63, 0.4);
+  color: var(--st-gray-text-color);
 }
 
 .toolbar-search input:focus {
-    border-color: rgba(49, 51, 63, 0.3);
+  border-color: var(--st-primary-color);
 }
 
 /* Expanded search state - animate width and opacity */
 .toolbar-search.expanded input {
-    max-width: 140px;
-    /* padding: 4px 6px; */
-    opacity: 1;
-    /* margin-left: 2px; */
+  max-width: 140px;
+  /* padding: 4px 6px; */
+  opacity: 1;
+  /* margin-left: 2px; */
 }

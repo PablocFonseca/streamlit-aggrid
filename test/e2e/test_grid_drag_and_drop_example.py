@@ -3,8 +3,10 @@ import pytest
 from playwright.sync_api import Page, expect
 from e2e_utils import StreamlitRunner
 
-ROOT_DIRECTORY = Path(__file__).parent.parent.absolute()
-BASIC_EXAMPLE_FILE = ROOT_DIRECTORY / "test" / "grid_drag_and_drop_example.py"
+pytestmark = pytest.mark.e2e
+
+HERE = Path(__file__).parent.absolute()
+BASIC_EXAMPLE_FILE = HERE / "grid_drag_and_drop_example.py"
 
 @pytest.fixture(autouse=True, scope="module")
 def streamlit_app():
@@ -17,10 +19,23 @@ def go_to_app(page: Page, streamlit_app: StreamlitRunner):
     page.get_by_role("img", name="Running...").is_hidden()
 
 def test_drag_first_row_to_last(page: Page):
-    frame = page.locator(".st-key-drag_grid").frame_locator("iframe").nth(0)
-    first_row_handle = frame.locator(".ag-center-cols-container .ag-row").nth(0).locator(".ag-row-drag")
-    last_row = frame.locator(".ag-center-cols-container .ag-row").nth(-1)
-    first_row_handle.drag_to(last_row)
+    frame = page.locator(".st-key-drag_grid")
+    rows = frame.locator(".ag-center-cols-container .ag-row")
+    expect(rows.first).to_be_visible()
+
+    first_row_handle = rows.nth(0).locator(".ag-row-drag")
+    last_row = rows.nth(-1)
+
+    # AG Grid row dragging is mouse-driven, not native HTML5 drag-and-drop, so
+    # Playwright's drag_to() won't trigger it. Simulate the real pointer sequence.
+    rows.nth(0).hover()
+    src = first_row_handle.bounding_box()
+    dst = last_row.bounding_box()
+    page.mouse.move(src["x"] + src["width"] / 2, src["y"] + src["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(src["x"] + src["width"] / 2, src["y"] + src["height"] / 2 + 5)
+    page.mouse.move(dst["x"] + dst["width"] / 2, dst["y"] + dst["height"] / 2, steps=15)
+    page.mouse.up()
     page.wait_for_timeout(500)
     rows = frame.locator(".ag-center-cols-container .ag-row")
     ids = [rows.nth(i).locator('[col-id="id"]').inner_text() for i in range(rows.count())]

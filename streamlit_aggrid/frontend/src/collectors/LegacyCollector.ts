@@ -152,7 +152,7 @@ export class LegacyCollector extends BaseCollector {
    * Process response using the original getGridReturnValue logic
    */
   async processResponse(context: CollectorContext): Promise<CollectorResult> {
-    const { state, props, eventData, streamlitRerunEventTriggerName } = context
+    const { state, eventData, streamlitRerunEventTriggerName } = context
     let api = state.api
 
     // Create functions for all data collection operations
@@ -214,7 +214,6 @@ export class LegacyCollector extends BaseCollector {
 
     // Serialize the entire return value to ensure it can be sent via postMessage
     const returnValue = {
-      originalDtypes: props.data.frame_dtypes,
       nodes: nodes,
       gridState: gridState,
       columnsState: columnsState,

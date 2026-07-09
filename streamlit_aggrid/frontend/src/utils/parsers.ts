@@ -11,7 +11,11 @@ export function parseGridOptions(
     allowUnsafeJscode: boolean,
     theme: any
 ): GridOptions {
-    let parsedGridOptions: GridOptions = cloneDeep(gridOptions)
+    // gridOptions crosses the Python -> host -> JS boundary; it can arrive as a
+    // JSON string (or missing) rather than a plain object.
+    const raw = typeof gridOptions === "string" ? JSON.parse(gridOptions) : gridOptions
+    let parsedGridOptions: GridOptions =
+        raw && typeof raw === "object" ? cloneDeep(raw) : {}
 
     if (allowUnsafeJscode) {
         console.warn("flag allow_unsafe_jscode is on.")

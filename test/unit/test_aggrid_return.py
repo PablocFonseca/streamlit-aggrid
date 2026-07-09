@@ -1,0 +1,190 @@
+"""Unit tests for AgGridReturn (no browser or Streamlit runtime required)."""
+
+import pytest
+
+from streamlit_aggrid.AgGridReturn import AgGridReturn
+from streamlit_aggrid.shared import DataReturnMode
+
+
+def make_response(nodes, **extra):
+    """Wrap nodes in the component result shape AgGridReturn expects."""
+    return {"grid_response": {"nodes": nodes, **extra}}
+
+
+@pytest.fixture
+def simple_nodes():
+    """Three rows; grid sorted so display order is reversed (via rowIndex)."""
+    return [
+        {
+            "id": "0",
+            "data": {"Name": "Alice", "Age": 25, "::auto_unique_id::": "0"},
+            "rowIndex": 2,
+            "isSelected": True,
+            "group": False,
+        },
+        {
+            "id": "1",
+            "data": {"Name": "Bob", "Age": 30, "::auto_unique_id::": "1"},
+            "rowIndex": 1,
+            "isSelected": False,
+            "group": False,
+        },
+        {
+            "id": "2",
+            "data": {"Name": "Charlie", "Age": 35, "::auto_unique_id::": "2"},
+            "rowIndex": 0,
+            "isSelected": True,
+            "group": False,
+        },
+    ]
+
+
+@pytest.fixture
+def grouped_nodes():
+    """Two leaf rows grouped under sport groups (AG Grid parentPath format)."""
+    return [
+        {"id": "g0", "data": {}, "group": True, "isSelected": False},
+        {
+            "id": "0",
+            "data": {"sport": "Swimming", "athlete": "Phelps"},
+            "rowIndex": 0,
+            "group": False,
+            "isSelected": False,
+            "parentPath": "ROOT_NODE_ID.row-group-sport-Swimming",
+        },
+        {
+            "id": "1",
+            "data": {"sport": "Judo", "athlete": "Silva"},
+            "rowIndex": 1,
+            "group": False,
+            "isSelected": False,
+            "parentPath": "ROOT_NODE_ID.row-group-sport-Judo",
+        },
+    ]
+
+
+class TestEmptyResponse:
+    def test_default_construction(self):
+        r = AgGridReturn()
+        assert r.data is None
+        assert r.selected_data is None
+        assert r.selected_rows is None
+        assert r.grid_state is None
+        assert r.event_data == {}
+
+    def test_empty_grid_response_value(self):
+        r = AgGridReturn(grid_response={"grid_response": {}})
+        assert r.data is None
+
+    def test_grid_response_key_none(self):
+        r = AgGridReturn(grid_response={"grid_response": None})
+        assert r.data is None
+
+
+class TestDataReturnModes:
+    def test_as_input_keeps_node_order(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        assert list(r.data["Name"]) == ["Alice", "Bob", "Charlie"]
+
+    def test_filtered_excludes_rows_without_row_index(self, simple_nodes):
+        simple_nodes[1] = {**simple_nodes[1], "rowIndex": None}
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.FILTERED)
+        assert list(r.data["Name"]) == ["Alice", "Charlie"]
+
+    def test_filtered_and_sorted_orders_by_row_index(self, simple_nodes):
+        r = AgGridReturn(
+            make_response(simple_nodes), DataReturnMode.FILTERED_AND_SORTED
+        )
+        assert list(r.data["Name"]) == ["Charlie", "Bob", "Alice"]
+
+    def test_mode_accepts_string(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), "FILTERED_AND_SORTED")
+        assert r.data_return_mode == DataReturnMode.FILTERED_AND_SORTED
+        assert list(r.data["Name"]) == ["Charlie", "Bob", "Alice"]
+
+    def test_group_nodes_are_excluded(self, grouped_nodes):
+        r = AgGridReturn(make_response(grouped_nodes), DataReturnMode.AS_INPUT)
+        assert len(r.data) == 2
+
+    def test_auto_unique_id_becomes_index(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        assert "::auto_unique_id::" not in r.data.columns
+        assert list(r.data.index) == ["0", "1", "2"]
+
+
+class TestSelection:
+    def test_selected_data(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        assert list(r.selected_data["Name"]) == ["Alice", "Charlie"]
+
+    def test_selected_rows_is_alias(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        assert list(r.selected_rows["Name"]) == list(r.selected_data["Name"])
+
+    def test_no_selection_returns_none(self, simple_nodes):
+        nodes = [{**n, "isSelected": False} for n in simple_nodes]
+        r = AgGridReturn(make_response(nodes), DataReturnMode.AS_INPUT)
+        assert r.selected_data is None
+
+    def test_selected_rows_id_from_grid_state(self, simple_nodes):
+        r = AgGridReturn(
+            make_response(simple_nodes, gridState={"rowSelection": ["0", "2"]})
+        )
+        assert r.selected_rows_id == ["0", "2"]
+
+
+class TestGroups:
+    def test_data_groups_keys(self, grouped_nodes):
+        r = AgGridReturn(make_response(grouped_nodes), DataReturnMode.AS_INPUT)
+        groups = r.dataGroups
+        assert ("Swimming",) in groups
+        assert ("Judo",) in groups
+        assert list(groups[("Swimming",)]["athlete"]) == ["Phelps"]
+
+    def test_data_groups_without_groups_falls_back(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        groups = r.dataGroups
+        assert list(groups.keys()) == [()]
+        assert len(groups[()]) == 3
+
+
+class TestBasicProperties:
+    def test_states_and_ids(self, simple_nodes):
+        r = AgGridReturn(
+            make_response(
+                simple_nodes,
+                gridState={"a": 1},
+                columnsState=[{"colId": "Name"}],
+                rowIdsAfterFilter=["0"],
+                rowIdsAfterSortAndFilter=["2", "0"],
+                eventData={"type": "selectionChanged"},
+            )
+        )
+        assert r.grid_state == {"a": 1}
+        assert r.columns_state == [{"colId": "Name"}]
+        assert r.rows_id_after_filter == ["0"]
+        assert r.rows_id_after_sort_and_filter == ["2", "0"]
+        assert r.event_data == {"type": "selectionChanged"}
+
+
+class TestMappingInterface:
+    def test_getitem_attribute(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
+        assert list(r["data"]["Name"]) == ["Alice", "Bob", "Charlie"]
+
+    def test_getitem_grid_response_key(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes))
+        assert r["nodes"] == simple_nodes
+
+    def test_getitem_missing_returns_none(self):
+        assert AgGridReturn()["nope"] is None
+
+    def test_keys_iteration_len(self, simple_nodes):
+        r = AgGridReturn(make_response(simple_nodes))
+        keys = r.keys()
+        assert "data" in keys and "selected_rows" in keys and "nodes" in keys
+        assert len(list(iter(r))) == len(r) == len(keys)
+
+    def test_values_matches_keys(self):
+        r = AgGridReturn()
+        assert len(r.values()) == len(r.keys())

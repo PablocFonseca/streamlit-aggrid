@@ -54,6 +54,16 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 
 # Development Notes
 
+Version 2.0.0
+ - Migrated to **Streamlit Components V2** (requires `streamlit >= 1.51`).
+ - The implementation package is now `streamlit_aggrid`; `from st_aggrid import ...` keeps working as an alias.
+ - Removed automatic dtype conversion of returned data and the `conversion_errors` parameter.
+ - JSON string inputs now return DataFrames (previously returned JSON strings).
+ - Deprecated `custom_css` — inject CSS with `st.markdown()` + `isolate_styles=False` (see `streamlit_aggrid.styles` helpers).
+ - Fixed CUSTOM return mode, the manual update button, and the `callback` parameter.
+ - Large internal cleanup (removed dead collector/processor modules) and a new unit test suite.
+ - See [MIGRATION.md](MIGRATION.md) for the full migration guide.
+
 Version 1.2.0
  - Added `server_sync_strategy` parameter to control data synchronization between server and client
  - Deprecates try_to_convert_back_to_original_types, now grid will always try to keep proper datatypes when editing data.

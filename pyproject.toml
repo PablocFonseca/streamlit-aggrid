@@ -7,25 +7,31 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Pablo Fonseca", email = "pablo.fonseca+pip@gmail.com" }]
 keywords = ["streamlit", "ag-grid", "component"]
-dependencies = ["streamlit (>=1.51.0)", "pandas >=1.4.0", "python-decouple"]
+dependencies = ["streamlit (>=1.59.0)", "pandas >=1.4.0"]
 
 [project.urls]
 homepage = "https://github.com/PablocFonseca/streamlit-aggrid"
 
 [tool.poetry]
-packages = [{ include = "st_aggrid" }]
+packages = [{ include = "streamlit_aggrid" }, { include = "st_aggrid" }]
 
-#exclude = [{ path = "st_aggrid/frontend/**/*" }]
+# The frontend sources are not shipped; only the build output is included below
+# (source maps are also left out to keep the wheel small).
+exclude = ["streamlit_aggrid/frontend"]
 include = [
-    { path = "st_aggrid/frontend/build/**/*", format = [
+    { path = "streamlit_aggrid/frontend/build/**/*.mjs", format = [
         "sdist",
         "wheel",
     ] },
-    { path = "st_aggrid/json/**/*.json", format = [
+    { path = "streamlit_aggrid/frontend/build/**/*.css", format = [
         "sdist",
         "wheel",
     ] },
-    { path = "st_aggrid/pyproject.toml", format = [
+    { path = "streamlit_aggrid/json/**/*.json", format = [
+        "sdist",
+        "wheel",
+    ] },
+    { path = "streamlit_aggrid/pyproject.toml", format = [
         "sdist",
         "wheel",
     ] },
@@ -35,6 +41,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["test/unit", "test/e2e"]
+markers = [
+    "e2e: needs a browser and a built frontend (run with: pytest -m e2e)",
+    "slow: slow tests (performance suites)",
+]
+addopts = "-m 'not e2e'"
 
 [tool.poetry.group.dev.dependencies]
 bs4 = "^0.0.2"

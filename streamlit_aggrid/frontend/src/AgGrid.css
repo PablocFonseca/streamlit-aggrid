@@ -29,8 +29,8 @@
   width: 100vw !important;
   height: 100vh !important;
   z-index: 1000000;
-  background-color: white;
-  padding-top: 3.5rem;
+  background-color: var(--ag-background-color, var(--st-background-color, white));
+  padding-top: 2.5rem;  /* Space for toolbar to avoid overlay */
   box-sizing: border-box;
 }
 

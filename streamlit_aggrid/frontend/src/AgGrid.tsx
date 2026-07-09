@@ -23,7 +23,6 @@ import { AgChartsEnterpriseModule } from "ag-charts-enterprise"
 import { AllEnterpriseModule, LicenseManager } from "ag-grid-enterprise"
 
 import debounce from 'lodash/debounce'
-import isEqual from 'lodash/isEqual'
 import omit from 'lodash/omit'
 
 import { ThemeParser } from "./ThemeParser"
@@ -79,29 +78,33 @@ type AgGridProps = Pick<
 > &
   AgGridData;
 
-const AgGrid: React.FC<AgGridProps> = (props) => {
 
-  // Register AG Grid modules
-  const enableEnterpriseModules = props.data?.enable_enterprise_modules
-  if (enableEnterpriseModules === "enterprise+AgCharts") {
-    ModuleRegistry.registerModules([
-      AllEnterpriseModule.with(AgChartsEnterpriseModule),
-    ])
-    if (props.data?.license_key) {
-      LicenseManager.setLicenseKey(props.data.license_key)
-    }
-  } else if (
-    enableEnterpriseModules === true ||
-    enableEnterpriseModules === "enterpriseOnly"
-  ) {
-    ModuleRegistry.registerModules([AllEnterpriseModule])
-    if (props.data?.license_key) {
-      LicenseManager.setLicenseKey(props.data.license_key)
-    }
-  } else {
-    ModuleRegistry.registerModules([AllCommunityModule, DateEditorModule, LargeTextEditorModule])
+export default (componentArgs: ComponentArgs<stAggridStateShape, AgGridData>) : Component<stAggridStateShape, AgGridProps> => {
+  const { parentElement, ...restArgs } = componentArgs
+  
+  let reactRoot = reactRoots.get(parentElement)
+  if (!reactRoot) {
+    reactRoot = ReactDOM.createRoot(parentElement)
+    reactRoots.set(parentElement, reactRoot)
   }
 
+  reactRoot.render(
+
+      <AgGrid parentElement={parentElement} {...omit(restArgs, 'key')}/>
+
+  )
+
+  return () => {
+    const root = reactRoots.get(parentElement)
+    if (root) {
+      root.unmount()
+      reactRoots.delete(parentElement)
+    }
+  }
+}
+
+
+const AgGrid: React.FC<AgGridProps> = (props) => {
 
   // Refs (non-reactive values)
   const gridContainerRef = useRef<HTMLDivElement>(null)
@@ -110,28 +113,62 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
   const shouldGridReturnRef = useRef<Function | undefined>(undefined)
   const collectGridReturnRef = useRef<Function | undefined>(undefined)
   const isGridAutoHeightOnRef = useRef(false)
+  const modulesRegisteredRef = useRef(false)
+
+
+  // Initial grid options (stable reference, updates handled via AG Grid API)
+  const gridOptionsRef = useRef<any>()
+
+  if (!gridOptionsRef.current) {
+    // Initialize once on first render
+    if (!props.data) {
+      gridOptionsRef.current = {}
+    } else {
+      const go = parseGridOptions(
+        props.data.gridOptions,
+        props.data.allow_unsafe_jscode,
+        props.data.theme
+      )
+      go.rowData = parseData(props.data.data, props.data.gridOptions?.rowData)
+
+      // Auto-generate getRowId if not provided and data has unique IDs
+      if (!("getRowId" in go) && go.rowData?.[0]?.["::auto_unique_id::"]) {
+        go.getRowId = (params: GetRowIdParams) => params.data["::auto_unique_id::"]
+      }
+
+      gridOptionsRef.current = go
+    }
+  }
+
+  const gridOptions = gridOptionsRef.current
+
+  // Register AG Grid modules (must run before render)
+  if (!modulesRegisteredRef.current) {
+    const enableEnterpriseModules = props.data?.enable_enterprise_modules
+
+    if (enableEnterpriseModules === "enterprise+AgCharts") {
+      ModuleRegistry.registerModules([
+        AllEnterpriseModule.with(AgChartsEnterpriseModule),
+      ])
+      if (props.data?.license_key) {
+        LicenseManager.setLicenseKey(props.data.license_key)
+      }
+    } else if (
+      enableEnterpriseModules === true ||
+      enableEnterpriseModules === "enterpriseOnly"
+    ) {
+      ModuleRegistry.registerModules([AllEnterpriseModule])
+      if (props.data?.license_key) {
+        LicenseManager.setLicenseKey(props.data.license_key)
+      }
+    } else {
+      ModuleRegistry.registerModules([AllCommunityModule, DateEditorModule, LargeTextEditorModule])
+    }
+
+    modulesRegisteredRef.current = true
+  }
 
   // State
-  const [gridOptions, setGridOptions] = useState<any>(() => {
-    // Guard against undefined props.data during initial render
-    if (!props.data) {
-      return {}
-    }
-
-    const go = parseGridOptions(
-      props.data.gridOptions,
-      props.data.allow_unsafe_jscode,
-      props.data.theme
-    )
-    go.rowData = parseData(props.data.data, props.data.gridOptions?.rowData)
-
-    // Auto-generate getRowId if not provided and data has unique IDs
-    if (!("getRowId" in go) && go.rowData?.[0]?.["::auto_unique_id::"]) {
-      go.getRowId = (params: GetRowIdParams) => params.data["::auto_unique_id::"]
-    }
-
-    return go
-  })
 
   const [editedRows, setEditedRows] = useState<Set<any>>(new Set())
   const [isMaximized, setIsMaximized] = useState(false)
@@ -144,21 +181,19 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
   const enterprise_features_enabled = props.data?.enable_enterprise_modules || false
   const isRowDataEdited = editedRows.size > 0
 
+
   // One-time initialization
   useEffect(() => {
     if (debug) {
       console.log("***Received Props", props)
       console.log("*** Processed Initial State", {
-        gridOptions,
+        gridOptions: gridOptionsRef.current,
         editedRows,
         isMaximized,
         savedColumnState,
         dataHash,
       })
     }
-
-    // Handle custom CSS
-    props.data?.custom_css && addCustomCSS(props.data.custom_css)
 
     // Handle pro assets
     props.data?.pro_assets?.forEach((asset: any) => injectProAssets(asset?.js, asset?.css))
@@ -167,7 +202,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     const StreamlitAgGridPro = (window as any)?.StreamlitAgGridPro
     if (StreamlitAgGridPro) {
       StreamlitAgGridPro.returnGridValue = returnGridValue
-      StreamlitAgGridPro.extenders?.forEach((extender: Function) => extender(gridOptions))
+      StreamlitAgGridPro.extenders?.forEach((extender: Function) => extender(gridOptionsRef.current))
     }
 
     isGridAutoHeightOnRef.current = props.data?.gridOptions?.domLayout === "autoHeight"
@@ -177,53 +212,98 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     collectGridReturnRef.current = props.data?.custom_jscode_for_grid_return
       ? parseJsCodeFromPython(props.data.custom_jscode_for_grid_return)
       : undefined
-  }, []) // Only run once on mount
+  }, [])
 
-  // Handle prop updates
+  // Prevent Streamlit keyboard shortcuts from interfering with grid
+  // Block specific Streamlit shortcuts while allowing AG Grid to handle its own keys
   useEffect(() => {
-    if (!props.data) return
+    const container = gridContainerRef.current
+    if (!container) return
 
-    debug && console.log("********** Props updated", props)
+    // Streamlit keyboard shortcuts that we need to block
+    const streamlitShortcuts = new Set(['r', 'c'])
 
-    // Update grid options if changed (excluding rowData)
-    const prevGridOptions = omit(gridOptions, "rowData")
-    const currGridOptions = omit(props.data.gridOptions, "rowData")
-    if (!isEqual(prevGridOptions, currGridOptions)) {
-      apiRef.current?.updateGridOptions(
-        parseGridOptions(
-          props.data.gridOptions,
-          props.data.allow_unsafe_jscode,
-          props.data.theme
-        )
-      )
+    const stopStreamlitShortcuts = (e: KeyboardEvent) => {
+      // Only block single-key shortcuts without modifiers (Ctrl/Cmd/Alt)
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && streamlitShortcuts.has(e.key.toLowerCase())) {
+        e.stopPropagation()
+      }
     }
 
-    // Update theme if changed
-    if (!isEqual(props.theme, themeParserRef.current) || !isEqual(props.data.theme, gridOptions?.theme)) {
-      apiRef.current?.updateGridOptions({
-        theme: themeParserRef.current?.parse(props.data.theme, props.theme),
-      })
-    }
+    container.addEventListener('keydown', stopStreamlitShortcuts, true)
 
-    // Handle data sync strategy
+    return () => {
+      container.removeEventListener('keydown', stopStreamlitShortcuts, true)
+    }
+  }, []) 
+
+  // Effect 1: Handle gridOptions changes (excluding rowData and theme)
+  useEffect(() => {
+    if (!props.data?.gridOptions || !apiRef.current) return
+
+    debug && console.log("********** GridOptions updated")
+
+    const newOptions = parseGridOptions(
+      props.data.gridOptions,
+      props.data.allow_unsafe_jscode,
+      props.data.theme
+    )
+
+    // Remove rowData and theme as they're handled in separate effects
+    const optionsToUpdate = omit(newOptions, ["rowData", "theme"])
+
+    apiRef.current.updateGridOptions(optionsToUpdate)
+  }, [props.data?.gridOptions])
+
+  // Effect 2: Handle theme changes
+  useEffect(() => {
+    if (!apiRef.current) return
+
+    debug && console.log("********** Theme updated")
+
+    apiRef.current.updateGridOptions({
+      theme: themeParserRef.current?.parse(props.data?.theme, props.theme),
+    })
+  }, [props.data?.theme])
+
+  // Effect 3: Handle data sync (rowData updates)
+  useEffect(() => {
+    if (!props.data || !apiRef.current) return
+
     const serverSyncStrategy = props.data.server_sync_strategy
-    if (serverSyncStrategy === "client_wins" && !isRowDataEdited && props.data.data_hash !== dataHash) {
-      apiRef.current?.updateGridOptions({
-        rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
-      })
-      setDataHash(props.data.data_hash)
-    } else if (serverSyncStrategy === "server_wins") {
-      apiRef.current?.stopEditing(true)
-      apiRef.current?.updateGridOptions({
-        rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
-      })
-    }
 
-    // Update column state if changed
-    if (!isEqual(gridOptions?.columnState, props.data.columns_state) && props.data.columns_state) {
-      apiRef.current?.applyColumnState({ state: props.data.columns_state, applyOrder: true })
+    debug && console.log(`********** Data sync (${serverSyncStrategy})`, {
+      dataHash,
+      newHash: props.data.data_hash,
+      isRowDataEdited
+    })
+
+    if (serverSyncStrategy === "client_wins") {
+      if (!isRowDataEdited && props.data.data_hash !== dataHash) {
+        apiRef.current.updateGridOptions({
+          rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
+        })
+        setDataHash(props.data.data_hash)
+      }
+    } else if (serverSyncStrategy === "server_wins") {
+      apiRef.current.stopEditing(true)
+      apiRef.current.updateGridOptions({
+        rowData: parseData(props.data.data, props.data.gridOptions?.rowData) || []
+      })
     }
-  }, [props.data, props.theme, dataHash, isRowDataEdited, gridOptions, debug])
+  }, [props.data?.data_hash, props.data?.server_sync_strategy, props.data?.data, props.data?.gridOptions?.rowData, isRowDataEdited, dataHash, debug])
+
+  // Effect 4: Handle column state changes
+  useEffect(() => {
+    if (!apiRef.current || !props.data?.columns_state) return
+
+    debug && console.log("********** Column state updated")
+
+    apiRef.current.applyColumnState({
+      state: props.data.columns_state,
+      applyOrder: true
+    })
+  }, [props.data?.columns_state, debug])
 
   const resizeGridContainer = useCallback(() => {
     const renderedGridHeight = gridContainerRef.current?.clientHeight
@@ -245,7 +325,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     }
 
     let context: CollectorContext = {
-      state: { gridOptions, isRowDataEdited, api: apiRef.current, enterprise_features_enabled, debug, editedRows, isMaximized, savedColumnState, gridHeight: props.data?.height || 400 },
+      state: { gridOptions: gridOptionsRef.current, isRowDataEdited, api: apiRef.current, enterprise_features_enabled, debug, editedRows, isMaximized, savedColumnState, gridHeight: props.data?.height || 400 },
       props: {data: props.data},
       eventData,
       streamlitRerunEventTriggerName,
@@ -278,7 +358,7 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     } catch (error) {
       console.error("Error in returnGridValue collector processing:", error)
     }
-  }, [debug, props, gridOptions, isRowDataEdited, enterprise_features_enabled, editedRows, isMaximized, savedColumnState])
+  }, [debug, props, isRowDataEdited, enterprise_features_enabled, editedRows, isMaximized, savedColumnState])
 
   const attachStreamlitRerunToEvents = useCallback((gridApi: GridApi) => {
     props.data?.update_on?.forEach((element: any) => {
@@ -329,8 +409,8 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
     )
 
     // Call user's onGridReady if provided
-    gridOptions.onGridReady?.(event)
-  }, [props.data?.server_sync_strategy, enterprise_features_enabled, gridOptions, attachStreamlitRerunToEvents, resizeGridContainer])
+    gridOptionsRef.current?.onGridReady?.(event)
+  }, [props.data?.server_sync_strategy, enterprise_features_enabled, attachStreamlitRerunToEvents, resizeGridContainer])
 
   const defineContainerHeight = useMemo(() => {
     if (isMaximized) {
@@ -375,9 +455,8 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
           apiRef.current?.exportDataAsCsv()
         }}
         onManualUpdateClick={() => {
-          if (debug) {
-            console.log("Manual update triggered")
-          }
+          debug && console.log("Manual update triggered")
+          returnGridValue({ api: apiRef.current }, "manualUpdate")
         }}
       />
       <AgGridReact
@@ -390,26 +469,3 @@ const AgGrid: React.FC<AgGridProps> = (props) => {
 
 const reactRoots: WeakMap<ComponentArgs<any, AgGridData>["parentElement"], Root> = new WeakMap()
 
-export default (componentArgs: ComponentArgs<stAggridStateShape, AgGridData>) : Component<stAggridStateShape, AgGridProps> => {
-  const { parentElement, ...restArgs } = componentArgs
-  
-  let reactRoot = reactRoots.get(parentElement)
-  if (!reactRoot) {
-    reactRoot = ReactDOM.createRoot(parentElement)
-    reactRoots.set(parentElement, reactRoot)
-  }
-
-  reactRoot.render(
-    <React.StrictMode>
-      <AgGrid parentElement={parentElement} {...omit(restArgs, 'key')}/>
-    </React.StrictMode>
-  )
-
-  return () => {
-    const root = reactRoots.get(parentElement)
-    if (root) {
-      root.unmount()
-      reactRoots.delete(parentElement)
-    }
-  }
-}

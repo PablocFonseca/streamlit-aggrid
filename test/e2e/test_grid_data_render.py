@@ -6,9 +6,11 @@ from playwright.sync_api import Page, expect
 
 from e2e_utils import StreamlitRunner
 
-ROOT_DIRECTORY = Path(__file__).parent.parent.absolute()
-DATA_RENDER_FILE = ROOT_DIRECTORY / "test" / "grid_data_render.py"
-SCREENSHOT_DIRECTORY = ROOT_DIRECTORY / "test" / "screen_shots"
+pytestmark = pytest.mark.e2e
+
+HERE = Path(__file__).parent.absolute()
+DATA_RENDER_FILE = HERE / "grid_data_render.py"
+SCREENSHOT_DIRECTORY = HERE / "screen_shots"
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -26,7 +28,7 @@ def go_to_app(page: Page, streamlit_app: StreamlitRunner):
 
 def test_grid_renders_lists(page: Page):
     """Test grid renders lists in DataFrame columns"""
-    frame0 = page.locator(".st-key-grid_from_dataframe").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-grid_from_dataframe")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("names")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("ages")
@@ -37,7 +39,7 @@ def test_grid_renders_lists(page: Page):
 
 def test_unhashable_lists(page: Page):
     """Test rendering of unhashable list types with JSON serialization"""
-    frame0 = page.locator(".st-key-test_unhashable_lists").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_unhashable_lists")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("id")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("simple_list")
@@ -49,7 +51,7 @@ def test_unhashable_lists(page: Page):
 
 def test_unhashable_sets(page: Page):
     """Test rendering of unhashable set types with JSON serialization"""
-    frame0 = page.locator(".st-key-test_unhashable_sets").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_unhashable_sets")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("id")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("simple_set")
@@ -61,7 +63,7 @@ def test_unhashable_sets(page: Page):
 
 def test_unhashable_dictionaries(page: Page):
     """Test rendering of unhashable dictionary types with JSON serialization"""
-    frame0 = page.locator(".st-key-test_unhashable_dicts").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_unhashable_dicts")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("id")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("simple_dict")
@@ -73,7 +75,7 @@ def test_unhashable_dictionaries(page: Page):
 
 def test_complex_nested_unhashable(page: Page):
     """Test rendering of complex nested unhashable structures"""
-    frame0 = page.locator(".st-key-test_complex_unhashable").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_complex_unhashable")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("id")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("complex_nested")
@@ -83,7 +85,7 @@ def test_complex_nested_unhashable(page: Page):
 
 def test_mixed_hashable_unhashable_data(page: Page):
     """Test rendering of mixed hashable and unhashable columns with custom formatters"""
-    frame0 = page.locator(".st-key-test_mixed_data").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_mixed_data")
     expect(frame0.locator(".ag-root")).to_be_visible()
     # Check custom column headers from gridOptions
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("Int")
@@ -97,7 +99,7 @@ def test_mixed_hashable_unhashable_data(page: Page):
 
 def test_empty_unhashable_structures(page: Page):
     """Test rendering of empty unhashable structures (lists, sets, dicts)"""
-    frame0 = page.locator(".st-key-test_empty_unhashable").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_empty_unhashable")
     expect(frame0.locator(".ag-root")).to_be_visible()
     expect(frame0.locator(".ag-header-cell-text").nth(0)).to_have_text("id")
     expect(frame0.locator(".ag-header-cell-text").nth(1)).to_have_text("empty_list")
@@ -121,7 +123,7 @@ def test_grid_data_serialization(page: Page):
     ]
     
     for grid_key in grids:
-        frame = page.locator(grid_key).frame_locator("iframe").nth(0)
+        frame = page.locator(grid_key)
         expect(frame.locator(".ag-root")).to_be_visible()
 
 
@@ -137,7 +139,7 @@ def test_json_serialization_functionality(page: Page):
     ]
     
     for grid_key in json_serialized_grids:
-        frame = page.locator(grid_key).frame_locator("iframe").nth(0)
+        frame = page.locator(grid_key)
         expect(frame.locator(".ag-root")).to_be_visible()
         # Verify that data is actually displayed (not just an empty grid)
         expect(frame.locator(".ag-row")).not_to_have_count(0)
@@ -145,7 +147,7 @@ def test_json_serialization_functionality(page: Page):
 
 def test_auto_serialization_fallback(page: Page):
     """Test that use_json_serialization='auto' works as fallback"""
-    frame0 = page.locator(".st-key-test_unhashable_lists").frame_locator("iframe").nth(0)
+    frame0 = page.locator(".st-key-test_unhashable_lists")
     expect(frame0.locator(".ag-root")).to_be_visible()
     # This grid uses 'auto' serialization, should still render properly
     expect(frame0.locator(".ag-row")).to_have_count(3)

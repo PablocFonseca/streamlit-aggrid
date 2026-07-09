@@ -1,0 +1,10 @@
+# Minimal manifest shipped inside the wheel so Streamlit's components v2
+# scanner can locate the component assets at runtime (asset_dir is resolved
+# relative to this package's root directory).
+[project]
+name = "streamlit-aggrid"
+version = "2.0.0rc1"
+
+[[tool.streamlit.component.components]]
+name = "agGrid"
+asset_dir = "frontend/build"

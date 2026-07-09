@@ -1,234 +1,239 @@
-from typing import Mapping
+"""
+Container for AgGrid component response data.
+
+This module provides the AgGridReturn class, which is a simplified data container
+for accessing grid data, selected rows, grid state, and other information returned
+by the AgGrid component.
+"""
+
+import pandas as pd
+from typing import Optional, List, Dict, Any, TypedDict
+
 from streamlit_aggrid.shared import DataReturnMode
 
-import json
-import pandas as pd
-import numpy as np
-import inspect
-import re
-import warnings
+
+class GridResponse(TypedDict, total=False):
+    """TypedDict for the grid response structure from the frontend."""
+
+    nodes: List[Dict[str, Any]]
+    gridOptions: Optional[Dict[str, Any]]
+    gridState: Optional[Dict[str, Any]]
+    columnsState: Optional[Dict[str, Any]]
+    rowIdsAfterFilter: Optional[List[Any]]
+    rowIdsAfterSortAndFilter: Optional[List[Any]]
+    eventData: Dict[str, Any]
 
 
-class AgGridReturn(Mapping):
+class AgGridReturn:
     """
     Container for AgGrid component response data.
 
     Provides easy access to grid data, selected rows, grid state, and other
     information returned by the AgGrid component.
+
+    This class maintains backward compatibility by implementing the Mapping interface,
+    but the recommended way to access data is through the provided methods and properties.
     """
 
     def __init__(
-        self,
-        originalData,
-        grid_response={},
-        data_return_mode=DataReturnMode.AS_INPUT,
-        conversion_errors="coerce",
-        frame_dtypes=None,
+        self, grid_response=None, data_return_mode=DataReturnMode.AS_INPUT
     ) -> None:
-        super().__init__()
+        """Initialize AgGridReturn with the component response.
 
-        # Configuration
-        self._original_data = originalData
-        self._data_return_mode = data_return_mode
-        self._conversion_errors = conversion_errors
+        Args:
+            grid_response: The response from the AgGrid component (a mapping
+                with a 'grid_response' key).
+            data_return_mode: How the data property is shaped (see DataReturnMode).
+        """
+        if isinstance(data_return_mode, str):
+            data_return_mode = DataReturnMode(data_return_mode.upper())
 
         # State
-        self._component_value_set = grid_response is True
-        self.__dict__["grid_response"] = grid_response
-        self.frame_dtypes = frame_dtypes
-
-    def _set_component_value(self, component_value):
-        """Set the response value from the AgGrid component."""
-        self._component_value_set = True
-        self.__dict__["grid_response"] = component_value
-
-        # Ensure gridOptions is a dict
-        grid_options = self.__dict__["grid_response"].get("gridOptions")
-        if grid_options and not isinstance(grid_options, dict):
-            self.__dict__["grid_response"]["gridOptions"] = json.loads(grid_options)
+        if grid_response is None:
+            self.grid_response: GridResponse = {}
+        else:
+            self.grid_response: GridResponse = grid_response.get("grid_response") or {}
+        self.data_return_mode = data_return_mode
 
     # ==========================================
     # Basic Properties - Direct Grid Response Access
     # ==========================================
 
     @property
-    def grid_response(self):
-        """Raw response from component."""
-        return self.__dict__["grid_response"]
-
-    @property
-    def rows_id_after_sort_and_filter(self):
-        """The row indexes after sort and filter is applied"""
+    def rows_id_after_sort_and_filter(self) -> Optional[List[Any]]:
+        """The row indexes after sort and filter is applied."""
         return self.grid_response.get("rowIdsAfterSortAndFilter")
 
     @property
-    def rows_id_after_filter(self):
-        """The filtered row indexes"""
+    def rows_id_after_filter(self) -> Optional[List[Any]]:
+        """The filtered row indexes."""
         return self.grid_response.get("rowIdsAfterFilter")
 
     @property
-    def grid_options(self):
+    def grid_options(self) -> Dict[str, Any]:
         """GridOptions as applied on the grid."""
         return self.grid_response.get("gridOptions", {})
 
     @property
-    def columns_state(self):
+    def columns_state(self) -> Optional[Dict[str, Any]]:
         """Gets the state of the columns. Typically used when saving column state."""
         return self.grid_response.get("columnsState")
 
     @property
-    def grid_state(self):
-        """Gets the grid state. Tipically used on initialState option. (https://ag-grid.com/javascript-data-grid//grid-options/#reference-miscellaneous-initialState)"""
+    def grid_state(self) -> Optional[Dict[str, Any]]:
+        """Gets the grid state. Typically used on initialState option.
+
+        See: https://ag-grid.com/javascript-data-grid/grid-options/#reference-miscellaneous-initialState
+        """
         return self.grid_response.get("gridState")
 
     @property
-    def selected_rows_id(self):
-        """Ids of selected rows"""
-        return self.grid_state.get("rowSelection")
+    def selected_rows_id(self) -> Optional[List[Any]]:
+        """IDs of selected rows."""
+        if self.grid_state:
+            return self.grid_state.get("rowSelection")
+        return None
+
+    @property
+    def event_data(self) -> Dict[str, Any]:
+        """Returns information about the event that triggered AgGrid response."""
+        return self.grid_response.get("eventData", {})
 
     # ==========================================
-    # Helper Methods - Data Processing
+    # Data Access Methods
     # ==========================================
 
-    def _convert_column_types(self, data):
-        """Convert DataFrame columns back to their original types.
+    @property
+    def data(self) -> Optional[pd.DataFrame | str]:
+        data =  self._get_data(
+            selected_only=False, data_return_mode=self.data_return_mode
+        )
+
+        return None if data.empty else data
+
+    @property
+    def selected_data(self) -> Optional[pd.DataFrame | str]:
+        data = self._get_data(
+            selected_only=True, data_return_mode=self.data_return_mode
+        )
+        return None if data.empty else data
+
+    @property
+    def selected_rows(self) -> Optional[pd.DataFrame | str]:
+        """Alias for selected_data for backward compatibility with old API."""
+        return self.selected_data
+
+    @property
+    def dataGroups(self) -> Dict[tuple, pd.DataFrame]:
+        """
+        Returns grouped rows as a dict where keys are tuples of group values
+        and values are pandas.DataFrame.
+
+        Example:
+            When data is grouped by 'sport' and 'athlete', returns:
+            {
+                ('Swimming',): DataFrame(...),           # All Swimming rows
+                ('Swimming', 'Michael Phelps'): DataFrame(...),  # Specific athlete
+                ('Gymnastics',): DataFrame(...),         # All Gymnastics rows
+                ...
+            }
+
+        Usage:
+            # Simple iteration
+            for group_key, group_df in response.dataGroups.items():
+                print(f"{group_key}: {len(group_df)} rows")
+
+            # Direct access
+            swimming_data = response.dataGroups[('Swimming',)]
+
+            # Filter by group level
+            sports = {k: v for k, v in response.dataGroups.items() if len(k) == 1}
+        """
+        groups = {}
+        for group_dict in self._get_data_groups(only_selected=False):
+            groups.update(group_dict)
+        return groups
+
+    @property
+    def selected_dataGroups(self) -> Dict[tuple, pd.DataFrame]:
+        """
+        Returns selected grouped rows as a dict where keys are tuples of
+        group values and values are pandas.DataFrame.
+
+        Only returns rows/groups that are selected in the grid.
+
+        Example:
+            {
+                ('North',): DataFrame(...),                    # Selected North rows
+                ('North', 'Product A'): DataFrame(...),        # Selected North Product A
+                ('South', 'Product B', 'Blue'): DataFrame(...),  # Selected specific item
+            }
+        """
+        groups = {}
+        for group_dict in self._get_data_groups(only_selected=True):
+            groups.update(group_dict)
+        return groups
+
+    # ==========================================
+    # Internal Helper Methods
+    # ==========================================
+
+    def _get_data(
+        self, selected_only: bool, data_return_mode: DataReturnMode
+    ) -> Optional[pd.DataFrame | str]:
+        """Internal method to get data with various filters applied.
 
         Args:
-            data: DataFrame with columns to convert
+            filtered: Whether to apply grid filtering
+            sorted: Whether to apply grid sorting (requires filtered=True)
+            selected_only: Whether to return only selected rows
 
         Returns:
-            DataFrame with columns converted to original types
+            DataFrame or JSON string with requested data
         """
-        converted_columns = []
 
-        for col_name in data.columns:
-            column = data[col_name]
+        nodes = self.grid_response.get("nodes", [])
 
-            # Keep UI-created columns as-is (they don't have original dtypes)
-            if col_name not in self.frame_dtypes:
-                converted_columns.append(column)
-                continue
+        # Filter to selected nodes if requested
+        if selected_only:
+            nodes = [n for n in nodes if n.get("isSelected", False)]
 
-            original_dtype = self.frame_dtypes[col_name]
-            dtype_kind = original_dtype.kind
-
-            # Convert based on original dtype kind
-            if dtype_kind == "i":  # Integer
-                converted_columns.append(
-                    self._convert_to_integer(column)
-                )
-            elif dtype_kind == "f":  # Float
-                converted_columns.append(
-                    pd.to_numeric(column, errors=self._conversion_errors).astype(
-                        original_dtype, copy=False
-                    )
-                )
-            elif dtype_kind in ("O", "S", "U"):  # Object/String/Unicode
-                converted_columns.append(
-                    column.astype(original_dtype, copy=False)
-                )
-            elif dtype_kind == "M":  # Datetime
-                converted_columns.append(
-                    pd.to_datetime(column, errors=self._conversion_errors).astype(
-                        original_dtype, copy=False
-                    )
-                )
-            elif dtype_kind == "m":  # Timedelta
-                converted_columns.append(
-                    self._convert_to_timedelta(column, original_dtype)
-                )
-            else:  # Other types
-                converted_columns.append(
-                    column.astype(original_dtype)
-                )
-
-        return pd.concat(converted_columns, axis=1, copy=False)
-
-    def _convert_to_integer(self, column):
-        """Convert column to Int64, falling back to Float64 on errors.
-
-        Args:
-            column: Series to convert
-
-        Returns:
-            Series converted to Int64 or Float64
-        """
-        try:
-            return pd.to_numeric(
-                column, downcast="integer", errors="coerce"
-            ).astype("Int64", copy=False)
-        except TypeError:
-            warnings.warn(
-                f"Error casting {column.name} to Int64. Falling back to Float64"
-            )
-            return pd.to_numeric(column, errors="coerce").astype(
-                "Float64", copy=False
-            )
-
-    def _convert_to_timedelta(self, column, original_dtype):
-        """Convert column to timedelta, handling errors gracefully.
-
-        Args:
-            column: Series to convert
-            original_dtype: Target dtype for the column
-
-        Returns:
-            Series converted to timedelta
-        """
-        def safe_timedelta(value):
-            """Convert value to Timedelta, returning original on error."""
-            try:
-                return pd.Timedelta(value)
-            except (ValueError, TypeError, pd.errors.OutOfBoundsDatetime):
-                return value
-
-        return column.apply(safe_timedelta).astype(original_dtype, copy=False)
-
-    def _create_dataframe_from_nodes(self, nodes):
-        """Create a DataFrame from grid nodes."""
-        # Extract data from non-group nodes
         data = pd.DataFrame(
             [n.get("data", {}) for n in nodes if not n.get("group", False)],
             dtype=object,
         )
 
+        if data_return_mode == DataReturnMode.FILTERED:
+            data = pd.DataFrame(
+                [
+                    n.get("data", {})
+                    for n in nodes
+                    if not n.get("group", False) and (n.get("rowIndex", None) is not None)
+                ],
+                dtype=object,
+            )
+
+        if data_return_mode == DataReturnMode.FILTERED_AND_SORTED:
+            data = pd.DataFrame(
+                [
+                    n.get("data", {})
+                    for n in sorted(nodes, key=lambda k: k.get("rowIndex") or -1)
+                    if (not n.get("group", False))
+                    and (n.get("rowIndex", None) is not None)
+                ],
+                dtype=object,
+            )
+
         # Set index from auto_unique_id if available
         if "::auto_unique_id::" in data.columns:
-            data.index = pd.Index(data["::auto_unique_id::"], name="index")
-            # Remove the internal column - it's only used for indexing
-            data = data.drop(columns=["::auto_unique_id::"])
+            data.set_index("::auto_unique_id::", drop=True, inplace=True)
+            data.index.name = 'index'
 
-        if self.frame_dtypes is not None:
-            data = self._convert_column_types(data)
         return data
 
-    def _process_grouped_response(self, nodes):
-        """Process nodes with grouping information."""
-        # Create data with parent information
-        data_rows = []
-        for node in nodes:
-            if not node.get("group", False):  # Only leaf nodes
-                parent_path = node.get("parentPath", "")
-                row_data = {**node.get("data", {}), "parentPath": parent_path}
-                data_rows.append(row_data)
-
-        # Set index and clean up
-        data = pd.DataFrame(data_rows)
-        if "::auto_unique_id::" in data.columns:
-            data = data.set_index("::auto_unique_id::")
-            # Apply filtering and sorting if needed
-            data = self._apply_filtering_and_sorting(data, only_selected=False)
-            data.index.name = ""
-
-        # Group by parent path and parse AG-Grid IDs for meaningful group names
-        # Use sort=False to preserve original order and improve performance
-        groups = []
-        for parent_path, group_data in data.groupby("parentPath", sort=False):
-            group_key = self._parse_aggrid_group_ids(parent_path)
-            clean_data = group_data.drop("parentPath", axis=1)
-            groups.append({group_key: clean_data})
-
-        return groups
+    # ==========================================
+    # Grouped Data Support
+    # ==========================================
 
     def _parse_aggrid_group_ids(self, parent_path: str) -> tuple:
         """Parse AG-Grid auto-generated IDs to extract meaningful group names.
@@ -267,7 +272,7 @@ class AgGridReturn(Mapping):
                     # Find the first dash and take everything after it
                     first_dash = content.find("-")
                     if first_dash > 0:
-                        key = content[first_dash + 1 :]
+                        key = content[first_dash + 1:]
                         group_keys.append(key)
                 else:
                     # Subsequent levels contain the full path: {previousPath}-{colId}-{key}
@@ -282,14 +287,14 @@ class AgGridReturn(Mapping):
                         # followed by -{colId}-{key}
                         if content.startswith(prev_content):
                             # Extract the new part: -{colId}-{key}
-                            new_part = content[len(prev_content) :]
+                            new_part = content[len(prev_content):]
                             if new_part.startswith("-"):
                                 new_part = new_part[1:]  # Remove leading dash
 
                                 # Find the next dash (after colId) and extract key
                                 dash_pos = new_part.find("-")
                                 if dash_pos > 0:
-                                    key = new_part[dash_pos + 1 :]
+                                    key = new_part[dash_pos + 1:]
                                     group_keys.append(key)
                                 else:
                                     # No dash found, the whole thing is the key
@@ -302,123 +307,48 @@ class AgGridReturn(Mapping):
 
         return tuple(group_keys)
 
-    def _get_data(self, only_selected=False):
-        """Get data from the grid, optionally filtering to selected rows only."""
-        if not self._component_value_set:
-            return None if only_selected else self._original_data
+    def _process_grouped_response(self, nodes: List[Dict[str, Any]]) -> List[Dict[tuple, pd.DataFrame]]:
+        """Process nodes with grouping information."""
+        # Create data with parent information
+        data_rows = []
+        for node in nodes:
+            if not node.get("group", False):  # Only leaf nodes
+                parent_path = node.get("parentPath", "")
+                row_data = {**node.get("data", {}), "parentPath": parent_path}
+                data_rows.append(row_data)
 
-        nodes = self.grid_response.get("nodes", [])
+        # Set index and clean up
+        data = pd.DataFrame(data_rows)
+        if "::auto_unique_id::" in data.columns:
+            data = data.set_index("::auto_unique_id::")
+            data.index.name = ""
 
-        # Filter to selected nodes if requested
-        if only_selected:
-            nodes = [n for n in nodes if n.get("isSelected", False)]
-            if not nodes:
-                return None
+        # Group by parent path and parse AG-Grid IDs for meaningful group names
+        # Use sort=False to preserve original order and improve performance
+        groups = []
+        for parent_path, group_data in data.groupby("parentPath", sort=False):
+            group_key = self._parse_aggrid_group_ids(parent_path)
+            clean_data = group_data.drop("parentPath", axis=1)
+            groups.append({group_key: clean_data})
 
-        # Handle DataFrame data
-        if (
-            isinstance(self._original_data, pd.DataFrame)
-            and not self._original_data.empty
-        ):
-            data = self._create_dataframe_from_nodes(nodes)
-            return self._apply_filtering_and_sorting(data, only_selected)
+        return groups
 
-        # Handle JSON/string data or empty DataFrame
-        if self._should_return_json_data():
-            return self._create_json_response(nodes)
+    def _get_data_groups(self, only_selected: bool = False) -> List[Dict[tuple, pd.DataFrame]]:
+        """Get grouped data from the grid.
 
-        return self._original_data if not only_selected else None
+        Args:
+            only_selected: If True, return only selected groups/rows
 
-    def _apply_filtering_and_sorting(self, data, only_selected):
-        """Apply grid filtering and sorting to the data."""
-        # Get the appropriate row IDs based on data return mode
-        if self._data_return_mode == DataReturnMode.FILTERED:
-            reindex_ids = self.rows_id_after_filter
-        elif self._data_return_mode == DataReturnMode.FILTERED_AND_SORTED:
-            reindex_ids = self.rows_id_after_sort_and_filter
-        else:
-            reindex_ids = None
-
-        if reindex_ids:
-            reindex_ids = pd.Index(reindex_ids)
-            if only_selected:
-                reindex_ids = reindex_ids.intersection(data.index)
-
-            data = data.reindex(index=reindex_ids).reset_index(drop=True)
-
-            # Remove auto_unique_id column if present
-            columns = [col for col in data.columns if col != "::auto_unique_id::"]
-            return data[columns]
-
-        return data
-
-    def _should_return_json_data(self):
-        """Check if we should return JSON data instead of DataFrame."""
-        data = self._original_data
-        return (
-            (isinstance(data, str) and self._is_valid_json(data))
-            or (isinstance(data, pd.DataFrame) and data.empty)
-            or (data is None)
-        )
-
-    def _is_valid_json(self, data_str):
-        """Check if a string is valid JSON."""
-        try:
-            json.loads(data_str)
-            return True
-        except (json.JSONDecodeError, TypeError):
-            return False
-
-    def _create_json_response(self, nodes):
-        """Create JSON response from nodes."""
-        if self._data_return_mode == DataReturnMode.FILTERED:
-            filter_ids = self.rows_id_after_filter or []
-        elif self._data_return_mode == DataReturnMode.FILTERED_AND_SORTED:
-            filter_ids = self.rows_id_after_sort_and_filter or []
-        else:
-            filter_ids = None
-
-        sorted_nodes = sorted(nodes, key=lambda n: n.get("rowIndex", 0))
-
-        if filter_ids:
-            data_list = [n["data"] for n in sorted_nodes if n["id"] in filter_ids]
-        else:
-            data_list = [n["data"] for n in sorted_nodes]
-
-        # Remove internal columns from each data item
-        data_list = [
-            {k: v for k, v in item.items() if not k.startswith("::")}
-            for item in data_list
-        ]
-
-        return json.dumps(data_list)
-
-    # ==========================================
-    # Main Data Access Properties
-    # ==========================================
-
-    @property
-    def data(self):
-        """Data from the grid. If rows are grouped, return only the leaf rows."""
-        return self._get_data(only_selected=False)
-
-    @property
-    def selected_data(self):
-        """Selected data from the grid."""
-        return self._get_data(only_selected=True)
-
-    def _get_data_groups(self, only_selected=False):
-        """Get grouped data from the grid."""
-        if not self._component_value_set:
-            return [{(): pd.DataFrame()}]
-
+        Returns:
+            List of dictionaries where keys are tuples of group values and values are DataFrames
+        """
         nodes = self.grid_response.get("nodes", [])
 
         if only_selected:
             # Default is True because AgGrid sets undefined for half-selected groups
             nodes = [n for n in nodes if n.get("isSelected", True)]
             if not nodes:
-                fallback_data = self._get_data(only_selected)
+                fallback_data = self._get_data(selected_only=True, data_return_mode=self.data_return_mode)
                 return [{(): fallback_data}]
 
         # Check if response has groups
@@ -438,54 +368,33 @@ class AgGridReturn(Mapping):
                 )
 
         # No groups or invalid grouped data - return single group with all data
-        fallback_data = self._get_data(only_selected)
+        fallback_data = self._get_data(selected_only=only_selected, data_return_mode=self.data_return_mode)
         return [{(): fallback_data}]
-
-    @property
-    def dataGroups(self):
-        """
-        Returns grouped rows as a dictionary where keys are tuples of
-        groupby strings and values are pandas.DataFrame.
-        """
-        return self._get_data_groups(only_selected=False)
-
-    @property
-    def selected_dataGroups(self):
-        """
-        Returns selected rows as a dictionary where keys are tuples of
-        grouped column names and values are pandas.DataFrame.
-        """
-        return self._get_data_groups(only_selected=True)
-
-    @property
-    def selected_rows(self):
-        """
-        Returns selected rows as a DataFrame.
-        If there are grouped rows, returns a dict of {key: pd.DataFrame}.
-        """
-        nodes = self.grid_response.get("nodes", [])
-        selected_items = pd.DataFrame(
-            [n.get("data", None) for n in nodes if n.get("isSelected", None) is True]
-        )
-
-        if selected_items.empty:
-            return None
-
-        # Set pandas index if available and remove the internal column
-        if "::auto_unique_id::" in selected_items.columns:
-            selected_items.set_index("::auto_unique_id::", inplace=True)
-            selected_items.index.name = "index"
-
-        return selected_items
-
-    @property
-    def event_data(self):
-        """Returns information about the event that triggered AgGrid response."""
-        return self.grid_response.get("eventData", None)
 
     # ==========================================
     # Dictionary Interface for Backwards Compatibility
     # ==========================================
+
+    # Static list of the public attributes exposed through the dict-like
+    # interface. Kept explicit so keys()/iteration never need to evaluate
+    # every (potentially expensive) property.
+    _PUBLIC_KEYS = (
+        "data",
+        "selected_data",
+        "selected_rows",
+        "dataGroups",
+        "selected_dataGroups",
+        "grid_response",
+        "grid_options",
+        "grid_state",
+        "columns_state",
+        "event_data",
+        "rows_id_after_filter",
+        "rows_id_after_sort_and_filter",
+        "selected_rows_id",
+        "data_return_mode",
+    )
+
     def __getitem__(self, key):
         """Get item using dict-like access."""
         # Try to get as attribute first
@@ -500,35 +409,27 @@ class AgGridReturn(Mapping):
             return grid_response[key]
 
         # Fall back to __dict__ access
-        return self.__dict__[key]
+        return self.__dict__.get(key)
 
     def __iter__(self):
         """Iterate over public attributes."""
-        return (
-            name for name, _ in inspect.getmembers(self) if not name.startswith("_")
-        )
+        return iter(self.keys())
 
     def __len__(self):
         """Return number of public attributes."""
-        return len(
-            [name for name, _ in inspect.getmembers(self) if not name.startswith("_")]
-        )
+        return len(self.keys())
 
     def keys(self):
         """Return all available keys (attributes + grid_response keys)."""
-        # Get public attribute names
-        attr_keys = [
-            name for name, _ in inspect.getmembers(self) if not name.startswith("_")
-        ]
+        attr_keys = list(self._PUBLIC_KEYS)
 
         # Get grid_response keys for backward compatibility
         grid_response = self.__dict__.get("grid_response", {})
         if isinstance(grid_response, dict):
-            grid_keys = [k for k in grid_response.keys() if k not in attr_keys]
-            return attr_keys + grid_keys
+            attr_keys += [k for k in grid_response.keys() if k not in attr_keys]
 
         return attr_keys
 
     def values(self):
         """Return all values for public attributes."""
-        return [value for _, value in inspect.getmembers(self) if not _.startswith("_")]
+        return [self[key] for key in self.keys()]

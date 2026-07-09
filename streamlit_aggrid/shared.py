@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from enum import Enum, IntEnum, IntFlag, Flag, auto, EnumMeta
+from enum import Enum, IntEnum, Flag, auto, EnumMeta
 import json
 import pathlib
 from typing import List, Literal, Mapping, Optional, TypedDict
@@ -133,9 +132,6 @@ class JsCode:
             re.compile(match_js_comment_expression, re.MULTILINE), r"\1", js_code
         )
 
-        match_js_spaces = r"\s+(?=(?:[^\'\"]*[\'\"][^\'\"]*[\'\"])*[^\'\"]*$)"
-        one_line_jscode = re.sub(match_js_spaces, " ", js_code, flags=re.MULTILINE)
-
         js_placeholder = "::JSCODE::"
         one_line_jscode = re.sub(r"\s+|\r\s*|\n+", " ", js_code, flags=re.MULTILINE)
 
@@ -170,38 +166,6 @@ def walk_gridOptions(go, func):
                 go[k] = func(go[k])
 
 
-def fetch_grid_options_from_site():
-    import itertools
-    import requests
-    from bs4 import BeautifulSoup
-
-    # Fetch the URL text
-    url = "https://ag-grid.com/react-data-grid/grid-options/"
-    response = requests.get(url)
-
-    # Parse the HTML text
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    result = []
-
-    for r in soup.select("tr"):
-        c1, c2 = r.select("td")
-        element = c1.select_one("h6._name_1pw3t_115 > span").text
-        labels = [p.text for p in c1.select("span._metaLabel_1pw3t_162")]
-        values = [p.text for p in c1.select("span._metaValue_1pw3t_167")]
-        args = dict(itertools.zip_longest(labels, values))
-        description = c2.text
-        i = {}
-        i["name"] = element
-        i["props"] = args
-        i["description"] = description
-        result.append(i)
-
-    import json
-
-    return json.dumps(result, indent=4)
-
-
 # add deprecation note
 class AgGridTheme(BaseEnum):
     STREAMLIT = "streamlit"
@@ -213,7 +177,7 @@ class AgGridTheme(BaseEnum):
 class StAggridThemeType(TypedDict):
     themeName: str
     base: Literal["alpine", "balham", "quartz"]
-    params: Optional[Mapping[str, str | int]] = {}
+    params: Optional[Mapping[str, str | int]]
     parts: Optional[List[str]]
 
 

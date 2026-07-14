@@ -61,18 +61,23 @@ Version 2.0.0
  - Removed automatic dtype conversion of returned data and the `conversion_errors` parameter.
  - JSON string inputs now return DataFrames (previously returned JSON strings).
  - Preserved `custom_css` compatibility inside the Components V2 style root; global CSS can use `st.markdown()` + `isolate_styles=False`.
+ - AG Grid and its toolbar now inherit Streamlit's configured app font through
+   the Components V2 theme CSS variable, without per-cell JavaScript or a bundled font.
  - Fixed CUSTOM return mode, the manual update button, and the `callback` parameter.
  - Made `DataReturnMode.MINIMAL` return only compact triggering-event data without walking the full row model.
+ - Added opt-in `server_wins_rows` synchronization for client-side grids with
+   explicit stable row IDs. It preserves unchanged browser row objects so AG Grid
+   refreshes only changed rows while keeping server data authoritative.
  - Preserved the 1.x toolbar default (`show_toolbar=False`); enable it explicitly when needed.
  - Large internal cleanup (removed dead collector/processor modules) and a new unit test suite.
  - See [MIGRATION.md](MIGRATION.md) for the full migration guide.
 
 ## Release validation
 
-Components V2 loads its frontend from metadata embedded in the wheel, so a
-source-only test cannot catch a missing package, manifest, or asset directory.
-Before publishing, build the frontend and wheel, then run the wheel contract
-test against the exact artifact that will be uploaded:
+Components V2 loads its frontend from metadata embedded in the distribution, so
+a source-only test cannot catch a missing package, manifest, or asset directory.
+Before publishing, build the frontend, wheel, and source distribution, then run
+the packaging contract against the exact artifacts that will be uploaded:
 
 ```shell
 yarn build
@@ -80,10 +85,10 @@ poetry build
 pytest -q test/unit/test_packaging_contract.py
 ```
 
-The check selects the sole wheel in `dist/` and verifies its distribution
-metadata, both public import packages, embedded component manifest, and hashed
-JavaScript and CSS assets. Set `STREAMLIT_AGGRID_WHEEL` when validating an
-artifact stored elsewhere.
+The check selects the sole wheel and source distribution in `dist/` and verifies
+their metadata, both public import packages, embedded component manifest, and
+the exact hashed JavaScript and CSS assets. Set `STREAMLIT_AGGRID_WHEEL` and
+`STREAMLIT_AGGRID_SDIST` when validating artifacts stored elsewhere.
 
 The million-row end-to-end suite is an absolute regression smoke check with
 generous, machine-dependent thresholds. It does not compare 1.x and 2.x and

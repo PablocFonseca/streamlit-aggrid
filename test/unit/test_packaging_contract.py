@@ -6,6 +6,7 @@ from pathlib import Path, PurePosixPath
 import re
 import subprocess
 import sys
+import tarfile
 import tomllib
 import zipfile
 
@@ -46,6 +47,22 @@ def _candidate_wheel():
         )
     if len(wheels) == 1:
         return wheels[0]
+    return None
+
+
+def _candidate_sdist():
+    configured = os.environ.get("STREAMLIT_AGGRID_SDIST")
+    if configured:
+        return Path(configured)
+
+    sdists = sorted((ROOT / "dist").glob("*.tar.gz"))
+    if len(sdists) > 1:
+        raise AssertionError(
+            "multiple source distributions found in dist; validate and publish one "
+            "exact artifact: " + ", ".join(str(path) for path in sdists)
+        )
+    if len(sdists) == 1:
+        return sdists[0]
     return None
 
 
@@ -119,8 +136,25 @@ def test_built_wheel_contains_matching_metadata_manifest_and_assets(tmp_path):
         asset_prefix = f"{asset_prefix.as_posix()}/"
 
         assets = [name for name in names if name.startswith(asset_prefix)]
-        assert any(name.endswith(".mjs") for name in assets)
-        assert any(name.endswith(".css") for name in assets)
+        component_js_assets = [
+            PurePosixPath(name).name
+            for name in assets
+            if PurePosixPath(name).name.startswith("index-")
+            and name.endswith(".mjs")
+        ]
+        component_css_assets = [
+            PurePosixPath(name).name
+            for name in assets
+            if PurePosixPath(name).name.startswith("index-")
+            and name.endswith(".css")
+        ]
+        assert len(component_js_assets) == 1
+        assert len(component_css_assets) == 1
+        assert "_hash_" not in component_js_assets[0]
+        assert "[hash]" not in component_js_assets[0]
+        assert "_hash_" not in component_css_assets[0]
+        assert "[hash]" not in component_css_assets[0]
+        assert not any("bootstrap.min.css" in name for name in names)
 
         extracted = tmp_path / "wheel"
         archive.extractall(extracted)
@@ -182,4 +216,59 @@ assert validated is not None
         "wheel failed isolated import/component-manifest smoke test\n"
         f"stdout:\n{result.stdout}\n"
         f"stderr:\n{result.stderr}"
+    )
+
+
+def test_built_sdist_contains_manifest_and_exact_hashed_assets():
+    sdist = _candidate_sdist()
+    if sdist is None:
+        pytest.skip(
+            "build an sdist or set STREAMLIT_AGGRID_SDIST to validate the "
+            "release artifact"
+        )
+    assert sdist.is_file(), f"source distribution does not exist: {sdist}"
+
+    with tarfile.open(sdist, "r:gz") as archive:
+        names = [PurePosixPath(member.name) for member in archive.getmembers()]
+
+    roots = {path.parts[0] for path in names if path.parts}
+    assert len(roots) == 1
+    root = next(iter(roots))
+
+    relative_names = {
+        PurePosixPath(*path.parts[1:]).as_posix()
+        for path in names
+        if path.parts and path.parts[0] == root
+    }
+    assert "pyproject.toml" in relative_names
+    assert "st_aggrid/__init__.py" in relative_names
+    assert "streamlit_aggrid/__init__.py" in relative_names
+    assert "streamlit_aggrid/pyproject.toml" in relative_names
+
+    with tarfile.open(sdist, "r:gz") as archive:
+        embedded_member = archive.extractfile(
+            f"{root}/streamlit_aggrid/pyproject.toml"
+        )
+        assert embedded_member is not None
+        embedded = tomllib.loads(embedded_member.read().decode())
+    manifest = _manifest(embedded)
+    assert manifest["name"] == "agGrid"
+    assert manifest["asset_dir"] == "frontend/build"
+
+    asset_prefix = "streamlit_aggrid/frontend/build/"
+    assets = sorted(
+        name for name in relative_names if name.startswith(asset_prefix)
+    )
+    scripts = [name for name in assets if name.endswith(".mjs")]
+    styles = [name for name in assets if name.endswith(".css")]
+    assert len(scripts) == 1
+    assert len(styles) == 1
+    assert PurePosixPath(scripts[0]).name.startswith("index-")
+    assert PurePosixPath(styles[0]).name.startswith("index-")
+
+    forbidden_fragments = ("bootstrap.min.css", "_hash_", "[hash]")
+    assert not any(
+        fragment in name
+        for name in relative_names
+        for fragment in forbidden_fragments
     )

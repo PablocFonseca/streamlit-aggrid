@@ -3,13 +3,13 @@ import { cloneDeep } from "lodash"
 import { deepMap } from "../utils"
 import { parseJsCodeFromPython } from "./gridUtils"
 import { columnFormaters } from "../customColumns"
-import { ThemeParser } from "../ThemeParser"
+import { ThemeParser, type StAggridThemeOptions } from "../ThemeParser"
 
 
 export function parseGridOptions(
     gridOptions: GridOptions,
     allowUnsafeJscode: boolean,
-    theme: any
+    theme?: StAggridThemeOptions
 ): GridOptions {
     // gridOptions crosses the Python -> host -> JS boundary; it can arrive as a
     // JSON string (or missing) rather than a plain object.
@@ -23,7 +23,10 @@ export function parseGridOptions(
     }
 
     if (!("getRowId" in parsedGridOptions)) {
-        console.warn("getRowId was not set. Auto Rows hashes will be used as row ids.")
+        // The renderer installs its positional ::auto_unique_id:: callback
+        // after parsing ordinary Python data. Keep this diagnostic out of the
+        // production warning channel because it is expected for normal grids.
+        console.debug("getRowId was not set; checking for generated row IDs.")
     }
 
     //adds custom columnFormatters
@@ -34,7 +37,7 @@ export function parseGridOptions(
 
     //processTheming
     const themeParser = new ThemeParser()
-    parsedGridOptions.theme = themeParser.parse(theme, theme)
+    parsedGridOptions.theme = themeParser.parse(theme)
 
     return parsedGridOptions
 }

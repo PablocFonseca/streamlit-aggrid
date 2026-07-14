@@ -30,6 +30,76 @@ _shown_deprecation_warnings = set()
 # (e.g. unit tests) must not fail.
 _COMPONENT_NAME = "streamlit-aggrid.agGrid"
 _component_funcs = {}
+_VALID_THEME_NAMES = frozenset(member.value for member in AgGridTheme)
+_DEFAULT_UPDATE_EVENTS = (
+    "cellValueChanged",
+    "selectionChanged",
+    "filterChanged",
+    "sortChanged",
+)
+
+
+def _event_name(event_spec):
+    """Return the AG Grid event name from a plain or debounced event spec."""
+    if isinstance(event_spec, str):
+        return event_spec
+    if (
+        isinstance(event_spec, (list, tuple))
+        and event_spec
+        and isinstance(event_spec[0], str)
+    ):
+        return event_spec[0]
+    return None
+
+
+def _deduplicate_update_events(event_specs):
+    """Keep one listener per event without discarding an explicit debounce."""
+    deduplicated = []
+    event_positions = {}
+
+    for event_spec in event_specs:
+        event_name = _event_name(event_spec)
+        if event_name is None:
+            # Keep backward compatibility for extensible/custom values. The
+            # frontend is responsible for ignoring unsupported event specs.
+            deduplicated.append(event_spec)
+            continue
+
+        if event_name in event_positions:
+            position = event_positions[event_name]
+            previous_spec = deduplicated[position]
+            previous_has_options = isinstance(previous_spec, (list, tuple))
+            new_has_options = isinstance(event_spec, (list, tuple))
+            # A tuple/list is more specific than a bare event name. Keep its
+            # debounce even if the same bare name appears later; when two
+            # configured specs are supplied, the later one intentionally wins.
+            if new_has_options or not previous_has_options:
+                deduplicated[position] = event_spec
+        else:
+            event_positions[event_name] = len(deduplicated)
+            deduplicated.append(event_spec)
+
+    return deduplicated
+
+
+def _merge_update_events(primary, supplemental):
+    """Add missing supplemental events without overriding explicit specs."""
+    merged = _deduplicate_update_events(primary)
+    configured_names = {
+        event_name
+        for event_spec in merged
+        if (event_name := _event_name(event_spec)) is not None
+    }
+
+    for event_spec in _deduplicate_update_events(supplemental):
+        event_name = _event_name(event_spec)
+        if event_name is not None and event_name in configured_names:
+            continue
+        merged.append(event_spec)
+        if event_name is not None:
+            configured_names.add(event_name)
+
+    return merged
 
 
 def _get_component_func(isolate_styles=True):
@@ -60,12 +130,13 @@ def AgGrid(
     | Literal["enterpriseOnly", "enterprise+AgCharts"] = False,
     license_key: str = None,
     columns_state=None,
-    theme: str
-    | StAggridTheme
-    | Literal["streamlit", "light", "dark", "blue", "fresh", "material"] = "streamlit",
+    theme: StAggridTheme
+    | AgGridTheme
+    | Literal["streamlit", "alpine", "balham", "material"]
+    | None = "streamlit",
     custom_css=None,
     key: typing.Any = None,
-    update_on=["cellValueChanged", "selectionChanged", "filterChanged", "sortChanged"],
+    update_on: list[str | tuple[str, int]] | None = None,
     callback=None,
     show_toolbar: bool = False,
     show_search: bool = True,
@@ -73,7 +144,9 @@ def AgGrid(
     custom_jscode_for_grid_return: JsCode = None,
     should_grid_return: JsCode = None,
     use_json_serialization: bool | Literal["auto"] = "auto",
-    server_sync_strategy: Literal["client_wins", "server_wins"] = "client_wins",
+    server_sync_strategy: Literal[
+        "client_wins", "server_wins", "server_wins_rows"
+    ] = "client_wins",
     isolate_styles=True,
     **default_column_parameters,
 ) -> AgGridReturn:
@@ -140,11 +213,10 @@ def AgGrid(
     theme : str | StAggridTheme, optional
         Grid theme:
             - 'streamlit': Matches Streamlit's default styling
-            - 'light': AG Grid balham-light theme
-            - 'dark': AG Grid balham-dark theme
-            - 'blue': AG Grid blue theme
-            - 'fresh': AG Grid fresh theme
-            - 'material': AG Grid material theme
+            - 'alpine': AG Grid Alpine theme
+            - 'balham': AG Grid Balham theme
+            - 'material': AG Grid Alpine theme with Material icons
+            - ``StAggridTheme``: Custom base, parameters, and parts
         Defaults to 'streamlit'.
 
     custom_css : dict, optional
@@ -158,6 +230,15 @@ def AgGrid(
         Use tuple (event_name, debounce_ms) for debounced events.
 
         Example: ['cellValueChanged', ('columnResized', 500)]
+        When omitted, the modern default events are ``cellValueChanged``,
+        ``selectionChanged``, ``filterChanged``, and ``sortChanged``. If a
+        deprecated ``update_mode`` other than ``NO_UPDATE`` is supplied, that
+        mode defines the events instead. Duplicate event names are consolidated,
+        while an explicitly supplied tuple retains its debounce setting.
+
+        ``update_mode=MANUAL`` with no ``update_on`` attaches no automatic
+        event listeners. Supplying ``update_on`` explicitly keeps those events
+        active in addition to the manual update button.
         Defaults to ['cellValueChanged', 'selectionChanged', 'filterChanged', 'sortChanged'].
 
     callback : callable, optional
@@ -232,16 +313,27 @@ def AgGrid(
         or False for strict type checking.
         Defaults to 'auto'.
 
-    server_sync_strategy : Literal['client_wins', 'server_wins'], optional
+    server_sync_strategy : Literal['client_wins', 'server_wins', 'server_wins_rows'], optional
         Controls data synchronization behavior between server and client:
 
         - 'client_wins' (default): After first edit, grid ignores server data updates
           and maintains local edits. Standard behavior for interactive editing.
         - 'server_wins': Server data always overwrites the grid, including edited cells.
           Useful when server data should be the single source of truth.
+        - 'server_wins_rows': Server data remains authoritative, but rows whose values
+          did not change retain their existing browser objects so AG Grid only refreshes
+          changed, added, or removed rows. This requires the client-side row model and
+          an explicit, stable, unique ``gridOptions['getRowId']`` ``JsCode`` callback
+          with ``allow_unsafe_jscode=True``. The positional IDs generated by
+          streamlit-aggrid do not qualify because they do not identify the same logical
+          row after inserts, removals, or reordering.
 
         When using 'server_wins', consider intercepting grid results with session_state
         to preserve user edits before re-rendering.
+        ``server_wins_rows`` still sends the complete dataset to the browser and performs
+        an O(n) comparison. It improves AG Grid reconciliation/rendering when a small
+        fraction of a large client-side dataset changes; it does not reduce transport
+        size and is not intended for server-side, infinite, or viewport row models.
         Defaults to 'client_wins'.
 
     isolate_styles : bool, optional
@@ -270,11 +362,15 @@ def AgGrid(
     if isinstance(theme, StAggridTheme):
         themeObj = theme
     elif isinstance(theme, (str, AgGridTheme)) or theme is None:
+        theme_name = theme.value if isinstance(theme, AgGridTheme) else theme
+        theme_name = theme_name or "streamlit"
+        if theme_name not in _VALID_THEME_NAMES:
+            raise ValueError(
+                f"{theme_name!r} is not a valid theme. Expected one of: "
+                f"{', '.join(sorted(_VALID_THEME_NAMES))}, or StAggridTheme."
+            )
         themeObj = StAggridTheme(None)
-        if isinstance(theme, AgGridTheme):
-            themeObj["themeName"] = theme.value
-        else:
-            themeObj["themeName"] = theme or "streamlit"
+        themeObj["themeName"] = theme_name
     else:
         raise ValueError(
             f"{theme} is not valid. Available options: {AgGridTheme.__members__}"
@@ -289,6 +385,25 @@ def AgGrid(
     elif not isinstance(data_return_mode, DataReturnMode):
         raise ValueError(
             "data_return_mode should be either a valid DataReturnMode enum value or string"
+        )
+
+    valid_server_sync_strategies = (
+        "client_wins",
+        "server_wins",
+        "server_wins_rows",
+    )
+    if server_sync_strategy not in valid_server_sync_strategies:
+        raise ValueError(
+            f"{server_sync_strategy!r} is not a valid server_sync_strategy. "
+            f"Expected one of: {', '.join(valid_server_sync_strategies)}."
+        )
+
+    if not (
+        use_json_serialization == "auto"
+        or type(use_json_serialization) is bool
+    ):
+        raise ValueError(
+            "use_json_serialization must be 'auto', True, or False."
         )
 
     # Parse update mode (deprecated)
@@ -313,10 +428,18 @@ def AgGrid(
             )
             _shown_deprecation_warnings.add(warning_key)
 
-    update_on = list(update_on)
     manual_update = update_mode == GridUpdateMode.MANUAL
-    if not manual_update:
-        update_on.extend(parse_update_mode(update_mode))
+    if update_on is None:
+        update_on = (
+            list(_DEFAULT_UPDATE_EVENTS)
+            if update_mode == GridUpdateMode.NO_UPDATE
+            else []
+        )
+    else:
+        update_on = _deduplicate_update_events(list(update_on))
+
+    if not manual_update and update_mode != GridUpdateMode.NO_UPDATE:
+        update_on = _merge_update_events(update_on, parse_update_mode(update_mode))
 
     # Process JsCode for the CUSTOM return mode
     if custom_jscode_for_grid_return is not None:
@@ -352,6 +475,35 @@ def AgGrid(
         use_json_serialization,
     )
 
+    if server_sync_strategy == "server_wins_rows":
+        row_model_type = gridOptions.get("rowModelType") or "clientSide"
+        if row_model_type != "clientSide":
+            raise ValueError(
+                "server_sync_strategy='server_wins_rows' only supports the "
+                "client-side row model."
+            )
+        if "getRowId" not in gridOptions:
+            raise ValueError(
+                "server_sync_strategy='server_wins_rows' requires an explicit, "
+                "stable gridOptions['getRowId'] callback. Auto-generated positional "
+                "row IDs are not stable across inserts, removals, or reordering."
+            )
+        if not allow_unsafe_jscode:
+            raise ValueError(
+                "server_sync_strategy='server_wins_rows' requires "
+                "allow_unsafe_jscode=True so gridOptions['getRowId'] can execute."
+            )
+        get_row_id = gridOptions["getRowId"]
+        if not (
+            isinstance(get_row_id, str)
+            and get_row_id.startswith("::JSCODE::")
+            and get_row_id.endswith("::JSCODE::")
+        ):
+            raise ValueError(
+                "server_sync_strategy='server_wins_rows' requires "
+                "gridOptions['getRowId'] to be a JsCode callback."
+            )
+
     initial_data = None
     if (
         data_return_mode not in (DataReturnMode.CUSTOM, DataReturnMode.MINIMAL)
@@ -360,6 +512,12 @@ def AgGrid(
         initial_data = data
         if "::auto_unique_id::" in data.columns:
             initial_data = data.drop(columns=["::auto_unique_id::"])
+
+    # Keep initial_data available to AgGridReturn, then move the transport copy
+    # into JSON rowData when explicitly requested.
+    if use_json_serialization is True and isinstance(data, pd.DataFrame):
+        gridOptions["rowData"] = data.to_json(orient="records")
+        data = None
 
     custom_css = custom_css or dict()
 
@@ -396,24 +554,34 @@ def AgGrid(
         def _on_grid_response_change():
             return None
 
-    # streamlit >= 1.59 silently coerces Arrow-incompatible frames instead of
-    # raising, corrupting the whole component payload. Detect it up front and
-    # send the data as JSON rowData when use_json_serialization is "auto".
-    if use_json_serialization == "auto" and isinstance(data, pd.DataFrame):
+    row_data_for_hash = data
+    json_fallback_data = data if isinstance(data, pd.DataFrame) else None
+
+    # Streamlit >= 1.59 may silently coerce an Arrow-incompatible frame after
+    # PyArrow rejects it. Preflight both non-JSON modes so "auto" can fall back
+    # safely and an explicit False retains its documented strict behavior. On
+    # success, pass the validated Arrow table onward so Streamlit does not have
+    # to perform the same DataFrame-to-Arrow conversion a second time.
+    if use_json_serialization in ("auto", False) and isinstance(data, pd.DataFrame):
         try:
             import pyarrow as pa
 
-            pa.Table.from_pandas(data)
+            data = pa.Table.from_pandas(data)
         except Exception:
+            if use_json_serialization is False:
+                raise
             gridOptions["rowData"] = data.to_json(orient="records")
             data = None
+            row_data_for_hash = gridOptions["rowData"]
             use_json_serialization = True
 
     # Prepare data payload for the component.
     # In Components V2, 'key' is a direct parameter, not part of data.
+    if row_data_for_hash is None:
+        row_data_for_hash = gridOptions.get("rowData")
     _component_data = dict(
         data=data,
-        data_hash=compute_data_hash(data),
+        data_hash=compute_data_hash(row_data_for_hash),
         gridOptions=gridOptions,
         height=height,
         allow_unsafe_jscode=allow_unsafe_jscode,
@@ -455,19 +623,26 @@ def AgGrid(
             or "Conversion failed" in error_msg
         )
 
-        if is_pyarrow_error and data is not None and use_json_serialization == "auto":
+        if (
+            is_pyarrow_error
+            and json_fallback_data is not None
+            and use_json_serialization == "auto"
+        ):
             logging.warning(
                 "PyArrow conversion failed, automatically retrying with JSON "
                 f"serialization: {error_msg}"
             )
             # Retry once, sending data as a JSON string inside gridOptions.rowData
             # (same shape produced by use_json_serialization=True).
-            gridOptions["rowData"] = data.to_json(orient="records")
+            gridOptions["rowData"] = json_fallback_data.to_json(orient="records")
             _component_data.update(
-                data=None, gridOptions=gridOptions, use_json_serialization=True
+                data=None,
+                data_hash=compute_data_hash(gridOptions["rowData"]),
+                gridOptions=gridOptions,
+                use_json_serialization=True,
             )
             component_result = _call_component()
-        elif is_pyarrow_error and data is not None:
+        elif is_pyarrow_error and json_fallback_data is not None:
             # User explicitly disabled JSON serialization, raise the PyArrow error
             raise
         else:

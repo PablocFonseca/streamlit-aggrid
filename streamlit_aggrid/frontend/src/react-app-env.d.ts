@@ -9,12 +9,6 @@ declare namespace NodeJS {
   }
 }
 
-// Allow importing @fontsource packages
-declare module '@fontsource/*' {
-  const content: any;
-  export default content;
-}
-
 declare module '*.avif' {
   const src: string;
   export default src;

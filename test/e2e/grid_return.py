@@ -1,5 +1,5 @@
 import json
-from st_aggrid import AgGrid, DataReturnMode, JsCode
+from st_aggrid import AgGrid, DataReturnMode, JsCode, StAggridTheme
 import streamlit as st
 import pandas as pd
 
@@ -294,16 +294,27 @@ def make_grid5():
 
 
 def make_grid6():
-    """Verify compatibility CSS is installed inside the isolated component."""
+    """Verify isolated CSS and Streamlit/custom font behavior."""
+    st.html('<span id="streamlit-font-probe">Streamlit font probe</span>')
     AgGrid(
         pd.DataFrame([{"item": "Widget", "quantity": 10}]),
         key="custom_css_grid",
+        show_toolbar=True,
         custom_css={
             ".ag-header-cell-text": {
                 "color": "#123456",
                 "font-weight": "700",
             }
         },
+    )
+    AgGrid(
+        pd.DataFrame([{"item": "Custom font", "quantity": 20}]),
+        key="explicit_custom_font_grid",
+        theme=(
+            StAggridTheme(base="quartz")
+            .withParams(fontFamily="monospace", backgroundColor="rgb(1, 2, 3)")
+            .withParts("colorSchemeDark")
+        ),
     )
 
 

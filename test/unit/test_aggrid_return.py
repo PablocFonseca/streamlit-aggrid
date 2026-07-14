@@ -1,5 +1,8 @@
 """Unit tests for AgGridReturn (no browser or Streamlit runtime required)."""
 
+from collections.abc import Mapping
+
+import pandas as pd
 import pytest
 
 from streamlit_aggrid.AgGridReturn import AgGridReturn
@@ -107,6 +110,22 @@ class TestCustomResponse:
         assert r["rowCount"] == 3
         assert r.get("editedField") == "price"
         assert r.get("missing", "fallback") == "fallback"
+
+    def test_custom_payload_keys_take_precedence_over_public_properties(self):
+        payload = {
+            "data": "custom data",
+            "grid_state": "custom grid state",
+            "raw_data": "custom raw data",
+        }
+        r = AgGridReturn(
+            grid_response={"grid_response": payload},
+            data_return_mode=DataReturnMode.CUSTOM,
+        )
+
+        assert r["data"] == "custom data"
+        assert r["grid_state"] == "custom grid state"
+        assert r["raw_data"] == "custom raw data"
+        assert dict(r)["data"] == "custom data"
 
 
 class TestMinimalResponse:
@@ -216,6 +235,9 @@ class TestBasicProperties:
 
 
 class TestMappingInterface:
+    def test_is_collections_mapping(self):
+        assert isinstance(AgGridReturn(), Mapping)
+
     def test_getitem_attribute(self, simple_nodes):
         r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)
         assert list(r["data"]["Name"]) == ["Alice", "Bob", "Charlie"]
@@ -224,8 +246,13 @@ class TestMappingInterface:
         r = AgGridReturn(make_response(simple_nodes))
         assert r["nodes"] == simple_nodes
 
-    def test_getitem_missing_returns_none(self):
-        assert AgGridReturn()["nope"] is None
+    def test_getitem_missing_raises_key_error(self):
+        with pytest.raises(KeyError, match="nope"):
+            AgGridReturn()["nope"]
+
+    def test_get_missing_returns_exact_default(self):
+        sentinel = object()
+        assert AgGridReturn().get("nope", sentinel) is sentinel
 
     def test_keys_iteration_len(self, simple_nodes):
         r = AgGridReturn(make_response(simple_nodes))
@@ -236,3 +263,35 @@ class TestMappingInterface:
     def test_values_matches_keys(self):
         r = AgGridReturn()
         assert len(r.values()) == len(r.keys())
+
+    def test_mapping_mixins_expose_items_and_build_a_dict(self):
+        r = AgGridReturn(grid_response={"grid_response": {"answer": 42}})
+
+        materialized = dict(r)
+        from_items = dict(r.items())
+        assert tuple(from_items) == tuple(materialized)
+        assert materialized["answer"] == 42
+        assert from_items["answer"] == 42
+        assert list(r)[: len(r._PUBLIC_KEYS)] == list(r._PUBLIC_KEYS)
+
+    def test_mapping_equality_for_scalar_values(self):
+        r = AgGridReturn(
+            grid_response={"grid_response": {"answer": 42}},
+            data_return_mode=DataReturnMode.CUSTOM,
+        )
+
+        expected = dict(r)
+        assert r == expected
+        assert expected == r
+
+    def test_mapping_equality_handles_dataframe_values(self):
+        original = pd.DataFrame({"value": [1, 2]})
+        r = AgGridReturn(original_data=original)
+        expected = dict(r)
+
+        assert r == expected
+        assert expected == r
+
+        changed = dict(expected)
+        changed["data"] = pd.DataFrame({"value": [1, 3]})
+        assert r != changed

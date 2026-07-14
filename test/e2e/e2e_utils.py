@@ -102,17 +102,23 @@ class StreamlitRunner:
     """A context manager for running Streamlit scripts."""
 
     def __init__(
-        self, script_path: os.PathLike, server_port: typing.Optional[int] = None
+        self,
+        script_path: os.PathLike,
+        server_port: typing.Optional[int] = None,
+        extra_args: typing.Optional[typing.Sequence[str]] = None,
     ):
         """Initialize a StreamlitRunner instance.
 
         Args:
             script_path (os.PathLike): Path to the Streamlit script to run.
             server_port (int, optional): Port for the Streamlit server. Defaults to None.
+            extra_args (Sequence[str], optional): Additional ``streamlit run``
+                command-line options. Defaults to None.
         """
         self._process = None
         self.server_port = server_port
         self.script_path = script_path
+        self.extra_args = list(extra_args or ())
 
     def __enter__(self) -> "StreamlitRunner":
         """Start the Streamlit server when entering the context."""
@@ -137,6 +143,7 @@ class StreamlitRunner:
                 "--server.headless=true",
                 "--browser.gatherUsageStats=false",
                 "--global.developmentMode=false",
+                *self.extra_args,
             ]
         )
         self._process.start()

@@ -1,5 +1,7 @@
 """Unit tests for shared helpers (JsCode, walk_gridOptions, themes, enums)."""
 
+import pytest
+
 from streamlit_aggrid.shared import (
     DataReturnMode,
     GridUpdateMode,
@@ -61,10 +63,22 @@ class TestWalkGridOptions:
 
 
 class TestStAggridTheme:
+    def test_default_theme_is_a_valid_custom_theme(self):
+        theme = StAggridTheme().withParams(fontSize=12)
+
+        assert theme["themeName"] == "custom"
+        assert theme["params"] == {"fontSize": 12}
+
     def test_base_sets_custom_theme(self):
         theme = StAggridTheme(base="quartz")
         assert theme["themeName"] == "custom"
         assert theme["base"] == "quartz"
+
+    def test_base_is_fluent(self):
+        theme = StAggridTheme()
+
+        assert theme.base("balham") is theme
+        assert theme["base"] == "balham"
 
     def test_fluent_params_and_parts(self):
         theme = (
@@ -76,11 +90,48 @@ class TestStAggridTheme:
         assert theme["params"] == {"fontSize": 12, "accentColor": "#ff0000"}
         assert theme["parts"] == ["iconSetQuartz"]
 
+    def test_parts_preserve_order_and_readded_part_moves_last(self):
+        theme = StAggridTheme(base="quartz").withParts(
+            "iconSetAlpine",
+            "colorSchemeDark",
+            "iconSetMaterial",
+        )
+
+        theme.withParts("iconSetAlpine")
+
+        assert theme["parts"] == [
+            "colorSchemeDark",
+            "iconSetMaterial",
+            "iconSetAlpine",
+        ]
+
+    @pytest.mark.parametrize("base", ["material", "typo", ""])
+    def test_invalid_base_is_rejected(self, base):
+        with pytest.raises(ValueError, match="not a valid custom theme base"):
+            StAggridTheme(base=base)
+
+    def test_invalid_part_is_rejected_without_mutating_theme(self):
+        theme = StAggridTheme(base="quartz").withParts("colorSchemeDark")
+
+        with pytest.raises(ValueError, match="Unsupported custom theme part"):
+            theme.withParts("notAThemePart")
+
+        assert theme["parts"] == ["colorSchemeDark"]
+
+    def test_parts_must_be_separate_strings(self):
+        with pytest.raises(TypeError, match="separate string arguments"):
+            StAggridTheme().withParts(["colorSchemeDark"])
+
     def test_is_json_serializable(self):
         import json
 
-        theme = StAggridTheme(base="balham").withParams(fontSize=10)
-        assert json.loads(json.dumps(theme))["base"] == "balham"
+        theme = StAggridTheme(base="balham").withParams(
+            fontSize=10,
+            focusShadow={"radius": 2, "color": "#ff0000"},
+        )
+        encoded = json.loads(json.dumps(theme))
+        assert encoded["base"] == "balham"
+        assert encoded["params"]["focusShadow"]["radius"] == 2
 
 
 class TestEnums:

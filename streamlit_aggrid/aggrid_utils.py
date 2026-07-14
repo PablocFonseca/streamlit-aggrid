@@ -1,12 +1,29 @@
+import hashlib
 import json
 import logging
 import os
+from collections.abc import Mapping
+from datetime import date, datetime, time
+from decimal import Decimal
+from pathlib import Path
+from uuid import UUID
+
 import pandas as pd
 
 from streamlit_aggrid.grid_options_builder import GridOptionsBuilder
 from streamlit_aggrid.shared import JsCode, walk_gridOptions, GridUpdateMode
 from io import StringIO
-from pathlib import Path
+
+
+def _copy_grid_option_containers(value):
+    """Copy JSON-like containers while preserving special leaf objects."""
+    if isinstance(value, Mapping):
+        return {key: _copy_grid_option_containers(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_copy_grid_option_containers(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_copy_grid_option_containers(item) for item in value)
+    return value
 
 
 def _load_json_file(path: Path) -> str:
@@ -48,6 +65,10 @@ def _parse_data_and_grid_options(
             data = data.to_pandas(use_pyarrow_extension_array=False)
 
         if isinstance(data, pd.DataFrame):
+            # Parsing adds the internal row-ID column and may normalize date
+            # columns. A shallow frame copy keeps those assignments private to
+            # the component without duplicating every underlying data block.
+            data = data.copy(deep=False)
             # converts date columns to iso format:
             for c, d in data.dtypes.items():
                 if d.kind == "M":
@@ -71,29 +92,40 @@ def _parse_data_and_grid_options(
         except Exception as ex:
             raise ValueError(f"Error parsing gridOptions parameter as raw json. {ex}") from ex
 
+    elif grid_options is not None:
+        # rowData is popped and nested JsCode leaves are replaced below. Keep
+        # those implementation details from mutating the caller's options.
+        grid_options = {
+            key: (
+                value
+                if key == "rowData"
+                else _copy_grid_option_containers(value)
+            )
+            for key, value in grid_options.items()
+        }
+
     if grid_options is None:
         grid_options = {}
 
-    # if data is supplied via gridOptions.rowData move it to the data parameter
-    if grid_options.get('rowData') and use_json_serialization is not True:
-        if data is not None:
+    # Normalize gridOptions.rowData through the same DataFrame path as data=.
+    # This keeps Arrow/JSON modes consistent and detects dual sources even for
+    # empty row arrays (whose truth value is false).
+    if "rowData" in grid_options:
+        row_data = grid_options.pop("rowData")
+        if data is not None and row_data is not None:
             raise ValueError(
                 "Data was supplied by both data and gridOptions rowData. "
                 "Use only one to load data into the grid."
             )
-        row_data = grid_options.pop("rowData")
-        if isinstance(row_data, str):
-            data = pd.read_json(StringIO(row_data))
-        else:
-            data = pd.DataFrame(row_data)
+        if data is None and row_data is not None:
+            if isinstance(row_data, str):
+                data = pd.read_json(StringIO(row_data))
+            else:
+                data = pd.DataFrame(row_data)
 
     # if rowId is not defined, create a unique row id
     if "getRowId" not in grid_options and data is not None:
         data['::auto_unique_id::'] = list(map(str, range(data.shape[0])))
-
-    if use_json_serialization is True and data is not None:
-        grid_options['rowData'] = data.to_json(orient='records')
-        data = None
 
     # process the JsCode objects
     if unsafe_allow_jscode:
@@ -104,36 +136,128 @@ def _parse_data_and_grid_options(
     return data, grid_options
 
 
-def compute_data_hash(df):
-    """Hash a DataFrame so the frontend can detect data changes between reruns."""
-    if df is None:
+def _normalize_hash_value(value):
+    """Convert common row values to a deterministic JSON-compatible shape."""
+    if value is None:
+        return None
+    if value is pd.NA or value is pd.NaT:
+        return {"__missing__": type(value).__name__}
+    if isinstance(value, dict):
+        items = [
+            [_normalize_hash_value(key), _normalize_hash_value(item)]
+            for key, item in value.items()
+        ]
+        items.sort(
+            key=lambda pair: json.dumps(
+                pair[0], sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+        )
+        return {"__mapping__": items}
+    if isinstance(value, (list, tuple)):
+        return [_normalize_hash_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        items = [_normalize_hash_value(item) for item in value]
+        items.sort(
+            key=lambda item: json.dumps(
+                item, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            )
+        )
+        return {"__set__": items}
+    if isinstance(value, (pd.Timestamp, pd.Timedelta, datetime, date, time)):
+        return {"__type__": type(value).__name__, "value": value.isoformat()}
+    if isinstance(value, (Decimal, UUID)):
+        return {"__type__": type(value).__name__, "value": str(value)}
+    if isinstance(value, bytes):
+        return {"__bytes__": value.hex()}
+    if isinstance(value, float):
+        if pd.isna(value):
+            return {"__float__": "nan"}
+        if value == float("inf"):
+            return {"__float__": "inf"}
+        if value == float("-inf"):
+            return {"__float__": "-inf"}
+        return value
+    if isinstance(value, (str, int, bool)):
+        return value
+
+    # NumPy and Arrow scalar objects generally expose a stable Python scalar.
+    item_method = getattr(value, "item", None)
+    if callable(item_method):
+        try:
+            scalar = item_method()
+            if scalar is not value:
+                return _normalize_hash_value(scalar)
+        except (TypeError, ValueError, OverflowError):
+            pass
+
+    return {
+        "__type__": f"{type(value).__module__}.{type(value).__qualname__}",
+        "value": str(value),
+    }
+
+
+def _canonical_json_bytes(value):
+    normalized = _normalize_hash_value(value)
+    return json.dumps(
+        normalized,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+
+def compute_data_hash(data):
+    """Return an order-sensitive content signature for component row data.
+
+    DataFrames use pandas' stable vectorized row hashing and include schema
+    metadata. JSON rowData is canonicalized so insignificant whitespace and
+    mapping-key order do not change the signature, while row order does.
+    """
+    if data is None:
         return None
 
-    try:
-        return str(pd.util.hash_pandas_object(df).sum())
-    except TypeError:
-        logging.warning(
-            "DataFrame contains non-hashable data, attempting type conversion..."
-        )
+    digest = hashlib.sha256()
 
+    if isinstance(data, pd.DataFrame):
+        digest.update(b"streamlit-aggrid:dataframe:v1\0")
         try:
-            df_copy = df.copy()
-            for col in df_copy.columns:
-                df_copy[col] = df_copy[col].apply(
-                    lambda x: tuple(x)
-                    if isinstance(x, list)
-                    else frozenset(x)
-                    if isinstance(x, set)
-                    else frozenset(x.items())
-                    if isinstance(x, dict)
-                    else x
-                )
-            return str(pd.util.hash_pandas_object(df_copy).sum())
-        except (TypeError, ValueError, AttributeError) as e:
+            metadata = {
+                "columns": [_normalize_hash_value(column) for column in data.columns],
+                "dtypes": [str(dtype) for dtype in data.dtypes],
+                "shape": list(data.shape),
+            }
+            digest.update(_canonical_json_bytes(metadata))
+            digest.update(b"\0")
+            # Pandas indices are removed by the frontend Arrow parser, so hash
+            # only the row values that AG Grid actually receives.
+            row_hashes = pd.util.hash_pandas_object(data, index=False)
+            # Pin byte order so the digest is stable across architectures.
+            digest.update(row_hashes.to_numpy(dtype="uint64").astype("<u8").tobytes())
+        except (TypeError, ValueError, AttributeError) as ex:
             logging.warning(
-                f"Type conversion failed ({e}), falling back to string-based hashing..."
+                "DataFrame contains values unsupported by pandas hashing; "
+                "using deterministic JSON hashing instead: %s",
+                ex,
             )
-            return str(hash(df.to_string()))
+            fallback = {
+                "columns": [_normalize_hash_value(column) for column in data.columns],
+                "dtypes": [str(dtype) for dtype in data.dtypes],
+                "data": [
+                    [_normalize_hash_value(value) for value in row]
+                    for row in data.itertuples(index=False, name=None)
+                ],
+            }
+            digest.update(_canonical_json_bytes(fallback))
+        return digest.hexdigest()
+
+    digest.update(b"streamlit-aggrid:row-data:v1\0")
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            pass
+    digest.update(_canonical_json_bytes(data))
+    return digest.hexdigest()
 
 
 def parse_update_mode(update_mode: GridUpdateMode, update_on=None):

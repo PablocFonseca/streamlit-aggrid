@@ -26,7 +26,7 @@ class GridResponse(TypedDict, total=False):
     eventData: Dict[str, Any]
 
 
-class AgGridReturn:
+class AgGridReturn(Mapping):
     """
     Container for AgGrid component response data.
 
@@ -483,59 +483,79 @@ class AgGridReturn:
         ):
             return grid_response[key]
 
-        # Try to get as attribute first
-        try:
+        # Only the documented public attributes participate in the Mapping.
+        # This keeps iteration and lookup consistent and avoids exposing
+        # implementation details such as ``_original_data``.
+        if key in self._PUBLIC_KEYS:
             return getattr(self, key)
-        except AttributeError:
-            pass
 
         # Try to get from grid_response
         if isinstance(grid_response, Mapping) and key in grid_response:
             return grid_response[key]
 
-        # Fall back to __dict__ access
-        return self.__dict__.get(key)
+        raise KeyError(key)
 
     def __iter__(self):
         """Iterate over public attributes."""
-        return iter(self.keys())
+        yield from self._PUBLIC_KEYS
+
+        grid_response = self.__dict__.get("grid_response", {})
+        if isinstance(grid_response, Mapping):
+            yield from (key for key in grid_response if key not in self._PUBLIC_KEYS)
 
     def __len__(self):
         """Return number of public attributes."""
-        return len(self.keys())
-
-    def keys(self):
-        """Return all available keys (attributes + grid_response keys)."""
-        attr_keys = list(self._PUBLIC_KEYS)
-
-        # Get grid_response keys for backward compatibility
-        grid_response = self.__dict__.get("grid_response", {})
-        if isinstance(grid_response, Mapping):
-            attr_keys += [k for k in grid_response.keys() if k not in attr_keys]
-
-        return attr_keys
-
-    def values(self):
-        """Return all values for public attributes."""
-        return [self[key] for key in self.keys()]
-
-    def get(self, key, default=None):
-        """Return a value by key without raising for arbitrary CUSTOM data."""
-        grid_response = self.__dict__.get("grid_response", {})
-        if (
-            self.data_return_mode == DataReturnMode.CUSTOM
-            and isinstance(grid_response, Mapping)
-        ):
-            if key in grid_response:
-                return grid_response[key]
-
-        if key in self.keys():
-            return self[key]
-        return default
+        return sum(1 for _ in self)
 
     def __contains__(self, key):
         """Return whether a public or raw response key is available."""
-        return key in self.keys()
+        if key in self._PUBLIC_KEYS:
+            return True
+
+        grid_response = self.__dict__.get("grid_response", {})
+        return isinstance(grid_response, Mapping) and key in grid_response
+
+    @staticmethod
+    def _mapping_values_equal(left, right) -> bool:
+        """Compare nested return values without pandas' ambiguous truth value."""
+        if left is right:
+            return True
+        if isinstance(left, (pd.DataFrame, pd.Series, pd.Index)):
+            return isinstance(right, type(left)) and left.equals(right)
+        if isinstance(left, Mapping) and isinstance(right, Mapping):
+            if left.keys() != right.keys():
+                return False
+            return all(
+                AgGridReturn._mapping_values_equal(left[key], right[key])
+                for key in left
+            )
+        if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
+            return len(left) == len(right) and all(
+                AgGridReturn._mapping_values_equal(a, b)
+                for a, b in zip(left, right)
+            )
+
+        try:
+            result = left == right
+            if isinstance(result, bool):
+                return result
+            # NumPy/Arrow-like comparison results expose an all() reduction.
+            reduce_all = getattr(result, "all", None)
+            if callable(reduce_all):
+                return bool(reduce_all())
+            return bool(result)
+        except (TypeError, ValueError):
+            return False
+
+    def __eq__(self, other):
+        """Compare mapping contents, including DataFrame-valued properties."""
+        if not isinstance(other, Mapping):
+            return NotImplemented
+        if self.keys() != other.keys():
+            return False
+        return all(
+            self._mapping_values_equal(self[key], other[key]) for key in self
+        )
 
     def is_dict_like(self) -> bool:
         """Whether the raw collector payload supports mapping access."""

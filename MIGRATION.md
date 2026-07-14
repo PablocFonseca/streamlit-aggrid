@@ -64,6 +64,12 @@ AgGrid(df, isolate_styles=False, key="grid")
 `streamlit_aggrid.styles` ships helpers: `get_hide_expanders_css()`,
 `get_compact_grid_css()`, `get_zebra_stripes_css()`.
 
+AG Grid now automatically inherits the app font selected by Streamlit's
+`[theme] font` setting, including fonts registered with `[[theme.fontFaces]]`.
+The component references Streamlit's Components V2 `--st-font` CSS variable,
+so theme changes cascade without JavaScript style reads or per-cell work. An
+explicit `fontFamily` in a custom AG Grid theme still takes precedence.
+
 ### Deprecated parameters
 | Deprecated | Use instead |
 |---|---|
@@ -71,6 +77,12 @@ AgGrid(df, isolate_styles=False, key="grid")
 | `fit_columns_on_grid_load=True` | `gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}` |
 | `try_to_convert_back_to_original_types` | removed — convert dtypes yourself |
 | `conversion_errors` | removed — convert dtypes yourself |
+
+When legacy `update_mode=GridUpdateMode.MANUAL` is retained temporarily, omit
+`update_on` to disable automatic reruns and use only the manual update button.
+An explicitly supplied `update_on` remains active. Other deprecated update
+modes now contribute only their matching events when `update_on` is omitted;
+the four modern default events apply to a normal call with neither option set.
 
 ### Custom return mode
 `data_return_mode=DataReturnMode.CUSTOM` with `custom_jscode_for_grid_return`
@@ -134,13 +146,63 @@ The toolbar remains off by default for compatibility with 1.x. Enable it with
 `show_toolbar=True`; `show_search` and `show_download_button` only affect the
 toolbar when it is enabled.
 
+### Row-level server synchronization
+For large client-side datasets where the server remains authoritative but only
+a small number of rows change per rerun, `server_wins_rows` avoids refreshing
+unchanged rows in AG Grid:
+
+```python
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+
+builder = GridOptionsBuilder.from_dataframe(df)
+builder.configure_grid_options(
+    getRowId=JsCode("params => String(params.data.id)")
+)
+options = builder.build()
+
+response = AgGrid(
+    df,
+    gridOptions=options,
+    key="grid",
+    allow_unsafe_jscode=True,
+    server_sync_strategy="server_wins_rows",
+)
+```
+
+This mode requires the default client-side row model and an explicit `getRowId`
+that returns a stable, unique string for every logical row. The positional IDs
+that streamlit-aggrid creates automatically are deliberately rejected: they do
+not remain attached to the same row after an insert, removal, or reorder.
+
+The optimization preserves browser objects for structurally unchanged rows and
+then lets AG Grid's immutable row-data path reconcile additions, updates,
+removals, and order. It still sends the complete dataset to the browser and
+performs an O(n) comparison, so it reduces AG Grid refresh/render work rather
+than Streamlit transport size. Continue using `server_wins` for non-client-side
+row models or when row-level reconciliation is unnecessary.
+
+### Outer iframes and reverse proxies
+Components V2 removes the component's own nested iframe and its legacy
+`postMessage` bridge. An iframe around the complete Streamlit app is still a
+normal deployment boundary: the browser must be able to load the whole
+Streamlit base path, open its `/_stcore/stream` WebSocket, and fetch component
+assets under `/_stcore/bidi-components/`. Preserve WebSocket upgrade headers,
+the configured `server.baseUrlPath`, and session affinity when a proxy or load
+balancer is involved.
+
+Streamlit 1.59 uses its Starlette/Uvicorn server directly; the earlier
+experimental `server.useStarlette` switch is no longer a valid 1.59 config
+option. Components V2 can remove an AgGrid-specific iframe communication layer,
+but it cannot repair a blocked outer Streamlit WebSocket or an incorrectly
+routed proxy path.
+
 ## Packaging notes
 
 - The implementation package is `streamlit_aggrid`; `st_aggrid` remains as a
   compatibility alias (both `from st_aggrid import ...` and
   `from streamlit_aggrid import ...` work, including submodules).
 - `python-decouple` is no longer a dependency.
-- Release wheels contain both import packages, the component manifest, and its
-  built `.mjs` and `.css` assets. Maintainers should run the wheel contract test
-  described in the README before publishing; testing only the source checkout
-  does not validate those files.
+- Release wheels and source distributions contain both import packages, the
+  component manifest, and its built `.mjs` and `.css` assets. Maintainers should
+  run the artifact contract described in the README before publishing; testing
+  only the source checkout does not validate those files.

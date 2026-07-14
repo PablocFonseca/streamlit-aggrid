@@ -10,5 +10,6 @@
 export { BaseCollector } from './BaseCollector'
 export { LegacyCollector } from './LegacyCollector'
 export { CustomCollector } from './CustomCollector'
+export { MinimalCollector } from './MinimalCollector'
 export { determineCollector, validateCollectorConfig, CollectorType } from './CollectorFactory'
 export type { CollectorContext, CollectorResult } from './types'

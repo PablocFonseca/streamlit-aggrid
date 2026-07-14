@@ -6,8 +6,10 @@ for accessing grid data, selected rows, grid state, and other information return
 by the AgGrid component.
 """
 
+from collections.abc import Mapping
+from typing import Any, Dict, List, Optional, TypedDict
+
 import pandas as pd
-from typing import Optional, List, Dict, Any, TypedDict
 
 from streamlit_aggrid.shared import DataReturnMode
 
@@ -36,7 +38,10 @@ class AgGridReturn:
     """
 
     def __init__(
-        self, grid_response=None, data_return_mode=DataReturnMode.AS_INPUT
+        self,
+        grid_response=None,
+        data_return_mode=DataReturnMode.AS_INPUT,
+        original_data: Optional[pd.DataFrame] = None,
     ) -> None:
         """Initialize AgGridReturn with the component response.
 
@@ -44,16 +49,40 @@ class AgGridReturn:
             grid_response: The response from the AgGrid component (a mapping
                 with a 'grid_response' key).
             data_return_mode: How the data property is shaped (see DataReturnMode).
+            original_data: Input data returned before the frontend has emitted
+                its first legacy grid response.
         """
         if isinstance(data_return_mode, str):
             data_return_mode = DataReturnMode(data_return_mode.upper())
 
-        # State
+        # Component V2 returns a flat state mapping whose ``grid_response``
+        # value is whatever the selected collector produced.  CUSTOM collectors
+        # may legitimately return any JSON value, including falsy values, so do
+        # not normalize the payload with ``or {}``.
         if grid_response is None:
-            self.grid_response: GridResponse = {}
+            self.grid_response: Any = {}
+        elif isinstance(grid_response, AgGridReturn):
+            self.grid_response = grid_response.grid_response
+            if original_data is None:
+                original_data = grid_response._original_data
+        elif isinstance(grid_response, Mapping):
+            self.grid_response = grid_response.get("grid_response", {})
         else:
-            self.grid_response: GridResponse = grid_response.get("grid_response") or {}
+            self.grid_response = {}
         self.data_return_mode = data_return_mode
+        self._original_data = original_data
+
+    def _response_mapping(self) -> Mapping[str, Any]:
+        """Return a mapping view for legacy accessors.
+
+        A CUSTOM collector is allowed to return a list, scalar, or ``None``.
+        Those payloads remain available through ``grid_response``/``raw_data``;
+        legacy grid-state accessors simply behave as if no legacy response was
+        returned.
+        """
+        if isinstance(self.grid_response, Mapping):
+            return self.grid_response
+        return {}
 
     # ==========================================
     # Basic Properties - Direct Grid Response Access
@@ -62,22 +91,23 @@ class AgGridReturn:
     @property
     def rows_id_after_sort_and_filter(self) -> Optional[List[Any]]:
         """The row indexes after sort and filter is applied."""
-        return self.grid_response.get("rowIdsAfterSortAndFilter")
+        return self._response_mapping().get("rowIdsAfterSortAndFilter")
 
     @property
     def rows_id_after_filter(self) -> Optional[List[Any]]:
         """The filtered row indexes."""
-        return self.grid_response.get("rowIdsAfterFilter")
+        return self._response_mapping().get("rowIdsAfterFilter")
 
     @property
     def grid_options(self) -> Dict[str, Any]:
         """GridOptions as applied on the grid."""
-        return self.grid_response.get("gridOptions", {})
+        value = self._response_mapping().get("gridOptions", {})
+        return value if isinstance(value, dict) else {}
 
     @property
     def columns_state(self) -> Optional[Dict[str, Any]]:
         """Gets the state of the columns. Typically used when saving column state."""
-        return self.grid_response.get("columnsState")
+        return self._response_mapping().get("columnsState")
 
     @property
     def grid_state(self) -> Optional[Dict[str, Any]]:
@@ -85,19 +115,30 @@ class AgGridReturn:
 
         See: https://ag-grid.com/javascript-data-grid/grid-options/#reference-miscellaneous-initialState
         """
-        return self.grid_response.get("gridState")
+        return self._response_mapping().get("gridState")
 
     @property
     def selected_rows_id(self) -> Optional[List[Any]]:
         """IDs of selected rows."""
-        if self.grid_state:
-            return self.grid_state.get("rowSelection")
+        grid_state = self.grid_state
+        if isinstance(grid_state, Mapping):
+            return grid_state.get("rowSelection")
         return None
 
     @property
     def event_data(self) -> Dict[str, Any]:
         """Returns information about the event that triggered AgGrid response."""
-        return self.grid_response.get("eventData", {})
+        value = self._response_mapping().get("eventData", {})
+        return value if isinstance(value, dict) else {}
+
+    @property
+    def raw_data(self) -> Any:
+        """The unmodified collector payload.
+
+        This is a compatibility alias for the ``CustomResponse.raw_data`` API
+        used by streamlit-aggrid 1.x.
+        """
+        return self.grid_response
 
     # ==========================================
     # Data Access Methods
@@ -105,7 +146,10 @@ class AgGridReturn:
 
     @property
     def data(self) -> Optional[pd.DataFrame | str]:
-        data =  self._get_data(
+        if self.data_return_mode == DataReturnMode.CUSTOM:
+            return None
+
+        data = self._get_data(
             selected_only=False, data_return_mode=self.data_return_mode
         )
 
@@ -113,6 +157,9 @@ class AgGridReturn:
 
     @property
     def selected_data(self) -> Optional[pd.DataFrame | str]:
+        if self.data_return_mode == DataReturnMode.CUSTOM:
+            return None
+
         data = self._get_data(
             selected_only=True, data_return_mode=self.data_return_mode
         )
@@ -149,6 +196,9 @@ class AgGridReturn:
             # Filter by group level
             sports = {k: v for k, v in response.dataGroups.items() if len(k) == 1}
         """
+        if self.data_return_mode in (DataReturnMode.CUSTOM, DataReturnMode.MINIMAL):
+            return {}
+
         groups = {}
         for group_dict in self._get_data_groups(only_selected=False):
             groups.update(group_dict)
@@ -169,6 +219,9 @@ class AgGridReturn:
                 ('South', 'Product B', 'Blue'): DataFrame(...),  # Selected specific item
             }
         """
+        if self.data_return_mode in (DataReturnMode.CUSTOM, DataReturnMode.MINIMAL):
+            return {}
+
         groups = {}
         for group_dict in self._get_data_groups(only_selected=True):
             groups.update(group_dict)
@@ -192,7 +245,22 @@ class AgGridReturn:
             DataFrame or JSON string with requested data
         """
 
-        nodes = self.grid_response.get("nodes", [])
+        response = self._response_mapping()
+        nodes = response.get("nodes", [])
+        if not isinstance(nodes, list):
+            nodes = []
+
+        # Components V2 starts with an empty state value. Preserve the 1.x
+        # behavior of exposing the input DataFrame until the first legacy
+        # collector response arrives, without serializing a duplicate dataset
+        # into the component's default state.
+        if (
+            "nodes" not in response
+            and not selected_only
+            and data_return_mode not in (DataReturnMode.CUSTOM, DataReturnMode.MINIMAL)
+            and isinstance(self._original_data, pd.DataFrame)
+        ):
+            return self._original_data
 
         # Filter to selected nodes if requested
         if selected_only:
@@ -342,7 +410,13 @@ class AgGridReturn:
         Returns:
             List of dictionaries where keys are tuples of group values and values are DataFrames
         """
-        nodes = self.grid_response.get("nodes", [])
+        response = self._response_mapping()
+        if "nodes" not in response:
+            return [{(): pd.DataFrame()}]
+
+        nodes = response.get("nodes", [])
+        if not isinstance(nodes, list):
+            nodes = []
 
         if only_selected:
             # Default is True because AgGrid sets undefined for half-selected groups
@@ -385,6 +459,7 @@ class AgGridReturn:
         "dataGroups",
         "selected_dataGroups",
         "grid_response",
+        "raw_data",
         "grid_options",
         "grid_state",
         "columns_state",
@@ -397,6 +472,17 @@ class AgGridReturn:
 
     def __getitem__(self, key):
         """Get item using dict-like access."""
+        # Preserve the streamlit-aggrid 1.x CustomResponse behavior: custom
+        # dictionary keys take precedence over the unified return object's
+        # convenience properties.
+        grid_response = self.__dict__.get("grid_response", {})
+        if (
+            self.data_return_mode == DataReturnMode.CUSTOM
+            and isinstance(grid_response, Mapping)
+            and key in grid_response
+        ):
+            return grid_response[key]
+
         # Try to get as attribute first
         try:
             return getattr(self, key)
@@ -404,8 +490,7 @@ class AgGridReturn:
             pass
 
         # Try to get from grid_response
-        grid_response = self.__dict__.get("grid_response", {})
-        if isinstance(grid_response, dict) and key in grid_response:
+        if isinstance(grid_response, Mapping) and key in grid_response:
             return grid_response[key]
 
         # Fall back to __dict__ access
@@ -425,7 +510,7 @@ class AgGridReturn:
 
         # Get grid_response keys for backward compatibility
         grid_response = self.__dict__.get("grid_response", {})
-        if isinstance(grid_response, dict):
+        if isinstance(grid_response, Mapping):
             attr_keys += [k for k in grid_response.keys() if k not in attr_keys]
 
         return attr_keys
@@ -433,3 +518,25 @@ class AgGridReturn:
     def values(self):
         """Return all values for public attributes."""
         return [self[key] for key in self.keys()]
+
+    def get(self, key, default=None):
+        """Return a value by key without raising for arbitrary CUSTOM data."""
+        grid_response = self.__dict__.get("grid_response", {})
+        if (
+            self.data_return_mode == DataReturnMode.CUSTOM
+            and isinstance(grid_response, Mapping)
+        ):
+            if key in grid_response:
+                return grid_response[key]
+
+        if key in self.keys():
+            return self[key]
+        return default
+
+    def __contains__(self, key):
+        """Return whether a public or raw response key is available."""
+        return key in self.keys()
+
+    def is_dict_like(self) -> bool:
+        """Whether the raw collector payload supports mapping access."""
+        return isinstance(self.grid_response, Mapping)

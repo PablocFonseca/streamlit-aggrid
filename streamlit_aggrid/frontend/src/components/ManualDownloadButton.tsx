@@ -1,5 +1,3 @@
-import React from "react"
-
 const ManualDownloadButton = (props: any) => {
   if (props.enabled) {
     return (

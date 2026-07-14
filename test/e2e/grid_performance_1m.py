@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode, DataReturnMode, GridUpdateMode
+from st_aggrid import AgGrid, JsCode, DataReturnMode, GridUpdateMode
 import time
 
 st.set_page_config(page_title="Grid Performance Test - 1M Records", layout="wide")
@@ -118,7 +118,10 @@ collect_return = JsCode("""
 function collect_return({streamlitRerunEventTriggerName, eventData}){
         let api = eventData.api;
         let colNames = api.getAllDisplayedColumns().map((c) => c.colDef.headerName);
-        return colNames   
+        return {
+            eventName: streamlitRerunEventTriggerName,
+            columnNames: colNames
+        }
     }
 """)
 
@@ -156,17 +159,18 @@ with col3:
 # Display grid return information
 if grid_response is not None:
     st.subheader("Grid Return Information")
-    
-    # Use the proper AgGridReturn interface
-    st.write("Grid response data:")
-    st.dataframe(grid_response.data)
-    # st.write(f"Selected rows: {len(grid_response.get('selected_rows', []))}")
-    # st.write(f"Data shape: {grid_response.get('data', df).shape}")
-
-    # Show first few rows of returned data
-    if not grid_response.get("data", df).empty:
-        st.write("First 5 rows of returned data:")
-        st.dataframe(grid_response["data"].head())
+    # CUSTOM mode intentionally does not collect the million row nodes. Expose
+    # the small response so the browser test can wait for a real round trip
+    # instead of sleeping for an assumed amount of time.
+    st.code(
+        repr(grid_response.grid_response),
+        language=None,
+        wrap_lines=True,
+    )
+    st.html(
+        "<pre data-testid='performance-grid-response'>"
+        f"{grid_response.grid_response!r}</pre>"
+    )
 
 # Page Refresh Timing Tracker
 st.divider()

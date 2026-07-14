@@ -28,13 +28,14 @@ _shown_deprecation_warnings = set()
 # component manifest against Streamlit's runtime registry, which only exists
 # inside a running Streamlit app. Importing this module from plain Python
 # (e.g. unit tests) must not fail.
+_COMPONENT_NAME = "streamlit-aggrid.agGrid"
 _component_funcs = {}
 
 
 def _get_component_func(isolate_styles=True):
     if isolate_styles not in _component_funcs:
         _component_funcs[isolate_styles] = components.component(
-            name="streamlit-aggrid.agGrid",
+            name=_COMPONENT_NAME,
             js="index-*.mjs",
             css="index-*.css",
             isolate_styles=isolate_styles,
@@ -66,7 +67,7 @@ def AgGrid(
     key: typing.Any = None,
     update_on=["cellValueChanged", "selectionChanged", "filterChanged", "sortChanged"],
     callback=None,
-    show_toolbar: bool = True,
+    show_toolbar: bool = False,
     show_search: bool = True,
     show_download_button: bool = True,
     custom_jscode_for_grid_return: JsCode = None,
@@ -147,9 +148,8 @@ def AgGrid(
         Defaults to 'streamlit'.
 
     custom_css : dict, optional
-        DEPRECATED. Not needed in Components V2.
-        Use st.markdown() and isolate_styles=False to inject CSS instead.
-        See streamlit_aggrid.styles for ready-made helpers.
+        Custom CSS rules scoped to this grid. The mapping uses CSS selectors as
+        keys and declaration dictionaries as values.
         Defaults to None.
 
     update_on : list[str | tuple[str, int]], optional
@@ -168,7 +168,7 @@ def AgGrid(
 
     show_toolbar : bool, optional
         Show toolbar above the grid.
-        Defaults to True.
+        Defaults to False.
 
     show_search : bool, optional
         Show search bar in toolbar.
@@ -352,15 +352,15 @@ def AgGrid(
         use_json_serialization,
     )
 
-    # Deprecate custom_css parameter (not needed in Components V2)
-    if custom_css is not None:
-        warnings.warn(
-            "The 'custom_css' parameter is deprecated in Components V2. "
-            "Use st.markdown() and isolate_styles=False to inject CSS instead. "
-            "See streamlit_aggrid.styles module for helper functions like get_hide_expanders_css().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+    initial_data = None
+    if (
+        data_return_mode not in (DataReturnMode.CUSTOM, DataReturnMode.MINIMAL)
+        and isinstance(data, pd.DataFrame)
+    ):
+        initial_data = data
+        if "::auto_unique_id::" in data.columns:
+            initial_data = data.drop(columns=["::auto_unique_id::"])
+
     custom_css = custom_css or dict()
 
     if height is None:
@@ -374,16 +374,21 @@ def AgGrid(
         gridOptions["autoSizeStrategy"] = {"type": "fitGridWidth"}
 
     # Wire the user callback through the Components V2 state-change callback
+    if callback is not None and not callable(callback):
+        raise TypeError("callback must be callable or None.")
     if callback is not None and key is None:
         raise ValueError("Component key must be set to use a callback.")
+
+    session_state_key = str(key) if key is not None else None
 
     if callback is not None:
 
         def _on_grid_response_change():
-            callback(
+            return callback(
                 AgGridReturn(
-                    grid_response=st.session_state.get(key),
+                    grid_response=st.session_state.get(session_state_key),
                     data_return_mode=data_return_mode,
+                    original_data=initial_data,
                 )
             )
     else:
@@ -433,7 +438,7 @@ def AgGrid(
 
     def _call_component():
         return _get_component_func(isolate_styles)(
-            key=key,
+            key=session_state_key,
             data=_component_data,
             on_grid_response_change=_on_grid_response_change,
             default=dict(grid_response={}),
@@ -476,5 +481,7 @@ def AgGrid(
             raise
 
     return AgGridReturn(
-        grid_response=component_result, data_return_mode=data_return_mode
+        grid_response=component_result,
+        data_return_mode=data_return_mode,
+        original_data=initial_data,
     )

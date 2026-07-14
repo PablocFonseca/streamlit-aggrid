@@ -4,8 +4,10 @@ CSS utility functions for styling AG Grid components.
 These functions return CSS strings that can be injected using:
     st.markdown(css_string, unsafe_allow_html=True)
 
-Since Streamlit AgGrid uses Components V2, CSS injected via st.markdown()
-will directly affect the grid without needing the deprecated custom_css parameter.
+Components V2 isolate component styles in a Shadow DOM by default. Global CSS
+injected with ``st.markdown`` reaches a grid only when that grid is rendered
+with ``isolate_styles=False``. Use AgGrid's ``custom_css`` parameter when style
+isolation should remain enabled.
 """
 
 
@@ -28,7 +30,7 @@ def get_hide_expanders_css() -> str:
         >>>
         >>> # Create and display grid
         >>> gb = GridOptionsBuilder.from_dataframe(df, parse_multi_index=True)
-        >>> AgGrid(df, gridOptions=gb.build())
+        >>> AgGrid(df, gridOptions=gb.build(), isolate_styles=False)
     """
     return """
 <style>
@@ -77,6 +79,7 @@ def get_compact_grid_css(row_height: int = 28, header_height: int = 32) -> str:
         >>> from streamlit_aggrid import get_compact_grid_css
         >>>
         >>> st.markdown(get_compact_grid_css(row_height=25), unsafe_allow_html=True)
+        >>> AgGrid(df, isolate_styles=False)
     """
     return f"""
 <style>
@@ -120,6 +123,7 @@ def get_zebra_stripes_css(even_color: str = "#f9f9f9", odd_color: str = "#ffffff
         >>> from streamlit_aggrid import get_zebra_stripes_css
         >>>
         >>> st.markdown(get_zebra_stripes_css(even_color="#f0f0f0"), unsafe_allow_html=True)
+        >>> AgGrid(df, isolate_styles=False)
     """
     return f"""
 <style>

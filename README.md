@@ -19,7 +19,7 @@
 
 **AgGrid** is an awesome grid for web frontend. More information in [https://www.ag-grid.com/](https://www.ag-grid.com/). Consider purchasing a license from Ag-Grid if you are going to use enterprise features!
 
-Current AgGrid version is [34.3.1](https://www.ag-grid.com/archive/34.3.1/)
+Current AgGrid version is [36.0.0](https://www.ag-grid.com/archive/36.0.0/)
 
 # Install
 
@@ -55,14 +55,40 @@ Grid data is sent back to streamlit and can be reused in other components. In th
 # Development Notes
 
 Version 2.0.0
- - Migrated to **Streamlit Components V2** (requires `streamlit >= 1.51`).
+ - Migrated to **Streamlit Components V2** (requires `streamlit >= 1.59`).
+ - Temporarily requires `pandas >= 1.4,<3` while pandas 3 support is validated.
  - The implementation package is now `streamlit_aggrid`; `from st_aggrid import ...` keeps working as an alias.
  - Removed automatic dtype conversion of returned data and the `conversion_errors` parameter.
  - JSON string inputs now return DataFrames (previously returned JSON strings).
- - Deprecated `custom_css` — inject CSS with `st.markdown()` + `isolate_styles=False` (see `streamlit_aggrid.styles` helpers).
+ - Preserved `custom_css` compatibility inside the Components V2 style root; global CSS can use `st.markdown()` + `isolate_styles=False`.
  - Fixed CUSTOM return mode, the manual update button, and the `callback` parameter.
+ - Made `DataReturnMode.MINIMAL` return only compact triggering-event data without walking the full row model.
+ - Preserved the 1.x toolbar default (`show_toolbar=False`); enable it explicitly when needed.
  - Large internal cleanup (removed dead collector/processor modules) and a new unit test suite.
  - See [MIGRATION.md](MIGRATION.md) for the full migration guide.
+
+## Release validation
+
+Components V2 loads its frontend from metadata embedded in the wheel, so a
+source-only test cannot catch a missing package, manifest, or asset directory.
+Before publishing, build the frontend and wheel, then run the wheel contract
+test against the exact artifact that will be uploaded:
+
+```shell
+yarn build
+poetry build
+pytest -q test/unit/test_packaging_contract.py
+```
+
+The check selects the sole wheel in `dist/` and verifies its distribution
+metadata, both public import packages, embedded component manifest, and hashed
+JavaScript and CSS assets. Set `STREAMLIT_AGGRID_WHEEL` when validating an
+artifact stored elsewhere.
+
+The million-row end-to-end suite is an absolute regression smoke check with
+generous, machine-dependent thresholds. It does not compare 1.x and 2.x and
+must not be used as evidence that Components V2 is faster without a controlled
+baseline run against both versions.
 
 Version 1.2.0
  - Added `server_sync_strategy` parameter to control data synchronization between server and client

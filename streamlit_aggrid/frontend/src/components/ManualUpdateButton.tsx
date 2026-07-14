@@ -1,5 +1,3 @@
-import React from "react"
-
 const ManualUpdateButton = (props: any) => {
   if (props.manualUpdate) {
     return (

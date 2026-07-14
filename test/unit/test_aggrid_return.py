@@ -81,6 +81,54 @@ class TestEmptyResponse:
         assert r.data is None
 
 
+class TestCustomResponse:
+    @pytest.mark.parametrize("payload", [0, False, "", [], ["a", "b"]])
+    def test_falsy_and_non_mapping_payloads_are_preserved(self, payload):
+        r = AgGridReturn(
+            grid_response={"grid_response": payload},
+            data_return_mode=DataReturnMode.CUSTOM,
+        )
+
+        assert r.grid_response == payload
+        assert r.raw_data == payload
+        assert r.data is None
+        assert r.selected_data is None
+        assert r.event_data == {}
+
+    def test_mapping_payload_supports_mapping_compatibility(self):
+        payload = {"rowCount": 3, "editedField": "price"}
+        r = AgGridReturn(
+            grid_response={"grid_response": payload},
+            data_return_mode=DataReturnMode.CUSTOM,
+        )
+
+        assert r.grid_response == payload
+        assert r.raw_data == payload
+        assert r["rowCount"] == 3
+        assert r.get("editedField") == "price"
+        assert r.get("missing", "fallback") == "fallback"
+
+
+class TestMinimalResponse:
+    def test_compact_event_data_has_no_dataframe_snapshot(self):
+        event = {
+            "streamlitRerunEventTriggerName": "cellValueChanged",
+            "newValue": 11,
+            "data": {"id": "row-1", "quantity": 11},
+            "node": {"id": "row-1", "rowIndex": 0},
+            "column": {"colId": "quantity"},
+        }
+        r = AgGridReturn(
+            grid_response={"grid_response": {"eventData": event}},
+            data_return_mode=DataReturnMode.MINIMAL,
+        )
+
+        assert r.event_data == event
+        assert r.data is None
+        assert r.selected_data is None
+        assert "nodes" not in r.grid_response
+
+
 class TestDataReturnModes:
     def test_as_input_keeps_node_order(self, simple_nodes):
         r = AgGridReturn(make_response(simple_nodes), DataReturnMode.AS_INPUT)

@@ -62,8 +62,6 @@ class ThemeParser {
 
     streamlitRecipe(streamlitTheme: StreamlitTheme): Theme{
         let theme : Theme = this.baseMapper['alpine']
-        const font = streamlitTheme?.font?.split(",").at(1)?.trim() || "Source Sans Pro"
-        const fontFamily = [font, {googleFont: font}]
 
         theme = theme.withParams({
             accentColor: "var(--st-primary-color)",
@@ -96,7 +94,7 @@ class ThemeParser {
         return themeAlpine.withPart(iconSetMaterial)
     }
 
-    customRecipe(gridOptionsTheme: stAggridThemeOptions, streamlitTheme?: StreamlitTheme) : Theme {
+    customRecipe(gridOptionsTheme: stAggridThemeOptions) : Theme {
         const {base, params, parts} = gridOptionsTheme
 
         let theme: Theme = this.baseMapper[base]
@@ -122,7 +120,7 @@ class ThemeParser {
             alpine: () => this.alpineRecipe(),
             balham: () => this.balhamRecipe(),
             material: () => this.materialRecipe(),
-            custom: () => this.customRecipe(gridOptionsTheme, streamlitTheme)
+            custom: () => this.customRecipe(gridOptionsTheme)
         };
 
         const recipe = recipeMapper[themeName] || (() => themeBalham);

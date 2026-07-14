@@ -1,11 +1,11 @@
 type CSSDict = { [key: string]: { [key: string]: string } }
 
 export function getCSS(styles: CSSDict): string {
-  var css = []
-  for (let selector in styles) {
-    let style = selector + " {"
-    for (let prop in styles[selector]) {
-      style += prop + ": " + styles[selector][prop] + ";"
+  const css: string[] = []
+  for (const selector in styles) {
+    let style = `${selector} {`
+    for (const prop in styles[selector]) {
+      style += `${prop}: ${styles[selector][prop]};`
     }
     style += "}"
     css.push(style)
@@ -13,25 +13,21 @@ export function getCSS(styles: CSSDict): string {
   return css.join("\n")
 }
 
-export function addCustomCSS(custom_css: CSSDict): void {
-  var css = getCSS(custom_css)
-  var styleSheet = document.createElement("style")
-  styleSheet.type = "text/css"
-  styleSheet.innerText = css
-  document.head.appendChild(styleSheet)
-}
+/**
+ * Inject an optional JavaScript extension and return a cleanup function.
+ *
+ * CSS is deliberately rendered by React inside the component root instead of
+ * being appended to document.head. Components V2 isolates styles in a shadow
+ * root by default, so document-level styles cannot reach the grid.
+ */
+export function injectProScript(jsCode?: string): () => void {
+  if (!jsCode) return () => undefined
 
-export function injectProAssets(jsCode: string, cssCode?: string) {
-  if (jsCode) {
-    const script = document.createElement("script")
-    script.textContent = jsCode
-    document.body.appendChild(script)
-  }
-  if (cssCode) {
-    const style = document.createElement("style")
-    style.textContent = cssCode
-    document.head.appendChild(style)
-  }
+  const script = document.createElement("script")
+  script.textContent = jsCode
+  document.body.appendChild(script)
+
+  return () => script.remove()
 }
 
 export function parseJsCodeFromPython(v: string) {

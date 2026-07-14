@@ -50,7 +50,7 @@ export function parseData(
     if (data) {
 
         //Quick fix for bigInt serializations. Python side should avoid sending non-json-serializabe entities.
-        const bigintReplacer = (key: any, value: any): any => {
+        const bigintReplacer = (_key: any, value: any): any => {
             if (typeof value === "bigint") {
                 return Number(value)
             }
@@ -76,7 +76,7 @@ export function parseData(
         try {
             const pandasMeta = JSON.parse(arrowTable?.schema?.metadata?.get('pandas') || '{}')
             indexColumns = pandasMeta.index_columns || []
-        } catch (e) {}
+        } catch {}
 
         // Filter out index columns and select only data fields
         const dataFields = arrowTable?.schema?.fields

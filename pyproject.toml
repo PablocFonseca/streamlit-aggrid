@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Pablo Fonseca", email = "pablo.fonseca+pip@gmail.com" }]
 keywords = ["streamlit", "ag-grid", "component"]
-dependencies = ["streamlit (>=1.59.0)", "pandas >=1.4.0"]
+dependencies = ["streamlit (>=1.59.0)", "pandas >=1.4.0,<3"]
 
 [project.urls]
 homepage = "https://github.com/PablocFonseca/streamlit-aggrid"

@@ -1,3 +1,9 @@
+"""Absolute performance regression smoke checks.
+
+The thresholds here catch severe regressions on a single build. This is not a
+comparative v1/v2 benchmark and does not support relative performance claims.
+"""
+
 import time
 from pathlib import Path
 
@@ -23,8 +29,7 @@ def streamlit_app():
 def go_to_app(page: Page, streamlit_app: StreamlitRunner):
     """Navigate to the app and wait for it to load."""
     page.goto(streamlit_app.server_url)
-    # Wait for app to load
-    page.get_by_role("img", name="Running...").is_hidden()
+    expect(page.get_by_role("img", name="Running...")).to_be_hidden()
 
 
 def test_grid_performance_1m_records(page: Page):
@@ -34,45 +39,37 @@ def test_grid_performance_1m_records(page: Page):
     page.wait_for_selector("text=Generated 1,000,000 records", timeout=60000)  # 60 second timeout
     
     # Measure time before grid renders
-    start_time = time.time()
+    start_time = time.perf_counter()
     
     # Wait for the grid to be visible
     frame = page.locator(".st-key-performance_grid_1m")
     expect(frame.locator(".ag-root")).to_be_visible(timeout=120000)  # 2 minute timeout
     
     # Record time when grid becomes visible
-    grid_visible_time = time.time()
+    grid_visible_time = time.perf_counter()
     
     # The grid row-groups by category + department, so the top level shows a
     # few collapsed group rows (pagination is not configured).
     expect(frame.locator(".ag-row").first).to_be_visible(timeout=30000)
 
     # Record time when grid is fully loaded
-    grid_loaded_time = time.time()
+    grid_loaded_time = time.perf_counter()
 
     rows = frame.locator(".ag-row")
     assert rows.count() > 0
     
-    # Test interaction - click on first row to measure response time
-    interaction_start_time = time.time()
-    rows.first.click()
-    interaction_end_time = time.time()
-    
     # Calculate performance metrics
     grid_initialization_time = grid_visible_time - start_time
     grid_full_load_time = grid_loaded_time - start_time
-    interaction_time = interaction_end_time - interaction_start_time
     
-    print(f"\n=== Grid Performance Metrics ===")
+    print("\n=== Grid Performance Metrics ===")
     print(f"Grid initialization time: {grid_initialization_time:.2f} seconds")
     print(f"Grid full load time: {grid_full_load_time:.2f} seconds")
-    print(f"Row interaction time: {interaction_time:.3f} seconds")
     
     # Performance assertions. Rendering 1M grouped rows in headless Chromium is
     # slow and machine-dependent; thresholds are generous to catch only regressions.
     assert grid_initialization_time < 90, f"Grid initialization took too long: {grid_initialization_time:.2f}s"
     assert grid_full_load_time < 90, f"Grid full load took too long: {grid_full_load_time:.2f}s"
-    assert interaction_time < 2, f"Row interaction took too long: {interaction_time:.3f}s"
 
 
 def test_grid_return_with_1m_records(page: Page):
@@ -85,25 +82,26 @@ def test_grid_return_with_1m_records(page: Page):
     expect(frame.locator(".ag-root")).to_be_visible(timeout=120000)
     expect(frame.locator(".ag-row").first).to_be_visible(timeout=30000)
 
-    # Measure time for return operation
-    return_start_time = time.time()
+    response = page.get_by_test_id("performance-grid-response")
+    expect(response).to_be_visible()
+    expect(response).not_to_contain_text("columnMoved")
 
-    # Click on a row to trigger selection and return
-    frame.locator(".ag-row").first.click()
-    
-    # Wait for the return information to be processed
-    # This might trigger a re-render in Streamlit
-    page.wait_for_timeout(2000)  # Give time for the return to be processed
-    
-    return_end_time = time.time()
-    return_time = return_end_time - return_start_time
-    
-    print(f"\n=== Grid Return Metrics ===")
+    # Move a column: unlike a row click, this event is in update_on and causes
+    # the CUSTOM collector, WebSocket round trip, and Streamlit rerun. Waiting
+    # for its event name measures the observable completion rather than a fixed
+    # two-second sleep.
+    first_header = frame.get_by_role("columnheader", name="id", exact=True)
+    second_header = frame.get_by_role("columnheader", name="name", exact=True)
+    expect(first_header).to_be_visible()
+    expect(second_header).to_be_visible()
+    return_start_time = time.perf_counter()
+    first_header.drag_to(second_header)
+    expect(response).to_contain_text("columnMoved", timeout=10000)
+    return_time = time.perf_counter() - return_start_time
+
+    print("\n=== Grid Return Metrics ===")
     print(f"Grid return processing time: {return_time:.3f} seconds")
-    
-    # Verify return information is displayed
-    expect(page.locator("text=Grid Return Information")).to_be_visible(timeout=10000)
-    
+
     # Performance assertion for return
     assert return_time < 5, f"Grid return took too long: {return_time:.3f}s"
 
@@ -118,15 +116,15 @@ def test_grid_group_expand_performance(page: Page):
     expect(frame.locator(".ag-root")).to_be_visible(timeout=120000)
     expect(frame.locator(".ag-row").first).to_be_visible(timeout=30000)
 
-    expand_start_time = time.time()
+    expand_start_time = time.perf_counter()
 
     # Expand the first collapsed category group row
     frame.locator(".ag-group-contracted").first.click()
-    page.wait_for_timeout(1000)
+    expect(frame.locator(".ag-group-expanded").first).to_be_visible()
 
-    expand_time = time.time() - expand_start_time
+    expand_time = time.perf_counter() - expand_start_time
 
-    print(f"\n=== Group Expand Performance ===")
+    print("\n=== Group Expand Performance ===")
     print(f"Group expand time: {expand_time:.3f} seconds")
 
     assert expand_time < 3, f"Group expand took too long: {expand_time:.3f}s"

@@ -252,6 +252,52 @@ def test_grid_return_test_4_selection_functionality(page: Page):
     expect(selection_event_data).to_contain_text("selectionChanged")
 
 
+def test_grid_return_test_5_minimal_cell_edit_is_compact(page: Page):
+    """MINIMAL returns the edited-row event, never a full row-model snapshot."""
+    page.get_by_test_id("stRadio").get_by_text("5").click()
+
+    grid = page.locator(".st-key-minimal_return_grid")
+    expect(grid.locator(".ag-root")).to_be_visible()
+    first_quantity = grid.locator(".ag-row").nth(0).locator(
+        ".ag-cell[col-id='quantity']"
+    )
+    expect(first_quantity).to_have_text("10")
+
+    response = page.get_by_test_id("minimal-grid-response")
+    expect(response).to_have_text("{}")
+
+    first_quantity.dblclick()
+    editor = first_quantity.locator("input")
+    expect(editor).to_be_visible()
+    editor.fill("11")
+    editor.press("Enter")
+
+    expect(response).to_contain_text("cellValueChanged")
+    expect(response).to_contain_text("newValue")
+    expect(response).to_contain_text("11")
+    expect(response).to_contain_text("row-1")
+    for heavy_key in (
+        "nodes",
+        "gridOptions",
+        "gridState",
+        "columnsState",
+        "rowIdsAfterFilter",
+        "rowIdsAfterSortAndFilter",
+    ):
+        expect(response).not_to_contain_text(heavy_key)
+
+
+def test_grid_return_test_6_custom_css_inside_default_style_isolation(page: Page):
+    """Compatibility CSS reaches AG Grid even with the default shadow root."""
+    page.get_by_test_id("stRadio").get_by_text("6").click()
+
+    grid = page.locator(".st-key-custom_css_grid")
+    expect(grid.locator(".ag-root")).to_be_visible()
+    header_text = grid.locator(".ag-header-cell-text").first
+    expect(header_text).to_have_css("color", "rgb(18, 52, 86)")
+    expect(header_text).to_have_css("font-weight", "700")
+
+
 def test_grid_return_test_4_header_checkbox_select_all(page: Page):
     """Test header checkbox select all functionality - selects all rows across all pages"""
     # Select radio option 4 from the radio button group

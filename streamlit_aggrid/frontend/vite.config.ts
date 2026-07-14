@@ -37,13 +37,19 @@ export default defineConfig(() => {
       },
       rollupOptions: {
         output: {
-          // Ensure CSS is inlined in the JS bundle
+          // Streamlit serves component assets with public caching. Give the
+          // single emitted stylesheet a real content hash so upgrades cannot
+          // reuse stale CSS through a browser or reverse proxy cache.
+          assetFileNames: "index-[hash][extname]",
           inlineDynamicImports: true,
         },
       },
       ...(!isDev && {
         esbuild: {
-          drop: ["console", "debugger"],
+          // Keep warnings and errors: row-ID contract failures and collector
+          // errors must remain diagnosable in the published component.
+          drop: ["debugger"],
+          pure: ["console.log", "console.debug"],
           minifyIdentifiers: true,
           minifySyntax: true,
           minifyWhitespace: true,

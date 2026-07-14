@@ -5,10 +5,12 @@
 import { BaseCollector } from './BaseCollector'
 import { LegacyCollector } from './LegacyCollector'
 import { CustomCollector } from './CustomCollector'
+import { MinimalCollector } from './MinimalCollector'
 
 export enum CollectorType {
   LEGACY = 'legacy',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
+  MINIMAL = 'minimal'
 }
 
 export interface CollectorConfig {
@@ -72,6 +74,8 @@ export function getCollectorInfo(collector: BaseCollector): {
     info.details = collector.getFunctionInfo()
   } else if (collector instanceof LegacyCollector) {
     info.details = { description: 'Uses original getGridReturnValue logic' }
+  } else if (collector instanceof MinimalCollector) {
+    info.details = { description: 'Returns only the triggering event payload' }
   }
 
   return info

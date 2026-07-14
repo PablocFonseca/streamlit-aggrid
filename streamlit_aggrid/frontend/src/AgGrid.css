@@ -20,6 +20,17 @@
   position: relative;
   flex: 1; /* Allow the grid to take the remaining space */
   width: 100%;
+  /* Streamlit injects this resolved config.toml theme value on the Components
+     V2 wrapper. It cascades to the toolbar and is also referenced by AG Grid's
+     theme, so updates require no JavaScript or per-cell style work. The system
+     stack keeps standalone frontend development readable without Streamlit. */
+  font-family: var(
+    --st-font,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
 }
 
 #gridContainer.maximized {

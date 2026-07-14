@@ -405,13 +405,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fontsource/source-sans-pro@npm:^5.2.5":
-  version: 5.2.5
-  resolution: "@fontsource/source-sans-pro@npm:5.2.5"
-  checksum: 10/8e2eaf69efd7516eacece3792b3dddd5e19f91a22349b66299225996680ba1901196672b4059bd030dd26b2c1dae8ae00fbb73f9e2238b32594a23f3095b4026
-  languageName: node
-  linkType: hard
-
 "@isaacs/balanced-match@npm:^4.0.1":
   version: 4.0.1
   resolution: "@isaacs/balanced-match@npm:4.0.1"
@@ -1313,7 +1306,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "frontend@workspace:streamlit_aggrid/frontend"
   dependencies:
-    "@fontsource/source-sans-pro": "npm:^5.2.5"
     "@streamlit/component-v2-lib": "npm:^0.2.0"
     "@types/lodash": "npm:^4.17.20"
     "@types/node": "npm:^22.14.1"

@@ -1,12 +1,12 @@
 import json
-from st_aggrid import AgGrid, JsCode
+from st_aggrid import AgGrid, DataReturnMode, JsCode, StAggridTheme
 import streamlit as st
 import pandas as pd
 
 
 TESTS = st.radio(
     "Select Test",
-    options=range(1, 5),
+    options=range(1, 7),
 )
 
 """grid launches with json data and grid options"""
@@ -240,7 +240,6 @@ def make_grid4():
     <pre data-testid='selection-grid-data'>{r.data.to_string() if r.data is not None else 'No data'}</pre>
     </span>
     """)
-
     st.html(f"""
     <span>
     <h1> Selected Rows </h1>
@@ -263,6 +262,62 @@ def make_grid4():
     """)
 
 
+def make_grid5():
+    """Exercise the compact MINIMAL collector with an editable cell."""
+    minimal_data = pd.DataFrame(
+        [
+            {"id": "row-1", "item": "Widget", "quantity": 10},
+            {"id": "row-2", "item": "Gadget", "quantity": 20},
+        ]
+    )
+    grid_options = {
+        "columnDefs": [
+            {"field": "id"},
+            {"field": "item"},
+            {"field": "quantity", "editable": True},
+        ],
+        "getRowId": JsCode("params => params.data.id"),
+    }
+    response = AgGrid(
+        minimal_data,
+        gridOptions=grid_options,
+        key="minimal_return_grid",
+        data_return_mode=DataReturnMode.MINIMAL,
+        update_on=["cellValueChanged"],
+        allow_unsafe_jscode=True,
+    )
+
+    st.html(
+        "<pre data-testid='minimal-grid-response'>"
+        f"{response.grid_response!r}</pre>"
+    )
+
+
+def make_grid6():
+    """Verify isolated CSS and Streamlit/custom font behavior."""
+    st.html('<span id="streamlit-font-probe">Streamlit font probe</span>')
+    AgGrid(
+        pd.DataFrame([{"item": "Widget", "quantity": 10}]),
+        key="custom_css_grid",
+        show_toolbar=True,
+        custom_css={
+            ".ag-header-cell-text": {
+                "color": "#123456",
+                "font-weight": "700",
+            }
+        },
+    )
+    AgGrid(
+        pd.DataFrame([{"item": "Custom font", "quantity": 20}]),
+        key="explicit_custom_font_grid",
+        theme=(
+            StAggridTheme(base="quartz")
+            .withParams(fontFamily="monospace", backgroundColor="rgb(1, 2, 3)")
+            .withParts("colorSchemeDark")
+        ),
+    )
+
+
 if TESTS == 1:
     make_grid()
 
@@ -274,3 +329,9 @@ if TESTS == 3:
 
 if TESTS == 4:
     make_grid4()
+
+if TESTS == 5:
+    make_grid5()
+
+if TESTS == 6:
+    make_grid6()

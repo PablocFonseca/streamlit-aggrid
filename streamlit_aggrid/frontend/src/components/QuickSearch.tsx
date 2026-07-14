@@ -1,5 +1,3 @@
-import React from "react"
-
 const QuickSearch = (props: any) => {
   if (props.enableQuickSearch) {
     return (

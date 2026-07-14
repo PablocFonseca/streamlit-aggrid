@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum, Flag, auto, EnumMeta
 import json
 import pathlib
-from typing import List, Literal, Mapping, Optional, TypedDict
+from typing import Any, Literal, Mapping, Optional, TypedDict
 
 DEFAULT_COLUMN_PROPS = [
     "cellDataType",
@@ -174,31 +174,81 @@ class AgGridTheme(BaseEnum):
     MATERIAL = "material"
 
 
-class StAggridThemeType(TypedDict):
-    themeName: str
+_CUSTOM_THEME_BASES = ("alpine", "balham", "quartz")
+_CUSTOM_THEME_PARTS = (
+    "colorSchemeLight",
+    "colorSchemeLightWarm",
+    "colorSchemeLightCold",
+    "colorSchemeDark",
+    "colorSchemeDarkWarm",
+    "colorSchemeDarkBlue",
+    "iconSetQuartz",
+    "iconSetQuartzLight",
+    "iconSetQuartzBold",
+    "iconSetAlpine",
+    "iconSetMaterial",
+    "iconSetQuartzRegular",
+)
+
+
+class StAggridThemeType(TypedDict, total=False):
+    themeName: Literal["custom"]
     base: Literal["alpine", "balham", "quartz"]
-    params: Optional[Mapping[str, str | int]]
-    parts: Optional[List[str]]
+    params: Mapping[str, Any]
+    parts: list[str]
 
 
-# suclassing a dict because it is JSON serializable.
+# Subclassing a dict keeps the theme directly JSON serializable.
 class StAggridTheme(dict):
     def __init__(self, base: Optional[Literal["alpine", "balham", "quartz"]] = None):
         super()
-
+        self["themeName"] = "custom"
         self["params"] = {}
-        self["parts"] = list()
-        if base:
-            self["themeName"] = "custom"
+        self["parts"] = []
+        if base is not None:
             self.base(base)
 
-    def base(self, base: Literal["alpine", "balham", "quartz"]):
+    def base(
+        self, base: Literal["alpine", "balham", "quartz"]
+    ) -> "StAggridTheme":
+        if base not in _CUSTOM_THEME_BASES:
+            raise ValueError(
+                f"{base!r} is not a valid custom theme base. Expected one of: "
+                f"{', '.join(_CUSTOM_THEME_BASES)}."
+            )
+        self["themeName"] = "custom"
         self["base"] = base
+        return self
 
-    def withParams(self, **params: Mapping[str, str | int]):
+    def withParams(self, **params: Any) -> "StAggridTheme":
+        self["themeName"] = "custom"
         self["params"].update(params)
         return self
 
-    def withParts(self, *parts: List[str]):
-        self["parts"] = list(set(self["parts"]).union(set(parts)))
+    def withParts(self, *parts: str) -> "StAggridTheme":
+        invalid_types = [part for part in parts if not isinstance(part, str)]
+        if invalid_types:
+            raise TypeError(
+                "Theme parts must be passed as separate string arguments, for "
+                "example withParts('colorSchemeDark', 'iconSetMaterial')."
+            )
+
+        invalid_parts = [part for part in parts if part not in _CUSTOM_THEME_PARTS]
+        if invalid_parts:
+            raise ValueError(
+                f"Unsupported custom theme part(s): {', '.join(invalid_parts)}. "
+                f"Expected one of: {', '.join(_CUSTOM_THEME_PARTS)}."
+            )
+
+        # AG Grid resolves competing parts of the same feature by using the
+        # last one. Preserve caller order and move re-added parts to the end so
+        # this behavior is deterministic across Python processes.
+        ordered_parts = list(self["parts"])
+        for part in parts:
+            if part in ordered_parts:
+                ordered_parts.remove(part)
+            ordered_parts.append(part)
+
+        self["themeName"] = "custom"
+        self["parts"] = ordered_parts
         return self

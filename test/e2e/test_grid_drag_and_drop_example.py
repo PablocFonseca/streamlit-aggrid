@@ -20,7 +20,9 @@ def go_to_app(page: Page, streamlit_app: StreamlitRunner):
 
 def test_drag_first_row_to_last(page: Page):
     frame = page.locator(".st-key-drag_grid")
-    rows = frame.locator(".ag-center-cols-container .ag-row")
+    # AG Grid 36 renders unpinned rows in ag-grid-scrolling-container. Select
+    # the data rows directly instead of relying on the removed v35 container.
+    rows = frame.locator(".ag-row[row-id]")
     expect(rows.first).to_be_visible()
 
     first_row_handle = rows.nth(0).locator(".ag-row-drag")
@@ -37,16 +39,17 @@ def test_drag_first_row_to_last(page: Page):
     page.mouse.move(dst["x"] + dst["width"] / 2, dst["y"] + dst["height"] / 2, steps=15)
     page.mouse.up()
     page.wait_for_timeout(500)
-    rows = frame.locator(".ag-center-cols-container .ag-row")
+    rows = frame.locator(".ag-row[row-id]")
     ids = [rows.nth(i).locator('[col-id="id"]').inner_text() for i in range(rows.count())]
     row_indices = [int(rows.nth(i).get_attribute("aria-rowindex")) for i in range(rows.count())]
     
     # Pair each id with its aria-rowindex and sort by aria-rowindex
     sorted_ids = [id for _, id in sorted(zip(row_indices, ids))]
     print("Visual order by aria-rowindex:", sorted_ids)
-    assert sorted_ids == ["2", "3", "1", "4"]
+    assert sorted_ids == ["2", "3", "4", "1"]
 
     # Find the row with id "1" and check its aria-rowindex
     for i in range(rows.count()):
         if rows.nth(i).locator('[col-id="id"]').inner_text() == "1":
-            assert rows.nth(i).get_attribute("aria-rowindex") == "4"  # If you expect it to be third visually
+            # The header occupies aria-rowindex=1, so the last data row is 5.
+            assert rows.nth(i).get_attribute("aria-rowindex") == "5"

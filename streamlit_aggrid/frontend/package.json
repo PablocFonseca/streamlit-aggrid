@@ -3,7 +3,6 @@
   "version": "1.1.5",
   "private": true,
   "dependencies": {
-    "@fontsource/source-sans-pro": "^5.2.5",
     "@streamlit/component-v2-lib": "^0.2.0",
     "ag-charts-enterprise": "^14.0.0",
     "ag-grid-community": "36.0.0",

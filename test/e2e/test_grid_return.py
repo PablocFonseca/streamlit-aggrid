@@ -15,7 +15,12 @@ SCREENSHOT_DIRECTORY = HERE / "screen_shots"
 
 @pytest.fixture(autouse=True, scope="module")
 def streamlit_app():
-    with StreamlitRunner(GRID_RETURN_FILE) as runner:
+    # Scope the non-default font to this app instead of changing the repository's
+    # global Streamlit config (and therefore every example and E2E server).
+    with StreamlitRunner(
+        GRID_RETURN_FILE,
+        extra_args=["--theme.base=dark", "--theme.font=serif"],
+    ) as runner:
         yield runner
 
 
@@ -250,6 +255,99 @@ def test_grid_return_test_4_selection_functionality(page: Page):
     selection_event_data = page.get_by_test_id("selection-event-data")
     expect(selection_event_data).to_be_visible()
     expect(selection_event_data).to_contain_text("selectionChanged")
+
+
+def test_grid_return_test_5_minimal_cell_edit_is_compact(page: Page):
+    """MINIMAL returns the edited-row event, never a full row-model snapshot."""
+    page.get_by_test_id("stRadio").get_by_text("5").click()
+
+    grid = page.locator(".st-key-minimal_return_grid")
+    expect(grid.locator(".ag-root")).to_be_visible()
+    first_quantity = grid.locator(".ag-row").nth(0).locator(
+        ".ag-cell[col-id='quantity']"
+    )
+    expect(first_quantity).to_have_text("10")
+
+    response = page.get_by_test_id("minimal-grid-response")
+    expect(response).to_have_text("{}")
+
+    first_quantity.dblclick()
+    editor = first_quantity.locator("input")
+    expect(editor).to_be_visible()
+    editor.fill("11")
+    editor.press("Enter")
+
+    expect(response).to_contain_text("cellValueChanged")
+    expect(response).to_contain_text("newValue")
+    expect(response).to_contain_text("11")
+    expect(response).to_contain_text("row-1")
+    for heavy_key in (
+        "nodes",
+        "gridOptions",
+        "gridState",
+        "columnsState",
+        "rowIdsAfterFilter",
+        "rowIdsAfterSortAndFilter",
+    ):
+        expect(response).not_to_contain_text(heavy_key)
+
+
+def test_grid_return_test_6_custom_css_inside_default_style_isolation(page: Page):
+    """Streamlit's dark theme, font, and compatibility CSS reach the grid."""
+    page.get_by_test_id("stRadio").get_by_text("6").click()
+
+    grid = page.locator(".st-key-custom_css_grid")
+    expect(grid.locator(".ag-root")).to_be_visible()
+    header_text = grid.locator(".ag-header-cell-text").first
+    expect(header_text).to_have_css("color", "rgb(18, 52, 86)")
+    expect(header_text).to_have_css("font-weight", "700")
+
+    app_font = page.locator("#streamlit-font-probe").evaluate(
+        "element => getComputedStyle(element).fontFamily"
+    )
+    cell_font = grid.locator(".ag-cell").first.evaluate(
+        "element => getComputedStyle(element).fontFamily"
+    )
+    toolbar_font = grid.locator(".toolbar-search input").evaluate(
+        "element => getComputedStyle(element).fontFamily"
+    )
+    assert "Source Serif" in app_font
+    assert cell_font == app_font
+    assert toolbar_font == app_font
+
+    theme_values = grid.locator(".ag-root-wrapper").evaluate(
+        """element => {
+            const styles = getComputedStyle(element)
+            return {
+                colorScheme: styles.colorScheme,
+                agBackground: styles.getPropertyValue('--ag-background-color').trim(),
+                stBackground: styles.getPropertyValue('--st-background-color').trim(),
+                agForeground: styles.getPropertyValue('--ag-foreground-color').trim(),
+                stForeground: styles.getPropertyValue('--st-text-color').trim(),
+                agHeader: styles.getPropertyValue('--ag-header-background-color').trim(),
+                stHeader: styles.getPropertyValue('--st-dataframe-header-background-color').trim(),
+                agBorder: styles.getPropertyValue('--ag-border-color').trim(),
+                stBorder: styles.getPropertyValue('--st-dataframe-border-color').trim(),
+            }
+        }"""
+    )
+    assert theme_values["colorScheme"] == "dark"
+    assert theme_values["agBackground"] == theme_values["stBackground"]
+    assert theme_values["agForeground"] == theme_values["stForeground"]
+    assert theme_values["agHeader"] == theme_values["stHeader"]
+    assert theme_values["agBorder"] == theme_values["stBorder"]
+
+    explicit_grid = page.locator(".st-key-explicit_custom_font_grid")
+    explicit_font_cell = explicit_grid.locator(".ag-cell").first
+    expect(explicit_font_cell).to_be_visible()
+    explicit_font = explicit_font_cell.evaluate(
+        "element => getComputedStyle(element).fontFamily"
+    )
+    assert "monospace" in explicit_font.lower()
+    assert explicit_font != app_font
+    expect(explicit_grid.locator(".ag-root-wrapper")).to_have_css(
+        "background-color", "rgb(1, 2, 3)"
+    )
 
 
 def test_grid_return_test_4_header_checkbox_select_all(page: Page):

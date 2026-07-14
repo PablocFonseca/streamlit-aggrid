@@ -3,7 +3,6 @@ import "./GridToolBar.css";
 
 interface GridToolBarProps {
   enabled: boolean;
-  gridContainerRef?: React.RefObject<HTMLDivElement>;
   onQuickSearchChange?: (value: string) => void;
   onDownloadClick?: () => void;
   onManualUpdateClick?: () => void;
@@ -17,7 +16,6 @@ interface GridToolBarProps {
 
 const GridToolBar: React.FC<GridToolBarProps> = ({
   enabled,
-  gridContainerRef,
   onQuickSearchChange,
   onDownloadClick,
   onManualUpdateClick,
@@ -51,8 +49,11 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
           }}
         >
           <button
+            type="button"
             className="toolbar-button search-button"
             title="Search"
+            aria-label="Search grid"
+            aria-expanded={searchExpanded}
             onClick={() => setSearchExpanded(!searchExpanded)}
           >
             <svg
@@ -79,9 +80,11 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
       {/* Download Button */}
       {showDownloadButton && (
         <button
+          type="button"
           className="toolbar-button download-button"
           onClick={onDownloadClick}
           title="Download as CSV"
+          aria-label="Download grid as CSV"
         >
           <svg
             viewBox="0 0 24 24"
@@ -104,9 +107,11 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
       {/* Maximize Button */}
       {showFullscreenButton && (
         <button
+          type="button"
           className="toolbar-button maximize-button"
           onClick={onMaximizeToggle}
           title={isMaximized ? "Exit Fullscreen" : "Fullscreen"}
+          aria-label={isMaximized ? "Exit grid fullscreen" : "Open grid fullscreen"}
         >
           {isMaximized ? (
             // Compress icon (exit maximize)
@@ -137,9 +142,11 @@ const GridToolBar: React.FC<GridToolBarProps> = ({
       {/* Manual Update Button */}
       {showManualUpdateButton && (
         <button
+          type="button"
           className="toolbar-button update-button"
           onClick={onManualUpdateClick}
           title="Manual Update"
+          aria-label="Update Streamlit with grid changes"
         >
           <svg
             viewBox="0 0 48 48"

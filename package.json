@@ -12,7 +12,7 @@
   "scripts": {
     "build": "yarn workspaces foreach -Avi run build",
     "build_all": "yarn workspaces foreach -Avi run build && poetry build",
-    "develop": "yarn workspaces foreach -R -v -j 99 -i -p run dev:watch"
+    "develop": "yarn workspaces foreach -R -v -j 99 -i -p run dev:watch   "
   },
   "resolutions": {
     "streamlit-component-lib/apache-arrow": "9.0.0"
